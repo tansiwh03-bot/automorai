@@ -1,203 +1,155 @@
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Toggle } from '@/components/ui/toggle';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
-export default function Dashboard() {
+const Dashboard = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [facebookConnected, setFacebookConnected] = useState(false);
-  const [pageName, setPageName] = useState('');
-  const [pageId, setPageId] = useState('');
-  const [pageAccessToken, setPageAccessToken] = useState('');
-  const [commentReplyEnabled, setCommentReplyEnabled] = useState(true);
-  const [messengerReplyEnabled, setMessengerReplyEnabled] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [commentReply, setCommentReply] = useState(true);
+  const [messengerReply, setMessengerReply] = useState(true);
 
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
-
-  const handleFacebookConnect = async () => {
-    setLoading(true);
-    try {
-      // Simulate Facebook OAuth flow
-      // In a real app, you would use the Facebook SDK or redirect to Facebook's OAuth dialog
-      // For this simulation, we'll mock a successful connection after a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock response from Facebook
-      const mockPageId = '1234567890';
-      const mockPageName = 'Automorai Test Page';
-      const mockAccessToken = 'EAACEdEose0cBA' + Math.random().toString(36).substr(2, 20);
-      
-      setPageId(mockPageId);
-      setPageName(mockPageName);
-      setPageAccessToken(mockAccessToken);
-      setFacebookConnected(true);
-      
-      // Send webhook for new customer connection
-      await sendWebhook({
-        user_id: user.id,
-        email: user.email,
-        page_id: mockPageId,
-        page_access_token: mockAccessToken,
-        comment_reply_enabled: true,
-        messenger_reply_enabled: true,
-        timestamp: new Date().toISOString()
-      });
-      
-      toast.success('Facebook Page connected successfully!');
-    } catch (error) {
-      toast.error('Failed to connect Facebook Page');
-      console.error('Facebook connection error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleChange = async (type: 'comment' | 'messenger', enabled: boolean) => {
-    if (type === 'comment') {
-      setCommentReplyEnabled(enabled);
-    } else {
-      setMessengerReplyEnabled(enabled);
-    }
-    
-    try {
-      await sendWebhook({
-        user_id: user.id,
-        comment_reply_enabled: commentReplyEnabled,
-        messenger_reply_enabled: messengerReplyEnabled
-      });
-      
-      toast.success(`Settings updated`);
-    } catch (error) {
-      toast.error('Failed to update settings');
-      console.error('Webhook error:', error);
-      // Revert toggle on error
-      if (type === 'comment') {
-        setCommentReplyEnabled(!enabled);
-      } else {
-        setMessengerReplyEnabled(!enabled);
-      }
-    }
-  };
-
-  const sendWebhook = async (data: any) => {
-    // In a real app, you would make an actual POST request to the webhook URL
-    // For this simulation, we'll just log the data and return a resolved promise
-    console.log('Webhook data sent:', data);
-    // Simulate network delay
-    return new Promise(resolve => setTimeout(resolve, 800));
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  if (!user) return <p style={{color:'white'}}>Please login</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
-      <div className="w-full max-w-2xl space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary mb-4">
-            Welcome to Automorai
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Hello, {user.email}! Manage your Facebook Page automation here.
-          </p>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      background: '#06070a',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'sans-serif'
+    }}>
+      <div style={{
+        background: '#12141c',
+        border: '1px solid #262a38',
+        borderRadius: '16px',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '480px',
+        color: 'white'
+      }}>
+        <h1 style={{color: '#7c5cff', marginBottom: '8px'}}>
+          Welcome to Automorai
+        </h1>
+        <p style={{color: '#8b90a3', marginBottom: '32px'}}>
+          Hello, {user.email}! Manage your Facebook Page automation here.
+        </p>
 
-        {!facebookConnected ? (
-          <Button 
-            onClick={handleFacebookConnect} 
-            className="w-full px-8 py-3"
-            disabled={loading}
-          >
-            {loading ? 'Connecting...' : 'Connect Facebook Page'}
-          </Button>
-        ) : (
-          <div className="space-y-6">
-            <div className="bg-card/50 p-6 rounded-lg border border-border/20">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                  <span className="text-primary text-2xl">📘</span>
-                </div>
-                <div>
-                  <h2 className="font-semibold text-primary">{pageName}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Page ID: {pageId}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setFacebookConnected(false);
-                    setPageName('');
-                    setPageId('');
-                    setPageAccessToken('');
-                    setCommentReplyEnabled(true);
-                    setMessengerReplyEnabled(true);
-                  }}
-                  className="w-full"
-                >
-                  Disconnect Page
-                </Button>
-              </div>
-            </div>
+        <button style={{
+          width: '100%',
+          padding: '14px',
+          background: '#7c5cff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '10px',
+          fontSize: '1rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+          marginBottom: '16px'
+        }}>
+          Connect Facebook Page
+        </button>
 
-            <div className="bg-card/50 p-6 rounded-lg border border-border/20">
-              <h3 className="font-semibold text-primary mb-4">Automation Settings</h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="comment-toggle" className="text-muted-foreground">
-                    Comment Auto-Reply
-                  </Label>
-                  <Toggle 
-                    id="comment-toggle"
-                    checked={commentReplyEnabled} 
-                    onCheckedChange={(checked) => handleToggleChange('comment', checked)}
-                    aria-label="Comment auto-reply toggle"
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="messenger-toggle" className="text-muted-foreground">
-                    Messenger Auto-Reply
-                  </Label>
-                  <Toggle 
-                    id="messenger-toggle"
-                    checked={messengerReplyEnabled} 
-                    onCheckedChange={(checked) => handleToggleChange('messenger', checked)}
-                    aria-label="Messenger auto-reply toggle"
-                  />
-                </div>
-              </div>
-              
-              <p className="text-xs text-muted-foreground mt-3">
-                Changes are saved automatically to your automation workflows.
-              </p>
-            </div>
+        {/* Comment Reply Toggle */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: '#181b26',
+          border: '1px solid #262a38',
+          borderRadius: '10px',
+          padding: '16px',
+          marginBottom: '12px'
+        }}>
+          <div>
+            <p style={{margin: 0, fontWeight: '600'}}>Comment Auto-Reply</p>
+            <p style={{margin: 0, color: '#8b90a3', fontSize: '0.85rem'}}>
+              Auto-reply to Facebook comments
+            </p>
           </div>
-        )}
-
-        <div className="mt-8">
-          <Button 
-            onClick={handleLogout} 
-            variant="outline"
-            className="w-full"
+          <div
+            onClick={() => setCommentReply(!commentReply)}
+            style={{
+              width: '48px',
+              height: '26px',
+              borderRadius: '13px',
+              background: commentReply ? '#7c5cff' : '#262a38',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.2s'
+            }}
           >
-            Logout
-          </Button>
+            <div style={{
+              position: 'absolute',
+              top: '3px',
+              left: commentReply ? '24px' : '3px',
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: 'white',
+              transition: 'left 0.2s'
+            }} />
+          </div>
         </div>
+
+        {/* Messenger Reply Toggle */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: '#181b26',
+          border: '1px solid #262a38',
+          borderRadius: '10px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <div>
+            <p style={{margin: 0, fontWeight: '600'}}>Messenger Auto-Reply</p>
+            <p style={{margin: 0, color: '#8b90a3', fontSize: '0.85rem'}}>
+              Auto-reply to Messenger messages
+            </p>
+          </div>
+          <div
+            onClick={() => setMessengerReply(!messengerReply)}
+            style={{
+              width: '48px',
+              height: '26px',
+              borderRadius: '13px',
+              background: messengerReply ? '#7c5cff' : '#262a38',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.2s'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: '3px',
+              left: messengerReply ? '24px' : '3px',
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: 'white',
+              transition: 'left 0.2s'
+            }} />
+          </div>
+        </div>
+
+        <button
+          onClick={logout}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: 'transparent',
+            color: '#8b90a3',
+            border: '1px solid #262a38',
+            borderRadius: '10px',
+            fontSize: '1rem',
+            cursor: 'pointer'
+          }}
+        >
+          Logout
+        </button>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
