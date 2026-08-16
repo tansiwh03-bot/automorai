@@ -1,38 +1,48 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
+import { createContext, useState, useContext, ReactNode } from 'react';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  return user ? <>{children}</> : <Navigate to="/login" />;
-};
+interface User {
+  email: string;
+}
 
-const AppRoutes = () => {
-  const { user } = useAuth();
+interface AuthContextType {
+  user: User | null;
+  login: (email: string, password: string) => boolean;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('automorai_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const login = (email: string, password: string): boolean => {
+    if (email && password.length >= 6) {
+      const userData = { email };
+      localStorage.setItem('automorai_user', JSON.stringify(userData));
+      setUser(userData);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('automorai_user');
+    setUser(null);
+  };
+
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <Signup />} />
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-    </Routes>
+    <AuthContext.Provider value={{ user, login, logout, isLoading: false }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-const App = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
 };
-
-export default App;
