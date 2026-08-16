@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Toggle } from '@/components/ui/toggle';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
@@ -160,12 +160,11 @@ export default function Dashboard() {
                   <Label htmlFor="comment-toggle" className="text-muted-foreground">
                     Comment Auto-Reply
                   </Label>
-                  <Checkbox 
+                  <Toggle 
                     id="comment-toggle"
                     checked={commentReplyEnabled} 
                     onCheckedChange={(checked) => handleToggleChange('comment', checked)}
                     aria-label="Comment auto-reply toggle"
-                    className="h-4 w-4 text-primary border-gray-300"
                   />
                 </div>
                 
@@ -173,12 +172,11 @@ export default function Dashboard() {
                   <Label htmlFor="messenger-toggle" className="text-muted-foreground">
                     Messenger Auto-Reply
                   </Label>
-                  <Checkbox 
+                  <Toggle 
                     id="messenger-toggle"
                     checked={messengerReplyEnabled} 
                     onCheckedChange={(checked) => handleToggleChange('messenger', checked)}
                     aria-label="Messenger auto-reply toggle"
-                    className="h-4 w-4 text-primary border-gray-300"
                   />
                 </div>
               </div>
