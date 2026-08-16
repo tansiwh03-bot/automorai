@@ -13,7 +13,8 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
-  const { user } = useAuth();
+  const { state } = useAuth();
+  const { user } = state;
 
   return (
     <BrowserRouter>
