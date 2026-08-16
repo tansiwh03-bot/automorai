@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const FACEBOOK_APP_ID = '858736313952564';
-const REDIRECT_URI = 'http://localhost:42101/dashboard';
+const REDIRECT_URI = 'https://venue-jugular-shakable.ngrok-free.dev/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
 
 const Dashboard = () => {
