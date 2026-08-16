@@ -1,12 +1,68 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const FACEBOOK_APP_ID = '858736313952564';
+const REDIRECT_URI = 'http://localhost:42101/dashboard';
+const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [commentReply, setCommentReply] = useState(true);
   const [messengerReply, setMessengerReply] = useState(true);
+  const [connectedPage, setConnectedPage] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>('');
 
   if (!user) return <p style={{color:'white'}}>Please login</p>;
+
+  // Check if Facebook returned a code
+  const urlParams = new URLSearchParams(window.location.search);
+  const fbCode = urlParams.get('code');
+
+  if (fbCode && !connectedPage) {
+    setStatus('Facebook connected! Setting up automation...');
+    // Send to webhook
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.email,
+        email: user.email,
+        page_id: 'pending',
+        page_access_token: fbCode,
+        comment_reply_enabled: true,
+        messenger_reply_enabled: true,
+        timestamp: new Date().toISOString()
+      })
+    }).then(() => {
+      setConnectedPage('Facebook Page');
+      setStatus('✅ Connected successfully!');
+      // Clean URL
+      window.history.replaceState({}, '', '/dashboard');
+    }).catch(() => {
+      setStatus('❌ Connection failed. Please try again.');
+    });
+  }
+
+  const handleFacebookConnect = () => {
+    const scope = 'pages_show_list,pages_messaging,pages_read_engagement,pages_manage_metadata';
+    const fbURL = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scope}&response_type=code`;
+    window.location.href = fbURL;
+  };
+
+  const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
+    if (type === 'comment') setCommentReply(value);
+    else setMessengerReply(value);
+
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.email,
+        comment_reply_enabled: type === 'comment' ? value : commentReply,
+        messenger_reply_enabled: type === 'messenger' ? value : messengerReply,
+      })
+    });
+  };
 
   return (
     <div style={{
@@ -29,24 +85,55 @@ const Dashboard = () => {
         <h1 style={{color: '#7c5cff', marginBottom: '8px'}}>
           Welcome to Automorai
         </h1>
-        <p style={{color: '#8b90a3', marginBottom: '32px'}}>
-          Hello, {user.email}! Manage your Facebook Page automation here.
+        <p style={{color: '#8b90a3', marginBottom: '24px'}}>
+          Hello, {user.email}!
         </p>
 
-        <button style={{
-          width: '100%',
-          padding: '14px',
-          background: '#7c5cff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '10px',
-          fontSize: '1rem',
-          fontWeight: '600',
-          cursor: 'pointer',
-          marginBottom: '16px'
-        }}>
-          Connect Facebook Page
-        </button>
+        {status && (
+          <div style={{
+            background: '#181b26',
+            border: '1px solid #7c5cff',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+            fontSize: '0.9rem',
+            color: '#c8ff5c'
+          }}>
+            {status}
+          </div>
+        )}
+
+        {connectedPage ? (
+          <div style={{
+            background: '#181b26',
+            border: '1px solid #c8ff5c',
+            borderRadius: '10px',
+            padding: '14px',
+            marginBottom: '16px',
+            color: '#c8ff5c',
+            fontWeight: '600'
+          }}>
+            ✅ {connectedPage} Connected
+          </div>
+        ) : (
+          <button
+            onClick={handleFacebookConnect}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: '#7c5cff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '16px'
+            }}
+          >
+            Connect Facebook Page
+          </button>
+        )}
 
         {/* Comment Reply Toggle */}
         <div style={{
@@ -66,26 +153,18 @@ const Dashboard = () => {
             </p>
           </div>
           <div
-            onClick={() => setCommentReply(!commentReply)}
+            onClick={() => handleToggleChange('comment', !commentReply)}
             style={{
-              width: '48px',
-              height: '26px',
-              borderRadius: '13px',
+              width: '48px', height: '26px', borderRadius: '13px',
               background: commentReply ? '#7c5cff' : '#262a38',
-              cursor: 'pointer',
-              position: 'relative',
-              transition: 'background 0.2s'
+              cursor: 'pointer', position: 'relative', transition: 'background 0.2s'
             }}
           >
             <div style={{
-              position: 'absolute',
-              top: '3px',
+              position: 'absolute', top: '3px',
               left: commentReply ? '24px' : '3px',
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              background: 'white',
-              transition: 'left 0.2s'
+              width: '20px', height: '20px', borderRadius: '50%',
+              background: 'white', transition: 'left 0.2s'
             }} />
           </div>
         </div>
@@ -108,26 +187,18 @@ const Dashboard = () => {
             </p>
           </div>
           <div
-            onClick={() => setMessengerReply(!messengerReply)}
+            onClick={() => handleToggleChange('messenger', !messengerReply)}
             style={{
-              width: '48px',
-              height: '26px',
-              borderRadius: '13px',
+              width: '48px', height: '26px', borderRadius: '13px',
               background: messengerReply ? '#7c5cff' : '#262a38',
-              cursor: 'pointer',
-              position: 'relative',
-              transition: 'background 0.2s'
+              cursor: 'pointer', position: 'relative', transition: 'background 0.2s'
             }}
           >
             <div style={{
-              position: 'absolute',
-              top: '3px',
+              position: 'absolute', top: '3px',
               left: messengerReply ? '24px' : '3px',
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              background: 'white',
-              transition: 'left 0.2s'
+              width: '20px', height: '20px', borderRadius: '50%',
+              background: 'white', transition: 'left 0.2s'
             }} />
           </div>
         </div>
@@ -135,14 +206,10 @@ const Dashboard = () => {
         <button
           onClick={logout}
           style={{
-            width: '100%',
-            padding: '14px',
-            background: 'transparent',
-            color: '#8b90a3',
-            border: '1px solid #262a38',
-            borderRadius: '10px',
-            fontSize: '1rem',
-            cursor: 'pointer'
+            width: '100%', padding: '14px',
+            background: 'transparent', color: '#8b90a3',
+            border: '1px solid #262a38', borderRadius: '10px',
+            fontSize: '1rem', cursor: 'pointer'
           }}
         >
           Logout
