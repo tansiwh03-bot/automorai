@@ -44,8 +44,7 @@ const Dashboard = () => {
   }
 
   const handleFacebookConnect = () => {
-    const scope = 'pages_show_list,pages_messaging,pages_read_engagement,pages_manage_metadata';
-    const fbURL = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scope}&response_type=code`;
+    const fbURL = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&config_id=1769398127405805&response_type=code`;
     window.location.href = fbURL;
   };
 
