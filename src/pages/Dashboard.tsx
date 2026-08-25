@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const FACEBOOK_APP_ID = '858736313952564';
 const REDIRECT_URI = 'https://automorai-app.vercel.app/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
+const CONFIG_ID = '1769398127405805';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -12,39 +13,38 @@ const Dashboard = () => {
   const [connectedPage, setConnectedPage] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
 
-  if (!user) return <p style={{color:'white'}}>Please login</p>;
-
-  // Check if Facebook returned a code
   const urlParams = new URLSearchParams(window.location.search);
   const fbCode = urlParams.get('code');
 
-  if (fbCode && !connectedPage) {
-    setStatus('Facebook connected! Setting up automation...');
-    // Send to webhook
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: user.email,
-        email: user.email,
-        page_id: 'pending',
-        page_access_token: fbCode,
-        comment_reply_enabled: true,
-        messenger_reply_enabled: true,
-        timestamp: new Date().toISOString()
-      })
-    }).then(() => {
-      setConnectedPage('Facebook Page');
-      setStatus('✅ Connected successfully!');
-      // Clean URL
-      window.history.replaceState({}, '', '/dashboard');
-    }).catch(() => {
-      setStatus('❌ Connection failed. Please try again.');
-    });
-  }
+  useEffect(() => {
+    if (fbCode && !connectedPage && user) {
+      setStatus('Facebook connected! Setting up automation...');
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.email,
+          email: user.email,
+          page_id: 'pending',
+          page_access_token: fbCode,
+          comment_reply_enabled: true,
+          messenger_reply_enabled: true,
+          timestamp: new Date().toISOString()
+        })
+      }).then(() => {
+        setConnectedPage('Facebook Page');
+        setStatus('✅ Connected successfully!');
+        window.history.replaceState({}, '', '/dashboard');
+      }).catch(() => {
+        setStatus('❌ Connection failed. Please try again.');
+      });
+    }
+  }, [fbCode, connectedPage, user]);
+
+  if (!user) return <p style={{color:'white'}}>Please login</p>;
 
   const handleFacebookConnect = () => {
-    const fbURL = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&config_id=1769398127405805&response_type=code`;
+    const fbURL = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&config_id=${CONFIG_ID}&response_type=code`;
     window.location.href = fbURL;
   };
 
@@ -134,7 +134,6 @@ const Dashboard = () => {
           </button>
         )}
 
-        {/* Comment Reply Toggle */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -168,7 +167,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Messenger Reply Toggle */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
