@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const FACEBOOK_APP_ID = '858736313952564';
-const REDIRECT_URI = 'https://venue-jugular-shakable.ngrok-free.dev/dashboard';
+const FACEBOOK_APP_ID = '2236207880559103';
+const REDIRECT_URI = 'https://automorai-app.vercel.app/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
 
 const Dashboard = () => {
