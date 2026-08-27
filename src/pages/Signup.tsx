@@ -21,6 +21,9 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+    const signup = (email: string, password: string): boolean => {
+    return login(email, password);
+  };
   const { signup } = useAuth();
   const navigate = useNavigate();
 
