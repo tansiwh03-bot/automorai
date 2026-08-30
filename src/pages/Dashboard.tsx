@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const FACEBOOK_APP_ID = '858736313952564';
+const FACEBOOK_APP_ID = '2236207880559103';
 const REDIRECT_URI = 'https://automorai-app.vercel.app/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
-const CONFIG_ID = '1769398127405805';
+const CONFIG_ID = '1766373457898596';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
