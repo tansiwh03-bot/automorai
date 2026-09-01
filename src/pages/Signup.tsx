@@ -28,8 +28,13 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      signup(email, password);
-      navigate('/dashboard');
+      const result = await signup(email, password);
+      if (result.success) {
+        toast.success('Account created! You can now log in.');
+        navigate('/login');
+      } else {
+        toast.error(result.error || 'Signup failed');
+      }
     } catch (err) {
       toast.error('Signup failed');
     } finally {
