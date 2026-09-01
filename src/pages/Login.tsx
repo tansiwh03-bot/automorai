@@ -28,8 +28,12 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const result = await login(email, password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        toast.error(result.error || 'Login failed');
+      }
     } catch (err) {
       toast.error('Login failed');
     } finally {
