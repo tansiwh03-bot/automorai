@@ -1,4 +1,6 @@
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 
 interface User {
   email: string;
@@ -6,8 +8,8 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => boolean;
-  signup: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -15,32 +17,43 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('automorai_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email: string, password: string): boolean => {
-    if (email && password.length >= 6) {
-      const userData = { email };
-      localStorage.setItem('automorai_user', JSON.stringify(userData));
-      setUser(userData);
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user?.email ? { email: session.user.email } : null);
+      setIsLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
+      setUser(session?.user?.email ? { email: session.user.email } : null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
   };
 
-  const signup = (email: string, password: string): boolean => {
-    return login(email, password);
+  const signup = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
   };
 
-  const logout = () => {
-    localStorage.removeItem('automorai_user');
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading: false }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
