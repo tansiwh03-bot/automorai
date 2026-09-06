@@ -39,14 +39,14 @@ const Dashboard = () => {
             body: JSON.stringify({
               user_id: user.email,
               email: user.email,
-              page_id: 'pending',
+              page_id: tokenData.page_id,
               page_access_token: tokenData.access_token,
               comment_reply_enabled: true,
               messenger_reply_enabled: true,
               timestamp: new Date().toISOString()
             })
           }).then(() => {
-            setConnectedPage('Facebook Page');
+            setConnectedPage(tokenData.page_name || 'Facebook Page');
             setStatus('✅ Connected successfully!');
             window.history.replaceState({}, '', '/dashboard');
           });
