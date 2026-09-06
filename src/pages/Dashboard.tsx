@@ -39,7 +39,7 @@ const Dashboard = () => {
             body: JSON.stringify({
               user_id: user.email,
               email: user.email,
-              page_id: tokenData.page_id,
+              page_id: 'pending',
               page_access_token: tokenData.access_token,
               comment_reply_enabled: true,
               messenger_reply_enabled: true,
