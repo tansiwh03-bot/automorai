@@ -18,26 +18,42 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (fbCode && !connectedPage && user) {
-      setStatus('Facebook connected! Setting up automation...');
-      fetch(WEBHOOK_URL, {
+      setStatus('Facebook connected! Exchanging token...');
+
+      fetch('/api/exchange-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.email,
-          email: user.email,
-          page_id: 'pending',
-          page_access_token: fbCode,
-          comment_reply_enabled: true,
-          messenger_reply_enabled: true,
-          timestamp: new Date().toISOString()
+        body: JSON.stringify({ code: fbCode })
+      })
+        .then((res) => res.json())
+        .then((tokenData) => {
+          if (tokenData.error || !tokenData.access_token) {
+            setStatus('❌ Token exchange failed: ' + (tokenData.error || 'unknown error'));
+            return;
+          }
+
+          setStatus('Setting up automation...');
+          return fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.email,
+              email: user.email,
+              page_id: 'pending',
+              page_access_token: tokenData.access_token,
+              comment_reply_enabled: true,
+              messenger_reply_enabled: true,
+              timestamp: new Date().toISOString()
+            })
+          }).then(() => {
+            setConnectedPage('Facebook Page');
+            setStatus('✅ Connected successfully!');
+            window.history.replaceState({}, '', '/dashboard');
+          });
         })
-      }).then(() => {
-        setConnectedPage('Facebook Page');
-        setStatus('✅ Connected successfully!');
-        window.history.replaceState({}, '', '/dashboard');
-      }).catch(() => {
-        setStatus('❌ Connection failed. Please try again.');
-      });
+        .catch(() => {
+          setStatus('❌ Connection failed. Please try again.');
+        });
     }
   }, [fbCode, connectedPage, user]);
 
