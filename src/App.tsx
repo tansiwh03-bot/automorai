@@ -7,12 +7,28 @@ import Dashboard from './pages/Dashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#06070a', color:'#8b90a3'}}>
+        Loading...
+      </div>
+    );
+  }
   return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
 const AppRoutes = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#06070a', color:'#8b90a3'}}>
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Index />} />
