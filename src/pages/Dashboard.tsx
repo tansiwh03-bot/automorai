@@ -32,24 +32,26 @@ const Dashboard = () => {
             return;
           }
 
-          setStatus('Setting up automation...');
-          return fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: user.email,
-              email: user.email,
-              page_id: 'pending',
-              page_access_token: tokenData.access_token,
-              comment_reply_enabled: true,
-              messenger_reply_enabled: true,
-              timestamp: new Date().toISOString()
-            })
-          }).then(() => {
-            setConnectedPage(tokenData.page_name || 'Facebook Page');
-            setStatus('✅ Connected successfully!');
-            window.history.replaceState({}, '', '/dashboard');
-          });
+     setStatus('Setting up automation...');
+return fetch(WEBHOOK_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: user.email,
+    email: user.email,
+    page_id: 'pending',
+    page_access_token: tokenData.access_token,
+    comment_reply_enabled: true,
+    messenger_reply_enabled: true,
+    timestamp: new Date().toISOString()
+  })
+})
+  .then((res) => res.json())
+  .then((webhookData) => {
+    setConnectedPage(webhookData.page_name || 'Facebook Page');
+    setStatus('✅ Connected successfully!');
+    window.history.replaceState({}, '', '/dashboard');
+  });
         })
         .catch(() => {
           setStatus('❌ Connection failed. Please try again.');
