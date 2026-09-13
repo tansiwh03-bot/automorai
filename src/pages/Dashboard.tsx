@@ -66,6 +66,10 @@ return fetch(WEBHOOK_URL, {
     window.location.href = fbURL;
   };
 
+  const handleWhatsAppConnect = () => {
+    window.location.href = '/connect-whatsapp';
+  };
+
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
     if (type === 'comment') setCommentReply(value);
     else setMessengerReply(value);
@@ -151,6 +155,24 @@ return fetch(WEBHOOK_URL, {
             Connect Facebook Page
           </button>
         )}
+
+        <button
+          onClick={handleWhatsAppConnect}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: '#25D366',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginBottom: '16px'
+          }}
+        >
+          Connect WhatsApp Business
+        </button>
 
         <div style={{
           display: 'flex',
