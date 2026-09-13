@@ -4,6 +4,7 @@ import Index from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import ConnectWhatsApp from './pages/ConnectWhatsApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +39,11 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/connect-whatsapp" element={
+        <ProtectedRoute>
+          <ConnectWhatsApp />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
