@@ -15,6 +15,7 @@ const ConnectWhatsApp = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [showBangla, setShowBangla] = useState(false);
 
   if (!user) return <p style={{ color: 'white' }}>Please login</p>;
 
@@ -93,7 +94,8 @@ const ConnectWhatsApp = () => {
             <h1 style={{ color: '#c8ff5c', marginBottom: '8px' }}>✅ Request received</h1>
             <p style={{ color: '#8b90a3', marginBottom: '24px' }}>
               Our team will set up WhatsApp for <strong style={{ color: 'white' }}>{businessName}</strong> within
-              24 hours and message you once it's ready to use.
+              24 hours. We'll message you at your WhatsApp number once it's ready to use — no
+              further action needed from you.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
@@ -133,7 +135,7 @@ const ConnectWhatsApp = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '10px' }}>
                 <label style={labelStyle}>WhatsApp Business number</label>
                 <input
                   type="text"
@@ -143,6 +145,50 @@ const ConnectWhatsApp = () => {
                   style={inputStyle}
                   required
                 />
+              </div>
+
+              {/* Important number warning */}
+              <div style={{
+                background: '#1f1a0f',
+                border: '1px solid #a5822b',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                fontSize: '0.82rem',
+                lineHeight: 1.5,
+                color: '#e0c184',
+              }}>
+                {!showBangla ? (
+                  <>
+                    ⚠️ <strong>Important:</strong> This number will be used only for WhatsApp
+                    automation. Once connected, you will no longer be able to use this number in
+                    the regular WhatsApp App on your phone. We recommend using a spare or
+                    dedicated number for this.
+                  </>
+                ) : (
+                  <>
+                    ⚠️ <strong>গুরুত্বপূর্ণ:</strong> এই নম্বরটি শুধুমাত্র WhatsApp automation-এর জন্য
+                    ব্যবহৃত হবে। কানেক্ট হয়ে গেলে, আপনি আর ফোনের সাধারণ WhatsApp App-এ এই নম্বরটি
+                    ব্যবহার করতে পারবেন না। এজন্য আমরা একটি আলাদা বা খালি নম্বর ব্যবহারের পরামর্শ দিই।
+                  </>
+                )}
+                <div style={{ marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBangla(!showBangla)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#c8ff5c',
+                      fontSize: '0.8rem',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    {showBangla ? 'Read in English' : 'বাংলায় পড়ুন'}
+                  </button>
+                </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
