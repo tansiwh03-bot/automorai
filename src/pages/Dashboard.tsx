@@ -70,6 +70,10 @@ return fetch(WEBHOOK_URL, {
     window.location.href = '/connect-whatsapp';
   };
 
+  const handleTenderConnect = () => {
+    window.location.href = '/connect-tender';
+  };
+
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
     if (type === 'comment') setCommentReply(value);
     else setMessengerReply(value);
@@ -172,6 +176,24 @@ return fetch(WEBHOOK_URL, {
           }}
         >
           Connect WhatsApp Business
+        </button>
+
+        <button
+          onClick={handleTenderConnect}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: '#ffb84c',
+            color: '#1a1200',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginBottom: '16px'
+          }}
+        >
+          Connect Tender Automation
         </button>
 
         <div style={{
