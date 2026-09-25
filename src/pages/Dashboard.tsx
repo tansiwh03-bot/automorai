@@ -61,6 +61,8 @@ const Dashboard = () => {
   const [messengerReply, setMessengerReply] = useState(true);
   const [connectedPage,  setConnectedPage]  = useState<string | null>(null);
   const [status,         setStatus]         = useState<string>('');
+  const [widgetCopied,   setWidgetCopied]   = useState(false);
+  const [waPageId,       setWaPageId]       = useState<string | null>(null);
 
   // Inbox state
   const [conversations,      setConversations]      = useState<Conversation[]>([]);
@@ -110,6 +112,18 @@ const Dashboard = () => {
         .catch(() => setStatus('❌ Connection failed. Please try again.'));
     }
   }, [fbCode, connectedPage, user]);
+
+  // ── Load WhatsApp page_id from sheet ──
+  useEffect(() => {
+    if (!user) return;
+    fetch(`https://n8n2.kingpurefood.com/webhook/automorai/inbox?user_id=${encodeURIComponent(user.email)}`)
+      .then(r => r.json())
+      .then(data => {
+        const waConv = data.conversations?.find((c: any) => c.platform === 'whatsapp');
+        if (waConv?.page_id) setWaPageId(waConv.page_id);
+      })
+      .catch(() => {});
+  }, [user]);
 
   // ── Load inbox when tab opens ──
   useEffect(() => {
@@ -278,6 +292,55 @@ const Dashboard = () => {
             <button onClick={handleTenderConnect} style={btnStyle('#ffb84c', '#1a1200')}>
               Connect Tender Automation
             </button>
+
+            {/* Widget Code */}
+            {waPageId && (
+              <div style={{
+                background: '#0e1018',
+                border: '1px solid #7c5cff44',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '16px',
+              }}>
+                <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>
+                  🌐 Your Website Widget Code
+                </p>
+                <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>
+                  এই code টা তোমার website এ paste করো
+                </p>
+                <pre style={{
+                  background: '#06070a',
+                  border: '1px solid #262a38',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontSize: '0.72rem',
+                  color: '#c8ff5c',
+                  overflowX: 'auto',
+                  margin: '0 0 10px',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                }}>{`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`}</pre>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`
+                    );
+                    setWidgetCopied(true);
+                    setTimeout(() => setWidgetCopied(false), 2000);
+                  }}
+                  style={{
+                    width: '100%', padding: '10px',
+                    background: widgetCopied ? '#c8ff5c' : '#7c5cff',
+                    color: widgetCopied ? '#06070a' : 'white',
+                    border: 'none', borderRadius: '8px',
+                    fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {widgetCopied ? '✅ Copied!' : '📋 Copy Code'}
+                </button>
+              </div>
+            )}
 
             {/* Toggles */}
             <Toggle
