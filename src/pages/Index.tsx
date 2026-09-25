@@ -81,14 +81,18 @@ const plans = [
 
 const Index = () => {
   useEffect(() => {
+    if (document.getElementById('am-widget')) return;
+    (window as any).AUTOMORAI_PAGE_ID  = 'automorai_support';
+    (window as any).AUTOMORAI_BUSINESS = 'Automorai Support';
+    (window as any).AUTOMORAI_COLOR    = '#7c5cff';
     const s = document.createElement('script');
     s.src = 'https://automorai.com/automorai-widget.js';
-    s.setAttribute('data-page-id', 'automorai_support');
-    s.setAttribute('data-business', 'Automorai Support');
-    s.setAttribute('data-color', '#7c5cff');
+    s.async = true;
     document.body.appendChild(s);
     return () => {
       if (document.body.contains(s)) document.body.removeChild(s);
+      const w = document.getElementById('am-widget');
+      if (w) w.remove();
     };
   }, []);
 
