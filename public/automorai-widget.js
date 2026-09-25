@@ -1,23 +1,24 @@
 (function () {
-  // ── Config (injected via script tag data attributes) ──────────────────────
+  // ── Config ────────────────────────────────────────────────────────────────
   const script = document.currentScript ||
     document.querySelector('script[data-page-id]');
 
-  const PAGE_ID     = script?.getAttribute('data-page-id') || '';
-  const BUSINESS    = script?.getAttribute('data-business') || 'আমাদের সাথে কথা বলুন';
-  const COLOR       = script?.getAttribute('data-color') || '#7c5cff';
-  const API         = 'https://n8n2.kingpurefood.com/webhook/automorai/website-chat';
+  const PAGE_ID  = script?.getAttribute('data-page-id')  || window.AUTOMORAI_PAGE_ID  || '';
+  const BUSINESS = script?.getAttribute('data-business') || window.AUTOMORAI_BUSINESS || 'আমাদের সাথে কথা বলুন';
+  const COLOR    = script?.getAttribute('data-color')    || window.AUTOMORAI_COLOR    || '#7c5cff';
+  const API      = 'https://n8n2.kingpurefood.com/webhook/automorai/website-chat';
 
   if (!PAGE_ID) { console.warn('Automorai Widget: data-page-id missing'); return; }
+  if (document.getElementById('am-widget')) return; // prevent duplicate
 
-  // ── Session ID (unique per visitor session) ───────────────────────────────
+  // ── Session ID ────────────────────────────────────────────────────────────
   let sessionId = sessionStorage.getItem('am_sid');
   if (!sessionId) {
     sessionId = 'web_' + Math.random().toString(36).slice(2, 11) + '_' + Date.now();
     sessionStorage.setItem('am_sid', sessionId);
   }
 
-  // ── Inject styles ─────────────────────────────────────────────────────────
+  // ── Styles ────────────────────────────────────────────────────────────────
   const style = document.createElement('style');
   style.textContent = `
     #am-widget * { box-sizing: border-box; font-family: sans-serif; }
@@ -94,7 +95,7 @@
   `;
   document.head.appendChild(style);
 
-  // ── Build HTML ────────────────────────────────────────────────────────────
+  // ── HTML ──────────────────────────────────────────────────────────────────
   const widget = document.createElement('div');
   widget.id = 'am-widget';
   widget.innerHTML = `
@@ -124,14 +125,13 @@
   const input    = document.getElementById('am-input');
   const sendBtn  = document.getElementById('am-send');
 
-  // ── Toggle ────────────────────────────────────────────────────────────────
   bubble.addEventListener('click', () => {
     box.classList.toggle('open');
     if (box.classList.contains('open')) input.focus();
   });
   closeBtn.addEventListener('click', () => box.classList.remove('open'));
 
-  // ── Add message bubble ────────────────────────────────────────────────────
+  // ── Text helpers ──────────────────────────────────────────────────────────
   function cleanText(text) {
     return text
       .replace(/#SEND_IMAGE:[^\n#]*/gi, '')
@@ -152,17 +152,14 @@
     return div;
   }
 
-  // ── Send message ──────────────────────────────────────────────────────────
+  // ── Send ──────────────────────────────────────────────────────────────────
   async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
-
     input.value = '';
     sendBtn.disabled = true;
     addMsg(text, 'user');
-
     const typing = addMsg('typing...', 'bot typing');
-
     try {
       const res = await fetch(API, {
         method: 'POST',
