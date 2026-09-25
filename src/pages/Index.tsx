@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
 const features = [
   {
@@ -79,6 +80,18 @@ const plans = [
 ];
 
 const Index = () => {
+  useEffect(() => {
+    const s = document.createElement('script');
+    s.src = 'https://automorai.com/automorai-widget.js';
+    s.setAttribute('data-page-id', 'automorai_support');
+    s.setAttribute('data-business', 'Automorai Support');
+    s.setAttribute('data-color', '#7c5cff');
+    document.body.appendChild(s);
+    return () => {
+      if (document.body.contains(s)) document.body.removeChild(s);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Nav */}
@@ -249,21 +262,6 @@ const Index = () => {
           </Link>
         </div>
       </section>
-            {/* Automorai Chat Widget */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var s = document.createElement('script');
-              s.src = 'https://automorai.com/automorai-widget.js';
-              s.setAttribute('data-page-id', 'automorai_support');
-              s.setAttribute('data-business', 'Automorai Support');
-              s.setAttribute('data-color', '#7c5cff');
-              document.body.appendChild(s);
-            })();
-          `
-        }}
-      />
 
       {/* Footer */}
       <footer className="text-center text-gray-500 text-sm pb-10">
