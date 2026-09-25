@@ -132,7 +132,7 @@
   closeBtn.addEventListener('click', () => box.classList.remove('open'));
 
   // ── Add message bubble ────────────────────────────────────────────────────
-function cleanText(text) {
+  function cleanText(text) {
     return text
       .replace(/#SEND_IMAGE:[^\n#]*/gi, '')
       .replace(/#ORDER_CONFIRMED/gi, '')
@@ -145,7 +145,8 @@ function cleanText(text) {
     if (role === 'bot') text = cleanText(text);
     const div = document.createElement('div');
     div.className = `am-msg ${role}`;
-    div.textContent = text;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    div.innerHTML = text.replace(urlRegex, '<a href="$1" target="_blank" style="color:#7c5cff;text-decoration:underline;word-break:break-all;">$1</a>');
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
     return div;
