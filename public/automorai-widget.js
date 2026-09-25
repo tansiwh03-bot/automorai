@@ -132,7 +132,17 @@
   closeBtn.addEventListener('click', () => box.classList.remove('open'));
 
   // ── Add message bubble ────────────────────────────────────────────────────
+function cleanText(text) {
+    return text
+      .replace(/#SEND_IMAGE:[^\n#]*/gi, '')
+      .replace(/#ORDER_CONFIRMED/gi, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .trim();
+  }
+
   function addMsg(text, role) {
+    if (role === 'bot') text = cleanText(text);
     const div = document.createElement('div');
     div.className = `am-msg ${role}`;
     div.textContent = text;
