@@ -76,12 +76,11 @@
       border-top: 1px solid #eee;
       display: flex; gap: 8px; background: #fff;
     }
-       #am-input {
+           #am-input {
       flex: 1; padding: 9px 12px; border-radius: 10px;
       border: 1px solid #ddd; font-size: 0.88rem; outline: none;
       color: #222; background: #fff;
     }
-    #am-input:focus { border-color: ${COLOR}; }
     #am-input:focus { border-color: ${COLOR}; }
     #am-send {
       padding: 9px 14px; background: ${COLOR}; color: #fff;
