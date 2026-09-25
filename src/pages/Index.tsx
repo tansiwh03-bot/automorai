@@ -249,6 +249,21 @@ const Index = () => {
           </Link>
         </div>
       </section>
+            {/* Automorai Chat Widget */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var s = document.createElement('script');
+              s.src = 'https://automorai.com/automorai-widget.js';
+              s.setAttribute('data-page-id', 'automorai_support');
+              s.setAttribute('data-business', 'Automorai Support');
+              s.setAttribute('data-color', '#7c5cff');
+              document.body.appendChild(s);
+            })();
+          `
+        }}
+      />
 
       {/* Footer */}
       <footer className="text-center text-gray-500 text-sm pb-10">
