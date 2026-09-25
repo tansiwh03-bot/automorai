@@ -119,8 +119,7 @@ const Dashboard = () => {
     fetch(`https://n8n2.kingpurefood.com/webhook/automorai/inbox?user_id=${encodeURIComponent(user.email)}`)
       .then(r => r.json())
       .then(data => {
-        const waConv = data.conversations?.find((c: any) => c.platform === 'whatsapp');
-        if (waConv?.page_id) setWaPageId(waConv.page_id);
+        if (data.wa_page_ids?.length > 0) setWaPageId(data.wa_page_ids[0]);
       })
       .catch(() => {});
   }, [user]);
