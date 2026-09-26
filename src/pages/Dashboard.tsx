@@ -6,6 +6,7 @@ const REDIRECT_URI = 'https://automorai.com/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
 const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
+const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Message {
@@ -23,6 +24,16 @@ interface Conversation {
   messages: Message[];
   last_message: string;
   last_time: string;
+}
+
+interface WebsiteForm {
+  business_name: string;
+  business_type: string;
+  phone: string;
+  address: string;
+  color: string;
+  services: string;
+  description: string;
 }
 
 // ─── Platform badge ───────────────────────────────────────────────────────────
@@ -53,8 +64,8 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 const Dashboard = () => {
   const { user, logout } = useAuth();
 
-  // Tabs: 'home' | 'inbox'
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox'>('home');
+  // Tabs: 'home' | 'inbox' | 'website'
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website'>('home');
 
   // Home tab state
   const [commentReply,   setCommentReply]   = useState(true);
@@ -65,10 +76,25 @@ const Dashboard = () => {
   const [waPageId,       setWaPageId]       = useState<string | null>(null);
 
   // Inbox state
-  const [conversations,      setConversations]      = useState<Conversation[]>([]);
+  const [conversations,        setConversations]        = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [inboxLoading,       setInboxLoading]       = useState(false);
-  const [inboxError,         setInboxError]         = useState('');
+  const [inboxLoading,         setInboxLoading]         = useState(false);
+  const [inboxError,           setInboxError]           = useState('');
+
+  // Website Builder state
+  const [websiteForm, setWebsiteForm] = useState<WebsiteForm>({
+    business_name: '',
+    business_type: 'retail',
+    phone: '',
+    address: '',
+    color: '#7c5cff',
+    services: '',
+    description: '',
+  });
+  const [websiteBuilding, setWebsiteBuilding] = useState(false);
+  const [websiteResult,   setWebsiteResult]   = useState<{ url: string; business_name: string } | null>(null);
+  const [websiteError,    setWebsiteError]    = useState('');
+  const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
 
   // ── Facebook OAuth code handler ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -166,6 +192,47 @@ const Dashboard = () => {
     });
   };
 
+  const handleWebsiteFormChange = (field: keyof WebsiteForm, value: string) => {
+    setWebsiteForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleBuildWebsite = async () => {
+    if (!websiteForm.business_name.trim()) {
+      setWebsiteError('Business name দিন');
+      return;
+    }
+    if (!websiteForm.phone.trim()) {
+      setWebsiteError('Phone number দিন');
+      return;
+    }
+
+    setWebsiteBuilding(true);
+    setWebsiteError('');
+    setWebsiteResult(null);
+
+    try {
+      const res = await fetch(WEBSITE_BUILDER_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...websiteForm,
+          email: user.email,
+          user_id: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setWebsiteResult({ url: data.url, business_name: data.business_name || websiteForm.business_name });
+      } else {
+        setWebsiteError('Website তৈরি করতে পারেনি। আবার চেষ্টা করুন।');
+      }
+    } catch {
+      setWebsiteError('Connection error। আবার চেষ্টা করুন।');
+    } finally {
+      setWebsiteBuilding(false);
+    }
+  };
+
   const formatTime = (ts: string) => {
     if (!ts) return '';
     try {
@@ -176,6 +243,18 @@ const Dashboard = () => {
       return d.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
     } catch { return ''; }
   };
+
+  const businessTypes = [
+    { value: 'retail',      label: 'Retail / Shop' },
+    { value: 'restaurant',  label: 'Restaurant / Food' },
+    { value: 'fashion',     label: 'Fashion / Clothing' },
+    { value: 'electronics', label: 'Electronics' },
+    { value: 'pharmacy',    label: 'Pharmacy / Health' },
+    { value: 'beauty',      label: 'Beauty / Salon' },
+    { value: 'education',   label: 'Education / Coaching' },
+    { value: 'service',     label: 'Service Business' },
+    { value: 'other',       label: 'Other' },
+  ];
 
   // ─────────────────────────────────────────────────────────────────────────
   // Render
@@ -204,10 +283,14 @@ const Dashboard = () => {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '4px' }}>
-          {(['home', 'inbox'] as const).map(tab => (
+          {([
+            { key: 'home',    label: '🏠 Home' },
+            { key: 'inbox',   label: '💬 Inbox' },
+            { key: 'website', label: '🌐 Website' },
+          ] as const).map(tab => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               style={{
                 padding: '6px 18px',
                 borderRadius: '8px',
@@ -215,12 +298,12 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 fontWeight: 600,
                 fontSize: '0.9rem',
-                background: activeTab === tab ? '#7c5cff' : 'transparent',
-                color:      activeTab === tab ? 'white'   : '#8b90a3',
+                background: activeTab === tab.key ? '#7c5cff' : 'transparent',
+                color:      activeTab === tab.key ? 'white'   : '#8b90a3',
                 transition: 'all 0.2s',
               }}
             >
-              {tab === 'home' ? '🏠 Home' : '💬 Inbox'}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -305,7 +388,7 @@ const Dashboard = () => {
                   🌐 Your Website Widget Code
                 </p>
                 <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>
-                  এই code টা তোমার website এ paste করো
+                  এই code টা আপনার website এ paste করুন
                 </p>
                 <pre style={{
                   background: '#06070a',
@@ -584,6 +667,304 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* ════════════════════════════════════════
+          WEBSITE BUILDER TAB
+      ════════════════════════════════════════ */}
+      {activeTab === 'website' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '40px 16px',
+        }}>
+          <div style={{ width: '100%', maxWidth: '560px' }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: '28px' }}>
+              <h2 style={{ color: '#7c5cff', margin: '0 0 6px', fontSize: '1.4rem' }}>
+                🌐 Website Builder
+              </h2>
+              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.9rem' }}>
+                আপনার business এর তথ্য দিন — AI আপনার জন্য একটি সুন্দর website তৈরি করে দেবে।
+              </p>
+            </div>
+
+            {/* ── Result card ── */}
+            {websiteResult && (
+              <div style={{
+                background: '#0d1f12',
+                border: '1px solid #c8ff5c',
+                borderRadius: '14px',
+                padding: '24px',
+                marginBottom: '24px',
+              }}>
+                <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>
+                  ✅ Website তৈরি হয়ে গেছে!
+                </p>
+                <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>
+                  {websiteResult.business_name} এর website live আছে।
+                </p>
+                <a
+                  href={websiteResult.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'block',
+                    color: '#7c5cff',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    marginBottom: '12px',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {websiteResult.url}
+                </a>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(websiteResult.url);
+                      setWebsiteUrlCopied(true);
+                      setTimeout(() => setWebsiteUrlCopied(false), 2000);
+                    }}
+                    style={{
+                      flex: 1, padding: '10px',
+                      background: websiteUrlCopied ? '#c8ff5c' : '#7c5cff',
+                      color: websiteUrlCopied ? '#06070a' : 'white',
+                      border: 'none', borderRadius: '8px',
+                      fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {websiteUrlCopied ? '✅ Copied!' : '📋 URL Copy করুন'}
+                  </button>
+                  <a
+                    href={websiteResult.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      flex: 1, padding: '10px',
+                      background: '#1e2130',
+                      color: 'white',
+                      border: '1px solid #262a38',
+                      borderRadius: '8px',
+                      fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem',
+                      textDecoration: 'none',
+                      textAlign: 'center',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    🔗 Website দেখুন
+                  </a>
+                </div>
+                <button
+                  onClick={() => {
+                    setWebsiteResult(null);
+                    setWebsiteForm({
+                      business_name: '',
+                      business_type: 'retail',
+                      phone: '',
+                      address: '',
+                      color: '#7c5cff',
+                      services: '',
+                      description: '',
+                    });
+                  }}
+                  style={{
+                    width: '100%', marginTop: '10px', padding: '10px',
+                    background: 'transparent', color: '#8b90a3',
+                    border: '1px solid #262a38', borderRadius: '8px',
+                    cursor: 'pointer', fontSize: '0.85rem',
+                  }}
+                >
+                  নতুন Website তৈরি করুন
+                </button>
+              </div>
+            )}
+
+            {/* ── Form ── */}
+            {!websiteResult && (
+              <div style={{
+                background: '#12141c',
+                border: '1px solid #262a38',
+                borderRadius: '16px',
+                padding: '28px',
+              }}>
+
+                {websiteError && (
+                  <div style={{
+                    background: '#1f0e0e',
+                    border: '1px solid #ff5c5c',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '16px',
+                    color: '#ff5c5c',
+                    fontSize: '0.88rem',
+                  }}>
+                    ❌ {websiteError}
+                  </div>
+                )}
+
+                {/* Business Name */}
+                <FormField label="Business Name *">
+                  <input
+                    type="text"
+                    placeholder="যেমন: Dhaka Fashion House"
+                    value={websiteForm.business_name}
+                    onChange={e => handleWebsiteFormChange('business_name', e.target.value)}
+                    style={inputStyle}
+                  />
+                </FormField>
+
+                {/* Business Type */}
+                <FormField label="Business Type *">
+                  <select
+                    value={websiteForm.business_type}
+                    onChange={e => handleWebsiteFormChange('business_type', e.target.value)}
+                    style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
+                  >
+                    {businessTypes.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </FormField>
+
+                {/* Phone */}
+                <FormField label="Phone Number *">
+                  <input
+                    type="text"
+                    placeholder="01XXXXXXXXX"
+                    value={websiteForm.phone}
+                    onChange={e => handleWebsiteFormChange('phone', e.target.value)}
+                    style={inputStyle}
+                  />
+                </FormField>
+
+                {/* Address */}
+                <FormField label="Address">
+                  <input
+                    type="text"
+                    placeholder="যেমন: Mirpur, Dhaka"
+                    value={websiteForm.address}
+                    onChange={e => handleWebsiteFormChange('address', e.target.value)}
+                    style={inputStyle}
+                  />
+                </FormField>
+
+                {/* Services */}
+                <FormField label="Products / Services">
+                  <input
+                    type="text"
+                    placeholder="যেমন: Shirts, Pants, Saree, Kids Wear"
+                    value={websiteForm.services}
+                    onChange={e => handleWebsiteFormChange('services', e.target.value)}
+                    style={inputStyle}
+                  />
+                </FormField>
+
+                {/* Description */}
+                <FormField label="Business Description">
+                  <textarea
+                    placeholder="আপনার business সম্পর্কে কিছু লিখুন..."
+                    value={websiteForm.description}
+                    onChange={e => handleWebsiteFormChange('description', e.target.value)}
+                    rows={3}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
+                  />
+                </FormField>
+
+                {/* Color */}
+                <FormField label="Brand Color">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input
+                      type="color"
+                      value={websiteForm.color}
+                      onChange={e => handleWebsiteFormChange('color', e.target.value)}
+                      style={{
+                        width: '48px',
+                        height: '40px',
+                        border: '1px solid #262a38',
+                        borderRadius: '8px',
+                        background: '#1e2130',
+                        cursor: 'pointer',
+                        padding: '2px',
+                      }}
+                    />
+                    <span style={{ color: '#8b90a3', fontSize: '0.9rem' }}>
+                      {websiteForm.color}
+                    </span>
+                    {/* Color presets */}
+                    <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
+                      {['#7c5cff', '#25D366', '#1877F2', '#ff6b35', '#e91e63', '#00bcd4'].map(c => (
+                        <div
+                          key={c}
+                          onClick={() => handleWebsiteFormChange('color', c)}
+                          style={{
+                            width: '24px', height: '24px',
+                            borderRadius: '50%',
+                            background: c,
+                            cursor: 'pointer',
+                            border: websiteForm.color === c ? '2px solid white' : '2px solid transparent',
+                            transition: 'border 0.2s',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </FormField>
+
+                {/* Submit */}
+                <button
+                  onClick={handleBuildWebsite}
+                  disabled={websiteBuilding}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: websiteBuilding ? '#4a3a99' : '#7c5cff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    cursor: websiteBuilding ? 'not-allowed' : 'pointer',
+                    transition: 'background 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  {websiteBuilding ? (
+                    <>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '16px', height: '16px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTop: '2px solid white',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                      }} />
+                      Website তৈরি হচ্ছে... (১-২ মিনিট)
+                    </>
+                  ) : (
+                    '🚀 Website তৈরি করুন'
+                  )}
+                </button>
+
+                <p style={{ color: '#8b90a3', fontSize: '0.8rem', textAlign: 'center', marginTop: '12px', marginBottom: 0 }}>
+                  AI আপনার তথ্য দিয়ে একটি সম্পূর্ণ website তৈরি করবে এবং তাৎক্ষণিকভাবে live করে দেবে।
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Spinner animation */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };
@@ -602,6 +983,27 @@ const btnStyle = (bg: string, color: string): React.CSSProperties => ({
   marginBottom: '16px',
   display: 'block',
 });
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  background: '#1e2130',
+  border: '1px solid #262a38',
+  borderRadius: '8px',
+  color: 'white',
+  fontSize: '0.9rem',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div style={{ marginBottom: '16px' }}>
+    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: '#aab0c0', fontWeight: 600 }}>
+      {label}
+    </label>
+    {children}
+  </div>
+);
 
 const Toggle = ({
   label, desc, value, onChange,
