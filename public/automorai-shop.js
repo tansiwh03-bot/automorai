@@ -20,7 +20,6 @@
 
   var state = { products: [], filtered: [], activeCategory: 'all' };
 
-  // ───────── Styles ─────────
   var style = document.createElement('style');
   style.textContent = [
     '.amr-wrap{max-width:1200px;margin:0 auto;padding:40px 20px;font-family:inherit;}',
@@ -43,12 +42,17 @@
     '.amr-card-price-orig{font-size:0.85rem;color:#999;text-decoration:line-through;}',
     '.amr-badge{display:inline-block;background:#ff4d4d;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:20px;position:absolute;top:10px;left:10px;z-index:2;}',
     '.amr-badge-sale{background:#16a34a;}',
-    '.amr-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s;}',
+    '.amr-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s;}',
     '.amr-overlay.open{opacity:1;pointer-events:auto;}',
     '.amr-modal{background:#fff;border-radius:16px;max-width:860px;width:100%;max-height:92vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;position:relative;}',
     '@media(max-width:680px){.amr-modal{grid-template-columns:1fr;}}',
     '.amr-modal-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid #eee;cursor:pointer;font-size:1.1rem;z-index:3;display:flex;align-items:center;justify-content:center;}',
-    '.amr-modal-img{width:100%;height:100%;min-height:280px;object-fit:cover;background:#f2f2f2;}',
+    '.amr-gallery-col{padding:16px;display:flex;flex-direction:column;gap:10px;background:#f9f9f9;}',
+    '.amr-modal-img-wrap{position:relative;width:100%;padding-top:100%;overflow:hidden;border-radius:10px;background:#eee;cursor:zoom-in;}',
+    '.amr-modal-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}',
+    '.amr-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}',
+    '.amr-thumb{width:60px;height:60px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid transparent;background:#eee;}',
+    '.amr-thumb.sel{border-color:' + BRAND_COLOR + ';}',
     '.amr-modal-body{padding:28px;}',
     '.amr-modal-title{font-size:1.3rem;font-weight:800;margin:0 0 6px;color:#1a1a1a;}',
     '.amr-modal-price{font-size:1.3rem;font-weight:800;color:' + BRAND_COLOR + ';margin-bottom:12px;}',
@@ -67,17 +71,26 @@
     '.amr-pay-opt.sel{border-color:' + BRAND_COLOR + ';background:' + BRAND_COLOR + '18;color:' + BRAND_COLOR + ';}',
     '.amr-pay-note{background:#fff8e6;border:1px solid #ffe3a3;border-radius:8px;padding:10px 12px;font-size:0.8rem;color:#8a6500;margin-bottom:12px;}',
     '.amr-success{text-align:center;padding:30px 10px;}',
-    '.amr-success h3{color:#1a1a1a;margin:14px 0 6px;}',
     '.amr-empty{text-align:center;padding:60px 20px;color:#999;}',
-    '.amr-added-bar{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-120%);background:#1a1a1a;color:#fff;padding:14px 22px;border-radius:10px;font-size:0.9rem;display:flex;align-items:center;gap:14px;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.25);transition:transform .25s ease;}',
-    '.amr-added-bar.show{transform:translateX(-50%) translateY(0);}',
-    '.amr-added-bar a{color:' + BRAND_COLOR + ';font-weight:700;text-decoration:underline;cursor:pointer;}',
-    '.amr-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,' + BRAND_COLOR + '22,' + BRAND_COLOR + '55);}',
-    '.amr-img-ph-tag{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:12px;z-index:2;}'
+    '.amr-lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;}',
+    '.amr-lightbox.open{display:flex;}',
+    '.amr-lightbox img{max-width:95%;max-height:95vh;object-fit:contain;border-radius:8px;}',
+    '.amr-lightbox-close{position:absolute;top:20px;right:20px;color:#fff;font-size:2rem;cursor:pointer;font-weight:bold;}'
   ].join('');
   document.head.appendChild(style);
 
-  // ───────── Mount point ─────────
+  var lightbox = document.createElement('div');
+  lightbox.className = 'amr-lightbox';
+  lightbox.innerHTML = '<span class="amr-lightbox-close">&times;</span><img id="amrLightboxImg" src="" alt="">';
+  document.body.appendChild(lightbox);
+
+  function openLightbox(src) {
+    if (!src) return;
+    document.getElementById('amrLightboxImg').src = src;
+    lightbox.classList.add('open');
+  }
+  lightbox.onclick = function () { lightbox.classList.remove('open'); };
+
   function getMount() {
     var el = document.getElementById('products');
     if (!el) {
@@ -155,7 +168,7 @@
         '<div class="amr-img-wrap">' + badge +
           (img
             ? '<img src="' + img + '" alt="' + escapeHtml(p.title) + '" loading="lazy">'
-            : '<div class="amr-img-placeholder">🛍️</div><span class="amr-img-ph-tag">ছবি দিন</span>') +
+            : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;">🛍️</div>') +
         '</div>' +
         '<div class="amr-card-body">' +
           '<p class="amr-card-title">' + escapeHtml(p.title) + '</p>' +
@@ -178,7 +191,6 @@
     });
   }
 
-  // ───────── Modal ─────────
   var overlay = document.createElement('div');
   overlay.className = 'amr-overlay';
   document.body.appendChild(overlay);
@@ -189,15 +201,25 @@
   }
 
   function openModal(p) {
+    var images = (p.images && p.images.length) ? p.images : [''];
+    var activeImg = images[0];
     var selected = { size: (p.sizes && p.sizes[0]) || '', color: (p.colors && p.colors[0]) || '', qty: 1 };
-    var img = (p.images && p.images[0]) || '';
+
+    var thumbsHtml = images.length > 1 ? '<div class="amr-thumbs">' + images.map(function (src, idx) {
+      return '<img class="amr-thumb' + (idx === 0 ? ' sel' : '') + '" src="' + src + '" data-src="' + src + '">';
+    }).join('') + '</div>' : '';
 
     overlay.innerHTML =
       '<div class="amr-modal">' +
         '<button class="amr-modal-close" id="amrClose">✕</button>' +
-        (img
-          ? '<img class="amr-modal-img" src="' + img + '" alt="">'
-          : '<div class="amr-modal-img" style="display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(135deg,' + BRAND_COLOR + '22,' + BRAND_COLOR + '55);">🛍️</div>') +
+        '<div class="amr-gallery-col">' +
+          '<div class="amr-modal-img-wrap" id="amrZoomBtn">' +
+            (activeImg
+              ? '<img class="amr-modal-img" id="amrMainImg" src="' + activeImg + '" alt="">'
+              : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:4rem;">🛍️</div>') +
+          '</div>' +
+          thumbsHtml +
+        '</div>' +
         '<div class="amr-modal-body" id="amrModalBody"></div>' +
       '</div>';
 
@@ -205,6 +227,17 @@
     overlay.classList.add('open');
     document.getElementById('amrClose').onclick = closeModal;
     overlay.onclick = function (e) { if (e.target === overlay) closeModal(); };
+
+    document.getElementById('amrZoomBtn').onclick = function () { openLightbox(activeImg); };
+    var thumbEls = overlay.querySelectorAll('.amr-thumb');
+    thumbEls.forEach(function (el) {
+      el.onclick = function () {
+        thumbEls.forEach(function (t) { t.classList.remove('sel'); });
+        el.classList.add('sel');
+        activeImg = el.getAttribute('data-src');
+        document.getElementById('amrMainImg').src = activeImg;
+      };
+    });
 
     function renderModalBody() {
       var body = document.getElementById('amrModalBody');
@@ -242,10 +275,8 @@
     }
   }
 
-  // ───────── Checkout ─────────
   function openCheckout(p, selected) {
     var pay = { method: 'cod' };
-    var modal = overlay.querySelector('.amr-modal');
     var body = overlay.querySelector('.amr-modal-body');
 
     function renderCheckout() {
@@ -304,9 +335,6 @@
     renderCheckout();
   }
 
-  // ───────── Init ─────────
-  // Note: the floating "Message Us" button is now handled site-wide by automorai-chat.js
-  // (injected on every site, service or ecommerce), so this script no longer duplicates it.
   function init() {
     fetch(SUPABASE_URL + '/rest/v1/products?site_id=eq.' + encodeURIComponent(SITE_ID) + '&is_active=eq.true&order=created_at.desc', {
       headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
