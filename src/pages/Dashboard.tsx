@@ -9,7 +9,7 @@ const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/products';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
-const SUPABASE_KEY = 'sb_secret_45l-OCGq-KJqCh91I33JHg_B28W6Y3N-';
+const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Message { role: string; message: string; timestamp: string; }
