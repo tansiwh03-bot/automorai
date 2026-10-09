@@ -25,7 +25,7 @@ interface WebsiteForm {
 }
 interface Product {
   id?: string; site_id: string; title: string; description: string;
-  price: number; images: string[]; sizes: string[]; colors: string[];
+  price: number; original_price?: number; images: string[]; sizes: string[]; colors: string[];
   stock: number; is_active: boolean;
 }
 interface Order {
@@ -36,7 +36,36 @@ interface Order {
   created_at: string;
 }
 
-// ─── Platform badge ───────────────────────────────────────────────────────────
+// ─── UI Helpers & Styles ──────────────────────────────────────────────────────
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 14px', background: '#1e2130',
+  border: '1px solid #262a38', borderRadius: '8px', color: 'white',
+  fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box'
+};
+
+const btnStyle = (bg: string, fg: string): React.CSSProperties => ({
+  width: '100%', padding: '12px', background: bg, color: fg,
+  border: 'none', borderRadius: '8px', fontWeight: 700,
+  cursor: 'pointer', marginBottom: '12px', fontSize: '0.9rem', transition: 'all 0.2s'
+});
+
+const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div style={{ marginBottom: '16px' }}>
+    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.82rem', color: '#aab0c0', fontWeight: 600 }}>{label}</label>
+    {children}
+  </div>
+);
+
+const Toggle = ({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContents: 'space-between', background: '#181b26', padding: '12px 16px', borderRadius: '10px' }}>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{label}</div>
+      <div style={{ fontSize: '0.78rem', color: '#8b90a3' }}>{desc}</div>
+    </div>
+    <input type="checkbox" checked={value} onChange={e => onChange(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
+  </div>
+);
+
 const PlatformBadge = ({ platform }: { platform: string }) => {
   const config: Record<string, { label: string; color: string }> = {
     whatsapp:  { label: 'WhatsApp',  color: '#25D366' },
@@ -83,13 +112,18 @@ const Dashboard = () => {
   const [websiteError,     setWebsiteError]     = useState('');
   const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
 
+  // Current site_id (from websiteResult or localStorage)
+  const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
+    try { return localStorage.getItem('automorai_site_id') || ''; } catch { return ''; }
+  });
+
   // Products state
   const [products,        setProducts]        = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [showAddProduct,  setShowAddProduct]  = useState(false);
   const [productForm,     setProductForm]     = useState<Omit<Product, 'id' | 'is_active'>>({
-    site_id: '', title: '', description: '', price: 0,
-    images: [], sizes: [], colors: [], stock: 0,
+    site_id: currentSiteId, title: '', description: '', price: 0, original_price: 0,
+    images: [], sizes: [], colors: [], stock: 10,
   });
   const [productSaving,   setProductSaving]   = useState(false);
   const [productError,    setProductError]    = useState('');
@@ -102,11 +136,6 @@ const Dashboard = () => {
   // Orders state
   const [orders,        setOrders]        = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
-
-  // Current site_id (from websiteResult or localStorage)
-  const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
-    try { return localStorage.getItem('automorai_site_id') || ''; } catch { return ''; }
-  });
 
   // ── Facebook OAuth ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -153,13 +182,11 @@ const Dashboard = () => {
       .catch(() => { setInboxError('Could not load conversations. Please try again.'); setInboxLoading(false); });
   }, [activeTab, user]);
 
-  // Load products when tab opens
   useEffect(() => {
     if (activeTab !== 'products' || !currentSiteId) return;
     loadProducts();
   }, [activeTab, currentSiteId]);
 
-  // Load orders when tab opens
   useEffect(() => {
     if (activeTab !== 'orders' || !currentSiteId) return;
     loadOrders();
@@ -167,7 +194,6 @@ const Dashboard = () => {
 
   if (!user) return <p style={{ color: 'white' }}>Please login</p>;
 
-  // ── Load products ──
   const loadProducts = async () => {
     setProductsLoading(true);
     try {
@@ -180,7 +206,6 @@ const Dashboard = () => {
     setProductsLoading(false);
   };
 
-  // ── Load orders ──
   const loadOrders = async () => {
     setOrdersLoading(true);
     try {
@@ -193,7 +218,6 @@ const Dashboard = () => {
     setOrdersLoading(false);
   };
 
-  // ── Save product ──
   const handleSaveProduct = async () => {
     if (!productForm.title.trim()) { setProductError('Product title দিন'); return; }
     if (!productForm.price) { setProductError('Price দিন'); return; }
@@ -207,7 +231,7 @@ const Dashboard = () => {
       const data = await res.json();
       if (data.success) {
         setShowAddProduct(false);
-        setProductForm({ site_id: currentSiteId, title: '', description: '', price: 0, images: [], sizes: [], colors: [], stock: 0 });
+        setProductForm({ site_id: currentSiteId, title: '', description: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
         setSizeInput(''); setColorInput(''); setImageInput('');
         loadProducts();
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
@@ -215,7 +239,6 @@ const Dashboard = () => {
     setProductSaving(false);
   };
 
-  // ── Upload image to Supabase Storage ──
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setImageUploading(true);
@@ -226,16 +249,11 @@ const Dashboard = () => {
       try {
         const res = await fetch(`${SUPABASE_URL}/storage/v1/object/product-images/${fileName}`, {
           method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': file.type,
-          },
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
           body: file,
         });
         if (res.ok) {
-          const url = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
-          uploaded.push(url);
+          uploaded.push(`${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`);
         }
       } catch {}
     }
@@ -245,7 +263,6 @@ const Dashboard = () => {
     setImageUploading(false);
   };
 
-  // ── Delete product ──
   const handleDeleteProduct = async (id: string) => {
     if (!confirm('এই product টা delete করবেন?')) return;
     try {
@@ -254,7 +271,6 @@ const Dashboard = () => {
     } catch {}
   };
 
-  // ── Update order status ──
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
@@ -272,6 +288,7 @@ const Dashboard = () => {
   };
   const handleWhatsAppConnect = () => { window.location.href = '/connect-whatsapp'; };
   const handleTenderConnect   = () => { window.location.href = '/connect-tender'; };
+
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
     if (type === 'comment') setCommentReply(value); else setMessengerReply(value);
     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -279,6 +296,7 @@ const Dashboard = () => {
         comment_reply_enabled: type === 'comment' ? value : commentReply,
         messenger_reply_enabled: type === 'messenger' ? value : messengerReply }) });
   };
+
   const handleWebsiteFormChange = (field: keyof WebsiteForm, value: string) =>
     setWebsiteForm(prev => ({ ...prev, [field]: value }));
 
@@ -317,9 +335,6 @@ const Dashboard = () => {
   const statusColors: Record<string, string> = {
     pending: '#ffb84c', confirmed: '#7c5cff', shipped: '#0099FF', delivered: '#25D366', cancelled: '#ff5c5c'
   };
-  const statusLabels: Record<string, string> = {
-    pending: 'Pending', confirmed: 'Confirmed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled'
-  };
   const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad' };
 
   const businessTypes = [
@@ -333,7 +348,6 @@ const Dashboard = () => {
   const commonSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
   const commonColors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Gray', 'Navy', 'Brown'];
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white' }}>
 
@@ -509,10 +523,6 @@ const Dashboard = () => {
                   style={{ width: '100%', padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   📦 Products Add করুন
                 </button>
-                <button onClick={() => { setWebsiteResult(null); setWebsiteForm({ business_name: '', business_type: 'retail', phone: '', address: '', color: '#7c5cff', services: '', description: '', whatsapp: '', bkash: '', nagad: '', website_type: 'ecommerce' }); }}
-                  style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                  নতুন Website তৈরি করুন
-                </button>
               </div>
             )}
 
@@ -522,12 +532,11 @@ const Dashboard = () => {
                   <div style={{ background: '#1f0e0e', border: '1px solid #ff5c5c', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#ff5c5c', fontSize: '0.88rem' }}>❌ {websiteError}</div>
                 )}
 
-                {/* Website Type Toggle */}
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: '#aab0c0', fontWeight: 600 }}>Website Type *</label>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {[{ v: 'ecommerce', l: '🛍️ E-commerce', d: 'Products বিক্রি' }, { v: 'service', l: '🏢 Service', d: 'Service দেওয়া' }].map(opt => (
-                      <button key={opt.v} onClick={() => handleWebsiteFormChange('website_type', opt.v)}
+                      <button key={opt.v} onClick={() => handleWebsiteFormChange('website_type', opt.v as any)}
                         style={{ flex: 1, padding: '12px', borderRadius: '10px', border: `2px solid ${websiteForm.website_type === opt.v ? '#7c5cff' : '#262a38'}`,
                           background: websiteForm.website_type === opt.v ? '#7c5cff22' : '#1e2130', color: websiteForm.website_type === opt.v ? '#7c5cff' : '#8b90a3',
                           cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.2s' }}>
@@ -542,66 +551,52 @@ const Dashboard = () => {
                   <input type="text" placeholder="যেমন: Dhaka Fashion House" value={websiteForm.business_name}
                     onChange={e => handleWebsiteFormChange('business_name', e.target.value)} style={inputStyle} />
                 </FormField>
+
                 <FormField label="Business Type *">
                   <select value={websiteForm.business_type} onChange={e => handleWebsiteFormChange('business_type', e.target.value)}
                     style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
                     {businessTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </FormField>
+
                 <FormField label="Phone Number *">
                   <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.phone}
                     onChange={e => handleWebsiteFormChange('phone', e.target.value)} style={inputStyle} />
                 </FormField>
+
                 <FormField label="WhatsApp Number">
-                  <input type="text" placeholder="01XXXXXXXXX (order notification পাবেন)" value={websiteForm.whatsapp}
+                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.whatsapp}
                     onChange={e => handleWebsiteFormChange('whatsapp', e.target.value)} style={inputStyle} />
                 </FormField>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <FormField label="bKash Number">
-                    <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.bkash}
-                      onChange={e => handleWebsiteFormChange('bkash', e.target.value)} style={inputStyle} />
-                  </FormField>
-                  <FormField label="Nagad Number">
-                    <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.nagad}
-                      onChange={e => handleWebsiteFormChange('nagad', e.target.value)} style={inputStyle} />
-                  </FormField>
-                </div>
+
+                <FormField label="bKash Number">
+                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.bkash}
+                    onChange={e => handleWebsiteFormChange('bkash', e.target.value)} style={inputStyle} />
+                </FormField>
+
+                <FormField label="Nagad Number">
+                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.nagad}
+                    onChange={e => handleWebsiteFormChange('nagad', e.target.value)} style={inputStyle} />
+                </FormField>
+
                 <FormField label="Address">
                   <input type="text" placeholder="যেমন: Mirpur, Dhaka" value={websiteForm.address}
                     onChange={e => handleWebsiteFormChange('address', e.target.value)} style={inputStyle} />
                 </FormField>
-                <FormField label="Products / Services">
-                  <input type="text" placeholder="যেমন: Shirts, Pants, Saree, Kids Wear" value={websiteForm.services}
-                    onChange={e => handleWebsiteFormChange('services', e.target.value)} style={inputStyle} />
+
+                <FormField label="Products / Services List">
+                  <textarea placeholder="কী কী বিক্রি বা সার্ভিস দেন লিখুন..." value={websiteForm.services}
+                    onChange={e => handleWebsiteFormChange('services', e.target.value)} style={{ ...inputStyle, height: '80px' }} />
                 </FormField>
+
                 <FormField label="Business Description">
-                  <textarea placeholder="আপনার business সম্পর্কে কিছু লিখুন..." value={websiteForm.description}
-                    onChange={e => handleWebsiteFormChange('description', e.target.value)} rows={3}
-                    style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }} />
+                  <textarea placeholder="ব্যবসা সম্পর্কে সংক্ষেপে লিখুন..." value={websiteForm.description}
+                    onChange={e => handleWebsiteFormChange('description', e.target.value)} style={{ ...inputStyle, height: '80px' }} />
                 </FormField>
-                <FormField label="Brand Color">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <input type="color" value={websiteForm.color} onChange={e => handleWebsiteFormChange('color', e.target.value)}
-                      style={{ width: '48px', height: '40px', border: '1px solid #262a38', borderRadius: '8px', background: '#1e2130', cursor: 'pointer', padding: '2px' }} />
-                    <span style={{ color: '#8b90a3', fontSize: '0.9rem' }}>{websiteForm.color}</span>
-                    <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
-                      {['#7c5cff', '#25D366', '#1877F2', '#ff6b35', '#e91e63', '#00bcd4'].map(c => (
-                        <div key={c} onClick={() => handleWebsiteFormChange('color', c)}
-                          style={{ width: '24px', height: '24px', borderRadius: '50%', background: c, cursor: 'pointer',
-                            border: websiteForm.color === c ? '2px solid white' : '2px solid transparent', transition: 'border 0.2s' }} />
-                      ))}
-                    </div>
-                  </div>
-                </FormField>
-                <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={{ width: '100%', padding: '16px',
-                  background: websiteBuilding ? '#4a3a99' : '#7c5cff', color: 'white', border: 'none', borderRadius: '10px',
-                  fontSize: '1rem', fontWeight: 700, cursor: websiteBuilding ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  {websiteBuilding ? (<><span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Website তৈরি হচ্ছে... (১-২ মিনিট)</>) : '🚀 Website তৈরি করুন'}
+
+                <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#7c5cff', 'white')}>
+                  {websiteBuilding ? '⏳ Website তৈরি হচ্ছে... (৩০-৬০ সেকেণ্ড)' : '🚀 Website তৈরি করুন'}
                 </button>
-                <p style={{ color: '#8b90a3', fontSize: '0.8rem', textAlign: 'center', marginTop: '12px', marginBottom: 0 }}>
-                  AI আপনার তথ্য দিয়ে একটি সম্পূর্ণ website তৈরি করবে এবং তাৎক্ষণিকভাবে live করে দেবে।
-                </p>
               </div>
             )}
           </div>
@@ -610,204 +605,102 @@ const Dashboard = () => {
 
       {/* ════════ PRODUCTS TAB ════════ */}
       {activeTab === 'products' && (
-        <div style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
-              <h2 style={{ color: '#7c5cff', margin: '0 0 4px', fontSize: '1.4rem' }}>📦 Products</h2>
-              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.85rem' }}>
-                {currentSiteId ? `Site: ${currentSiteId}` : '⚠️ আগে Website তৈরি করুন'}
-              </p>
+              <h2 style={{ color: '#7c5cff', margin: 0 }}>📦 Product Management</h2>
+              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Site ID: {currentSiteId || 'Not connected'}</p>
             </div>
-            <button onClick={() => { setShowAddProduct(true); setProductError(''); }}
-              disabled={!currentSiteId}
-              style={{ padding: '10px 20px', background: currentSiteId ? '#7c5cff' : '#262a38',
-                color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: currentSiteId ? 'pointer' : 'not-allowed', fontSize: '0.9rem' }}>
+            <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
               + Add Product
             </button>
           </div>
 
-          {/* Add Product Form */}
+          {/* Add Product Modal */}
           {showAddProduct && (
-            <div style={{ background: '#12141c', border: '1px solid #7c5cff', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
-              <h3 style={{ color: '#7c5cff', margin: '0 0 20px', fontSize: '1.1rem' }}>নতুন Product Add করুন</h3>
-              {productError && (
-                <div style={{ background: '#1f0e0e', border: '1px solid #ff5c5c', borderRadius: '8px', padding: '10px', marginBottom: '16px', color: '#ff5c5c', fontSize: '0.85rem' }}>❌ {productError}</div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <FormField label="Product Title *">
-                  <input type="text" placeholder="যেমন: Cotton T-Shirt" value={productForm.title}
-                    onChange={e => setProductForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
+            <div style={{ fixed: 'inset-0', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99, padding: '20px' }}>
+              <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <h3 style={{ margin: '0 0 16px', color: '#7c5cff' }}>Add New Product</h3>
+                {productError && <div style={{ color: '#ff5c5c', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
+                
+                <FormField label="Title *">
+                  <input type="text" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} style={inputStyle} placeholder="যেমন: Premium Cotton Shirt" />
                 </FormField>
-                <FormField label="Price (৳) *">
-                  <input type="number" placeholder="০" value={productForm.price || ''}
-                    onChange={e => setProductForm(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} style={inputStyle} />
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <FormField label="Sale Price (৳) *">
+                    <input type="number" value={productForm.price || ''} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} style={inputStyle} placeholder="1200" />
+                  </FormField>
+                  <FormField label="Original Price (৳)">
+                    <input type="number" value={productForm.original_price || ''} onChange={e => setProductForm({ ...productForm, original_price: parseFloat(e.target.value) || 0 })} style={inputStyle} placeholder="1500" />
+                  </FormField>
+                </div>
+
+                <FormField label="Description">
+                  <textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} style={{ ...inputStyle, height: '70px' }} placeholder="পণ্যের বিবরণ..." />
                 </FormField>
-              </div>
-              <FormField label="Description">
-                <textarea placeholder="Product সম্পর্কে লিখুন..." value={productForm.description}
-                  onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} rows={2}
-                  style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }} />
-              </FormField>
-              <FormField label="Stock">
-                <input type="number" placeholder="০" value={productForm.stock || ''}
-                  onChange={e => setProductForm(p => ({ ...p, stock: parseInt(e.target.value) || 0 }))} style={{ ...inputStyle, width: '120px' }} />
-              </FormField>
 
-              {/* Sizes */}
-              <FormField label="Sizes">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                  {commonSizes.map(s => (
-                    <button key={s} onClick={() => {
-                      setProductForm(p => ({ ...p, sizes: p.sizes.includes(s) ? p.sizes.filter(x => x !== s) : [...p.sizes, s] }));
-                    }} style={{ padding: '4px 12px', borderRadius: '6px', border: `1px solid ${productForm.sizes.includes(s) ? '#7c5cff' : '#262a38'}`,
-                      background: productForm.sizes.includes(s) ? '#7c5cff22' : 'transparent',
-                      color: productForm.sizes.includes(s) ? '#7c5cff' : '#8b90a3', cursor: 'pointer', fontSize: '0.82rem' }}>{s}</button>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input type="text" placeholder="Custom size..." value={sizeInput}
-                    onChange={e => setSizeInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && sizeInput.trim()) { setProductForm(p => ({ ...p, sizes: [...p.sizes, sizeInput.trim()] })); setSizeInput(''); } }}
-                    style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (sizeInput.trim()) { setProductForm(p => ({ ...p, sizes: [...p.sizes, sizeInput.trim()] })); setSizeInput(''); } }}
-                    style={{ padding: '8px 14px', background: '#262a38', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Add</button>
-                </div>
-                {productForm.sizes.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-                    {productForm.sizes.map((s, i) => (
-                      <span key={i} style={{ padding: '2px 10px', background: '#7c5cff33', color: '#7c5cff', borderRadius: '20px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {s} <span onClick={() => setProductForm(p => ({ ...p, sizes: p.sizes.filter((_, j) => j !== i) }))} style={{ cursor: 'pointer', opacity: 0.7 }}>×</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </FormField>
-
-              {/* Colors */}
-              <FormField label="Colors">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                  {commonColors.map(c => (
-                    <button key={c} onClick={() => setProductForm(p => ({ ...p, colors: p.colors.includes(c) ? p.colors.filter(x => x !== c) : [...p.colors, c] }))}
-                      style={{ padding: '4px 12px', borderRadius: '6px', border: `1px solid ${productForm.colors.includes(c) ? '#7c5cff' : '#262a38'}`,
-                        background: productForm.colors.includes(c) ? '#7c5cff22' : 'transparent',
-                        color: productForm.colors.includes(c) ? '#7c5cff' : '#8b90a3', cursor: 'pointer', fontSize: '0.82rem' }}>{c}</button>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input type="text" placeholder="Custom color..." value={colorInput}
-                    onChange={e => setColorInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
-                    style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
-                    style={{ padding: '8px 14px', background: '#262a38', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Add</button>
-                </div>
-                {productForm.colors.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-                    {productForm.colors.map((c, i) => (
-                      <span key={i} style={{ padding: '2px 10px', background: '#7c5cff33', color: '#7c5cff', borderRadius: '20px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {c} <span onClick={() => setProductForm(p => ({ ...p, colors: p.colors.filter((_, j) => j !== i) }))} style={{ cursor: 'pointer', opacity: 0.7 }}>×</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </FormField>
-
-              {/* Image Upload */}
-              <FormField label="Product Images">
-                {/* Upload button */}
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => e.preventDefault()}
-                  onDrop={e => { e.preventDefault(); handleImageUpload(e.dataTransfer.files); }}
-                  style={{ border: '2px dashed #262a38', borderRadius: '10px', padding: '20px', textAlign: 'center', cursor: 'pointer', background: '#1e2130', marginBottom: '10px', transition: 'border-color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#7c5cff')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#262a38')}
-                >
-                  {imageUploading ? (
-                    <div style={{ color: '#7c5cff', fontSize: '0.9rem' }}>⏳ Uploading...</div>
-                  ) : (
-                    <>
-                      <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>📷</div>
-                      <div style={{ color: '#aab0c0', fontSize: '0.85rem' }}>Click করুন বা photo drag করুন</div>
-                      <div style={{ color: '#8b90a3', fontSize: '0.75rem', marginTop: '4px' }}>JPG, PNG, WEBP — একসাথে একাধিক select করা যাবে</div>
-                    </>
-                  )}
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
-                  onChange={e => handleImageUpload(e.target.files)} />
-
-                {/* OR URL input */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <input type="text" placeholder="অথবা image URL paste করুন..." value={imageInput}
-                    onChange={e => setImageInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && imageInput.trim()) { setProductForm(p => ({ ...p, images: [...p.images, imageInput.trim()] })); setImageInput(''); } }}
-                    style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (imageInput.trim()) { setProductForm(p => ({ ...p, images: [...p.images, imageInput.trim()] })); setImageInput(''); } }}
-                    style={{ padding: '8px 14px', background: '#262a38', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Add</button>
-                </div>
-
-                {/* Preview */}
-                {productForm.images.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                {/* Multi Image Upload */}
+                <FormField label="Product Images">
+                  <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={e => handleImageUpload(e.target.files)} style={{ display: 'none' }} />
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                     {productForm.images.map((img, i) => (
-                      <div key={i} style={{ position: 'relative' }}>
-                        <img src={img} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #262a38' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <button onClick={() => setProductForm(p => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
-                          style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', background: '#ff5c5c', border: 'none', borderRadius: '50%', color: 'white', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                      <div key={i} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #262a38' }}>
+                        <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button onClick={() => setProductForm(p => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
+                          style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '16px', height: '16px', cursor: 'pointer', fontSize: '10px' }}>✕</button>
                       </div>
                     ))}
+                    <button onClick={() => fileInputRef.current?.click()} disabled={imageUploading}
+                      style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px dashed #7c5cff', background: '#181b26', color: '#7c5cff', cursor: 'pointer', fontSize: '1.2rem' }}>
+                      {imageUploading ? '⏳' : '+'}
+                    </button>
                   </div>
-                )}
-              </FormField>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input type="text" value={imageInput} onChange={e => setImageInput(e.target.value)} placeholder="অথবা Image URL দিন" style={inputStyle} />
+                    <button onClick={() => { if(imageInput){ setProductForm(p => ({ ...p, images: [...p.images, imageInput] })); setImageInput(''); } }} style={{ padding: '0 12px', background: '#262a38', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Add</button>
+                  </div>
+                </FormField>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={handleSaveProduct} disabled={productSaving}
-                  style={{ flex: 1, padding: '12px', background: productSaving ? '#4a3a99' : '#7c5cff', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: productSaving ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
-                  {productSaving ? 'Saving...' : '✅ Save Product'}
-                </button>
-                <button onClick={() => { setShowAddProduct(false); setProductError(''); }}
-                  style={{ padding: '12px 20px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  Cancel
-                </button>
+                {/* Sizes & Colors */}
+                <FormField label="Sizes">
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    {commonSizes.map(s => (
+                      <button key={s} onClick={() => setProductForm(p => ({ ...p, sizes: p.sizes.includes(s) ? p.sizes.filter(x => x !== s) : [...p.sizes, s] }))}
+                        style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #262a38', background: productForm.sizes.includes(s) ? '#7c5cff' : '#1e2130', color: 'white', cursor: 'pointer' }}>{s}</button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <FormField label="Stock Quantity">
+                  <input type="number" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} style={inputStyle} />
+                </FormField>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button onClick={handleSaveProduct} disabled={productSaving} style={{ ...btnStyle('#7c5cff', 'white'), flex: 1, margin: 0 }}>
+                    {productSaving ? 'Saving...' : 'Save Product'}
+                  </button>
+                  <button onClick={() => setShowAddProduct(false)} style={{ ...btnStyle('#262a38', '#8b90a3'), flex: 1, margin: 0 }}>Cancel</button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Products List */}
-          {productsLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#8b90a3' }}>Loading products...</div>
-          ) : products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#8b90a3' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
-              <p>কোনো product নেই। উপরে "+ Add Product" click করুন।</p>
-              {!currentSiteId && <p style={{ color: '#ff5c5c', fontSize: '0.85rem' }}>⚠️ আগে Website tab এ গিয়ে website তৈরি করুন।</p>}
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
-              {products.map(product => (
-                <div key={product.id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '14px', overflow: 'hidden' }}>
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '180px', background: '#1e2130', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>📦</div>
-                  )}
+          {/* Product Grid */}
+          {productsLoading ? <div style={{ color: '#8b90a3' }}>Products loading...</div> : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+              {products.map(p => (
+                <div key={p.id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ height: '160px', background: '#181b26', position: 'relative' }}>
+                    {p.images && p.images[0] ? (
+                      <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '2rem' }}>🛍️</div>}
+                  </div>
                   <div style={{ padding: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>{product.title}</h4>
-                      <span style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', marginLeft: '8px' }}>৳{product.price}</span>
-                    </div>
-                    {product.description && <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 8px', lineHeight: '1.4' }}>{product.description}</p>}
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                      {product.sizes?.map(s => <span key={s} style={{ padding: '2px 8px', background: '#7c5cff22', color: '#7c5cff', borderRadius: '4px', fontSize: '0.75rem' }}>{s}</span>)}
-                      {product.colors?.map(c => <span key={c} style={{ padding: '2px 8px', background: '#25D36622', color: '#25D366', borderRadius: '4px', fontSize: '0.75rem' }}>{c}</span>)}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#8b90a3', fontSize: '0.8rem' }}>Stock: {product.stock}</span>
-                      <button onClick={() => handleDeleteProduct(product.id!)}
-                        style={{ padding: '4px 12px', background: '#ff5c5c22', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>
-                        Delete
-                      </button>
-                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
+                    <div style={{ color: '#7c5cff', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
+                    <button onClick={() => p.id && handleDeleteProduct(p.id)} style={{ width: '100%', marginTop: '10px', padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -818,106 +711,57 @@ const Dashboard = () => {
 
       {/* ════════ ORDERS TAB ════════ */}
       {activeTab === 'orders' && (
-        <div style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-              <h2 style={{ color: '#7c5cff', margin: '0 0 4px', fontSize: '1.4rem' }}>🛍️ Orders</h2>
-              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.85rem' }}>Customer দের সব orders এখানে দেখতে পাবেন।</p>
-            </div>
-            <button onClick={loadOrders} style={{ padding: '8px 16px', background: '#1e2130', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
-              🔄 Refresh
-            </button>
-          </div>
-
-          {ordersLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#8b90a3' }}>Loading orders...</div>
-          ) : orders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#8b90a3' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🛍️</div>
-              <p>এখনো কোনো order নেই।</p>
-              {!currentSiteId && <p style={{ color: '#ff5c5c', fontSize: '0.85rem' }}>⚠️ আগে Website তৈরি করুন।</p>}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {orders.map(order => (
-                <div key={order.id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '14px', padding: '18px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>{order.product_title}</div>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {order.selected_size && <span style={{ padding: '2px 8px', background: '#7c5cff22', color: '#7c5cff', borderRadius: '4px', fontSize: '0.78rem' }}>Size: {order.selected_size}</span>}
-                        {order.selected_color && <span style={{ padding: '2px 8px', background: '#25D36622', color: '#25D366', borderRadius: '4px', fontSize: '0.78rem' }}>Color: {order.selected_color}</span>}
-                        <span style={{ padding: '2px 8px', background: '#ffb84c22', color: '#ffb84c', borderRadius: '4px', fontSize: '0.78rem' }}>Qty: {order.quantity}</span>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '1.1rem' }}>৳{order.product_price * order.quantity}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '2px' }}>{formatTime(order.created_at)}</div>
-                    </div>
-                  </div>
-                  <div style={{ background: '#1e2130', borderRadius: '10px', padding: '12px', marginBottom: '12px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
-                      <div><span style={{ color: '#8b90a3' }}>Customer: </span><span style={{ color: 'white' }}>{order.customer_name}</span></div>
-                      <div><span style={{ color: '#8b90a3' }}>Phone: </span><span style={{ color: 'white' }}>{order.customer_phone}</span></div>
-                      <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#8b90a3' }}>Address: </span><span style={{ color: 'white' }}>{order.customer_address}</span></div>
-                      <div><span style={{ color: '#8b90a3' }}>Payment: </span><span style={{ color: 'white' }}>{paymentLabels[order.payment_method] || order.payment_method}</span></div>
-                      {order.transaction_id && <div><span style={{ color: '#8b90a3' }}>TxID: </span><span style={{ color: 'white' }}>{order.transaction_id}</span></div>}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ padding: '4px 12px', background: (statusColors[order.status] || '#8b90a3') + '22', color: statusColors[order.status] || '#8b90a3', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>
-                      {statusLabels[order.status] || order.status}
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
-                      {['confirmed', 'shipped', 'delivered', 'cancelled'].map(s => (
-                        order.status !== s && (
-                          <button key={s} onClick={() => handleUpdateOrderStatus(order.id, s)}
-                            style={{ padding: '4px 10px', background: (statusColors[s] || '#8b90a3') + '22', color: statusColors[s] || '#8b90a3',
-                              border: `1px solid ${(statusColors[s] || '#8b90a3')}44`, borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
-                            {statusLabels[s]}
-                          </button>
-                        )
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          <h2 style={{ color: '#7c5cff', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
+          {ordersLoading ? <div style={{ color: '#8b90a3' }}>Loading orders...</div> : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                <thead>
+                  <tr style={{ background: '#12141c', borderBottom: '1px solid #262a38', color: '#8b90a3' }}>
+                    <th style={{ padding: '12px' }}>Product</th>
+                    <th style={{ padding: '12px' }}>Customer</th>
+                    <th style={{ padding: '12px' }}>Payment</th>
+                    <th style={{ padding: '12px' }}>Total</th>
+                    <th style={{ padding: '12px' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(o => (
+                    <tr key={o.id} style={{ borderBottom: '1px solid #1a1d27' }}>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ fontWeight: 600 }}>{o.product_title}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.selected_size} {o.selected_color} (x{o.quantity})</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <div>{o.customer_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.customer_phone}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#666' }}>{o.customer_address}</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <div>{paymentLabels[o.payment_method] || o.payment_method}</div>
+                        {o.transaction_id && <div style={{ fontSize: '0.72rem', color: '#c8ff5c' }}>TrxID: {o.transaction_id}</div>}
+                      </td>
+                      <td style={{ padding: '12px', fontWeight: 700, color: '#7c5cff' }}>৳{o.product_price * o.quantity}</td>
+                      <td style={{ padding: '12px' }}>
+                        <select value={o.status} onChange={e => handleUpdateOrderStatus(o.id, e.target.value)}
+                          style={{ background: '#1e2130', color: statusColors[o.status] || 'white', border: '1px solid #262a38', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const btnStyle = (bg: string, color: string): React.CSSProperties => ({
-  width: '100%', padding: '14px', background: bg, color, border: 'none',
-  borderRadius: '10px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
-  marginBottom: '16px', display: 'block',
-});
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', background: '#1e2130', border: '1px solid #262a38',
-  borderRadius: '8px', color: 'white', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
-};
-const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div style={{ marginBottom: '16px' }}>
-    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: '#aab0c0', fontWeight: 600 }}>{label}</label>
-    {children}
-  </div>
-);
-const Toggle = ({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#181b26', border: '1px solid #262a38', borderRadius: '10px', padding: '16px' }}>
-    <div>
-      <p style={{ margin: 0, fontWeight: 600 }}>{label}</p>
-      <p style={{ margin: 0, color: '#8b90a3', fontSize: '0.85rem' }}>{desc}</p>
-    </div>
-    <div onClick={() => onChange(!value)} style={{ width: '48px', height: '26px', borderRadius: '13px', background: value ? '#7c5cff' : '#262a38', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', top: '3px', left: value ? '24px' : '3px', width: '20px', height: '20px', borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
-    </div>
-  </div>
-);
 
 export default Dashboard;
