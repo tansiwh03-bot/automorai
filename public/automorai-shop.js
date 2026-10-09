@@ -71,7 +71,9 @@
     '.amr-empty{text-align:center;padding:60px 20px;color:#999;}',
     '.amr-added-bar{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-120%);background:#1a1a1a;color:#fff;padding:14px 22px;border-radius:10px;font-size:0.9rem;display:flex;align-items:center;gap:14px;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.25);transition:transform .25s ease;}',
     '.amr-added-bar.show{transform:translateX(-50%) translateY(0);}',
-    '.amr-added-bar a{color:' + BRAND_COLOR + ';font-weight:700;text-decoration:underline;cursor:pointer;}'
+    '.amr-added-bar a{color:' + BRAND_COLOR + ';font-weight:700;text-decoration:underline;cursor:pointer;}',
+    '.amr-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,' + BRAND_COLOR + '22,' + BRAND_COLOR + '55);}',
+    '.amr-img-ph-tag{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:12px;z-index:2;}'
   ].join('');
   document.head.appendChild(style);
 
@@ -151,7 +153,9 @@
 
       card.innerHTML =
         '<div class="amr-img-wrap">' + badge +
-          '<img src="' + img + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
+          (img
+            ? '<img src="' + img + '" alt="' + escapeHtml(p.title) + '" loading="lazy">'
+            : '<div class="amr-img-placeholder">🛍️</div><span class="amr-img-ph-tag">ছবি দিন</span>') +
         '</div>' +
         '<div class="amr-card-body">' +
           '<p class="amr-card-title">' + escapeHtml(p.title) + '</p>' +
@@ -191,7 +195,9 @@
     overlay.innerHTML =
       '<div class="amr-modal">' +
         '<button class="amr-modal-close" id="amrClose">✕</button>' +
-        '<img class="amr-modal-img" src="' + img + '" alt="">' +
+        (img
+          ? '<img class="amr-modal-img" src="' + img + '" alt="">'
+          : '<div class="amr-modal-img" style="display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(135deg,' + BRAND_COLOR + '22,' + BRAND_COLOR + '55);">🛍️</div>') +
         '<div class="amr-modal-body" id="amrModalBody"></div>' +
       '</div>';
 
