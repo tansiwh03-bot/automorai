@@ -97,6 +97,7 @@ const Dashboard = () => {
   const [colorInput,      setColorInput]      = useState('');
   const [imageInput,      setImageInput]      = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Orders state
   const [orders,        setOrders]        = useState<Order[]>([]);
@@ -212,6 +213,36 @@ const Dashboard = () => {
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
+  };
+
+  // ── Upload image to Supabase Storage ──
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setImageUploading(true);
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/product-images/${fileName}`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': file.type,
+          },
+          body: file,
+        });
+        if (res.ok) {
+          const url = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
+          uploaded.push(url);
+        }
+      } catch {}
+    }
+    if (uploaded.length > 0) {
+      setProductForm(p => ({ ...p, images: [...p.images, ...uploaded] }));
+    }
+    setImageUploading(false);
   };
 
   // ── Delete product ──
@@ -681,23 +712,48 @@ const Dashboard = () => {
                 )}
               </FormField>
 
-              {/* Image URLs */}
-              <FormField label="Product Images (URL)">
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input type="text" placeholder="https://... image URL দিন" value={imageInput}
+              {/* Image Upload */}
+              <FormField label="Product Images">
+                {/* Upload button */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); handleImageUpload(e.dataTransfer.files); }}
+                  style={{ border: '2px dashed #262a38', borderRadius: '10px', padding: '20px', textAlign: 'center', cursor: 'pointer', background: '#1e2130', marginBottom: '10px', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#7c5cff')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#262a38')}
+                >
+                  {imageUploading ? (
+                    <div style={{ color: '#7c5cff', fontSize: '0.9rem' }}>⏳ Uploading...</div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>📷</div>
+                      <div style={{ color: '#aab0c0', fontSize: '0.85rem' }}>Click করুন বা photo drag করুন</div>
+                      <div style={{ color: '#8b90a3', fontSize: '0.75rem', marginTop: '4px' }}>JPG, PNG, WEBP — একসাথে একাধিক select করা যাবে</div>
+                    </>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
+                  onChange={e => handleImageUpload(e.target.files)} />
+
+                {/* OR URL input */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input type="text" placeholder="অথবা image URL paste করুন..." value={imageInput}
                     onChange={e => setImageInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && imageInput.trim()) { setProductForm(p => ({ ...p, images: [...p.images, imageInput.trim()] })); setImageInput(''); } }}
                     style={{ ...inputStyle, flex: 1 }} />
                   <button onClick={() => { if (imageInput.trim()) { setProductForm(p => ({ ...p, images: [...p.images, imageInput.trim()] })); setImageInput(''); } }}
                     style={{ padding: '8px 14px', background: '#262a38', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Add</button>
                 </div>
+
+                {/* Preview */}
                 {productForm.images.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                     {productForm.images.map((img, i) => (
                       <div key={i} style={{ position: 'relative' }}>
-                        <img src={img} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #262a38' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <img src={img} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #262a38' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         <button onClick={() => setProductForm(p => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
-                          style={{ position: 'absolute', top: '-6px', right: '-6px', width: '18px', height: '18px', background: '#ff5c5c', border: 'none', borderRadius: '50%', color: 'white', fontSize: '0.7rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                          style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', background: '#ff5c5c', border: 'none', borderRadius: '50%', color: 'white', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                       </div>
                     ))}
                   </div>
