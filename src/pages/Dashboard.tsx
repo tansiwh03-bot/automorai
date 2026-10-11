@@ -6,7 +6,7 @@ const REDIRECT_URI = 'https://automorai.com/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
 const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
-const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website';
+const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/products';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
@@ -19,9 +19,7 @@ interface Conversation {
   page_id: string; messages: Message[]; last_message: string; last_time: string;
 }
 interface WebsiteForm {
-  business_name: string; business_type: string; phone: string;
-  address: string; color: string; services: string; description: string;
-  whatsapp: string; bkash: string; nagad: string; website_type: 'ecommerce' | 'service';
+  business_name: string; niche: string; whatsapp_number: string; accent_color: string;
 }
 interface Product {
   id?: string; site_id: string; title: string; description: string;
@@ -103,9 +101,7 @@ const Dashboard = () => {
 
   // Website Builder state
   const [websiteForm, setWebsiteForm] = useState<WebsiteForm>({
-    business_name: '', business_type: 'retail', phone: '', address: '',
-    color: '#7c5cff', services: '', description: '',
-    whatsapp: '', bkash: '', nagad: '', website_type: 'ecommerce',
+    business_name: '', niche: 'kids_wear', whatsapp_number: '', accent_color: '#7c5cff',
   });
   const [websiteBuilding,  setWebsiteBuilding]  = useState(false);
   const [websiteResult,    setWebsiteResult]    = useState<{ url: string; business_name: string; site_id?: string } | null>(null);
@@ -302,20 +298,26 @@ const Dashboard = () => {
 
   const handleBuildWebsite = async () => {
     if (!websiteForm.business_name.trim()) { setWebsiteError('Business name দিন'); return; }
-    if (!websiteForm.phone.trim()) { setWebsiteError('Phone number দিন'); return; }
+    if (!websiteForm.whatsapp_number.trim()) { setWebsiteError('WhatsApp Number দিন'); return; }
     setWebsiteBuilding(true); setWebsiteError(''); setWebsiteResult(null);
     try {
       const res = await fetch(WEBSITE_BUILDER_API, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...websiteForm, email: user.email, user_id: user.email }),
+        body: JSON.stringify({
+          business_name: websiteForm.business_name,
+          niche: websiteForm.niche,
+          whatsapp_number: websiteForm.whatsapp_number,
+          accent_color: websiteForm.accent_color,
+          user_id: user.email,
+        }),
       });
       const data = await res.json();
-      if (data.success && data.url) {
-        setWebsiteResult({ url: data.url, business_name: data.business_name || websiteForm.business_name, site_id: data.site_id });
-        if (data.site_id) {
-          setCurrentSiteId(data.site_id);
-          try { localStorage.setItem('automorai_site_id', data.site_id); } catch {}
-          setProductForm(prev => ({ ...prev, site_id: data.site_id }));
+      if (data.success && data.website_url) {
+        setWebsiteResult({ url: data.website_url, business_name: websiteForm.business_name, site_id: data.slug });
+        if (data.slug) {
+          setCurrentSiteId(data.slug);
+          try { localStorage.setItem('automorai_site_id', data.slug); } catch {}
+          setProductForm(prev => ({ ...prev, site_id: data.slug }));
         }
       } else { setWebsiteError('Website তৈরি করতে পারেনি। আবার চেষ্টা করুন।'); }
     } catch { setWebsiteError('Connection error। আবার চেষ্টা করুন।'); }
@@ -337,12 +339,12 @@ const Dashboard = () => {
   };
   const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad' };
 
-  const businessTypes = [
-    { value: 'retail', label: 'Retail / Shop' }, { value: 'restaurant', label: 'Restaurant / Food' },
-    { value: 'fashion', label: 'Fashion / Clothing' }, { value: 'electronics', label: 'Electronics' },
-    { value: 'pharmacy', label: 'Pharmacy / Health' }, { value: 'beauty', label: 'Beauty / Salon' },
-    { value: 'education', label: 'Education / Coaching' }, { value: 'service', label: 'Service Business' },
-    { value: 'other', label: 'Other' },
+  const niches = [
+    { value: 'kids_wear', label: '👶 শিশুদের পোশাক' }, { value: 'clothing', label: '👗 ফ্যাশন / পোশাক' },
+    { value: 'electronics', label: '⚡ ইলেকট্রনিক্স' }, { value: 'food', label: '🌿 খাদ্যপণ্য' },
+    { value: 'beauty', label: '💄 বিউটি / কসমেটিক্স' }, { value: 'pharmacy', label: '💊 ফার্মেসি' },
+    { value: 'home_decor', label: '🏠 হোম ডেকর' }, { value: 'sports', label: '🏀 স্পোর্টস' },
+    { value: 'jewelry', label: '💍 জুয়েলারি' }, { value: 'general', label: '🛒 সাধারণ দোকান' },
   ];
 
   const commonSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
@@ -532,66 +534,27 @@ const Dashboard = () => {
                   <div style={{ background: '#1f0e0e', border: '1px solid #ff5c5c', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#ff5c5c', fontSize: '0.88rem' }}>❌ {websiteError}</div>
                 )}
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: '#aab0c0', fontWeight: 600 }}>Website Type *</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {[{ v: 'ecommerce', l: '🛍️ E-commerce', d: 'Products বিক্রি' }, { v: 'service', l: '🏢 Service', d: 'Service দেওয়া' }].map(opt => (
-                      <button key={opt.v} onClick={() => handleWebsiteFormChange('website_type', opt.v as any)}
-                        style={{ flex: 1, padding: '12px', borderRadius: '10px', border: `2px solid ${websiteForm.website_type === opt.v ? '#7c5cff' : '#262a38'}`,
-                          background: websiteForm.website_type === opt.v ? '#7c5cff22' : '#1e2130', color: websiteForm.website_type === opt.v ? '#7c5cff' : '#8b90a3',
-                          cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.2s' }}>
-                        <div>{opt.l}</div>
-                        <div style={{ fontSize: '0.75rem', marginTop: '2px', opacity: 0.8 }}>{opt.d}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <FormField label="Business Name *">
                   <input type="text" placeholder="যেমন: Dhaka Fashion House" value={websiteForm.business_name}
                     onChange={e => handleWebsiteFormChange('business_name', e.target.value)} style={inputStyle} />
                 </FormField>
 
-                <FormField label="Business Type *">
-                  <select value={websiteForm.business_type} onChange={e => handleWebsiteFormChange('business_type', e.target.value)}
+                <FormField label="ব্যবসার ধরন (Niche) *">
+                  <select value={websiteForm.niche} onChange={e => handleWebsiteFormChange('niche', e.target.value)}
                     style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                    {businessTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    {niches.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </FormField>
 
-                <FormField label="Phone Number *">
-                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.phone}
-                    onChange={e => handleWebsiteFormChange('phone', e.target.value)} style={inputStyle} />
+                <FormField label="WhatsApp Number *">
+                  <input type="text" placeholder="8801XXXXXXXXX" value={websiteForm.whatsapp_number}
+                    onChange={e => handleWebsiteFormChange('whatsapp_number', e.target.value)} style={inputStyle} />
                 </FormField>
 
-                <FormField label="WhatsApp Number">
-                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.whatsapp}
-                    onChange={e => handleWebsiteFormChange('whatsapp', e.target.value)} style={inputStyle} />
-                </FormField>
-
-                <FormField label="bKash Number">
-                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.bkash}
-                    onChange={e => handleWebsiteFormChange('bkash', e.target.value)} style={inputStyle} />
-                </FormField>
-
-                <FormField label="Nagad Number">
-                  <input type="text" placeholder="01XXXXXXXXX" value={websiteForm.nagad}
-                    onChange={e => handleWebsiteFormChange('nagad', e.target.value)} style={inputStyle} />
-                </FormField>
-
-                <FormField label="Address">
-                  <input type="text" placeholder="যেমন: Mirpur, Dhaka" value={websiteForm.address}
-                    onChange={e => handleWebsiteFormChange('address', e.target.value)} style={inputStyle} />
-                </FormField>
-
-                <FormField label="Products / Services List">
-                  <textarea placeholder="কী কী বিক্রি বা সার্ভিস দেন লিখুন..." value={websiteForm.services}
-                    onChange={e => handleWebsiteFormChange('services', e.target.value)} style={{ ...inputStyle, height: '80px' }} />
-                </FormField>
-
-                <FormField label="Business Description">
-                  <textarea placeholder="ব্যবসা সম্পর্কে সংক্ষেপে লিখুন..." value={websiteForm.description}
-                    onChange={e => handleWebsiteFormChange('description', e.target.value)} style={{ ...inputStyle, height: '80px' }} />
+                <FormField label="থিম কালার (Accent Color)">
+                  <input type="color" value={websiteForm.accent_color}
+                    onChange={e => handleWebsiteFormChange('accent_color', e.target.value)}
+                    style={{ width: '100%', height: '42px', padding: '4px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer' }} />
                 </FormField>
 
                 <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#7c5cff', 'white')}>
