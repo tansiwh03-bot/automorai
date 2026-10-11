@@ -7,7 +7,7 @@ const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-custome
 const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
-const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/products';
+const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -22,9 +22,9 @@ interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
 }
 interface Product {
-  id?: string; site_id: string; title: string; description: string;
+  product_id?: string; business_slug: string; title: string; description: string;
   price: number; original_price?: number; images: string[]; sizes: string[]; colors: string[];
-  stock: number; is_active: boolean;
+  stock: number; is_active?: boolean;
 }
 interface Order {
   id: string; site_id: string; product_title: string; product_price: number;
@@ -117,8 +117,8 @@ const Dashboard = () => {
   const [products,        setProducts]        = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [showAddProduct,  setShowAddProduct]  = useState(false);
-  const [productForm,     setProductForm]     = useState<Omit<Product, 'id' | 'is_active'>>({
-    site_id: currentSiteId, title: '', description: '', price: 0, original_price: 0,
+  const [productForm,     setProductForm]     = useState<Omit<Product, 'product_id' | 'is_active'>>({
+    business_slug: currentSiteId, title: '', description: '', price: 0, original_price: 0,
     images: [], sizes: [], colors: [], stock: 10,
   });
   const [productSaving,   setProductSaving]   = useState(false);
@@ -193,11 +193,9 @@ const Dashboard = () => {
   const loadProducts = async () => {
     setProductsLoading(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/products?site_id=eq.${currentSiteId}&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      });
+      const res = await fetch(`${PRODUCTS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
       const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
+      setProducts(data.success && Array.isArray(data.products) ? data.products : []);
     } catch { setProducts([]); }
     setProductsLoading(false);
   };
@@ -222,12 +220,12 @@ const Dashboard = () => {
     try {
       const res = await fetch(`${PRODUCTS_API}/add`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...productForm, site_id: currentSiteId }),
+        body: JSON.stringify({ ...productForm, business_slug: currentSiteId }),
       });
       const data = await res.json();
       if (data.success) {
         setShowAddProduct(false);
-        setProductForm({ site_id: currentSiteId, title: '', description: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
+        setProductForm({ business_slug: currentSiteId, title: '', description: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
         setSizeInput(''); setColorInput(''); setImageInput('');
         loadProducts();
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
@@ -259,10 +257,10 @@ const Dashboard = () => {
     setImageUploading(false);
   };
 
-  const handleDeleteProduct = async (id: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     if (!confirm('এই product টা delete করবেন?')) return;
     try {
-      await fetch(`${PRODUCTS_API}/delete?id=${id}`, { method: 'DELETE' });
+      await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(productId)}`, { method: 'DELETE' });
       loadProducts();
     } catch {}
   };
@@ -317,7 +315,7 @@ const Dashboard = () => {
         if (data.slug) {
           setCurrentSiteId(data.slug);
           try { localStorage.setItem('automorai_site_id', data.slug); } catch {}
-          setProductForm(prev => ({ ...prev, site_id: data.slug }));
+          setProductForm(prev => ({ ...prev, business_slug: data.slug }));
         }
       } else { setWebsiteError('Website তৈরি করতে পারেনি। আবার চেষ্টা করুন।'); }
     } catch { setWebsiteError('Connection error। আবার চেষ্টা করুন।'); }
@@ -572,7 +570,7 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
               <h2 style={{ color: '#7c5cff', margin: 0 }}>📦 Product Management</h2>
-              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Site ID: {currentSiteId || 'Not connected'}</p>
+              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'এখনো তৈরি হয়নি'}</p>
             </div>
             <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
               + Add Product
@@ -653,7 +651,7 @@ const Dashboard = () => {
           {productsLoading ? <div style={{ color: '#8b90a3' }}>Products loading...</div> : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
               {products.map(p => (
-                <div key={p.id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '12px', overflow: 'hidden' }}>
+                <div key={p.product_id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '12px', overflow: 'hidden' }}>
                   <div style={{ height: '160px', background: '#181b26', position: 'relative' }}>
                     {p.images && p.images[0] ? (
                       <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -663,7 +661,7 @@ const Dashboard = () => {
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
                     <div style={{ color: '#7c5cff', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
                     <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
-                    <button onClick={() => p.id && handleDeleteProduct(p.id)} style={{ width: '100%', marginTop: '10px', padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                    <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ width: '100%', marginTop: '10px', padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
                   </div>
                 </div>
               ))}
