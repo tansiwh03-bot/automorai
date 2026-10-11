@@ -8,6 +8,7 @@ const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
+const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -17,6 +18,13 @@ interface Conversation {
   id: string; sender_id: string; name: string;
   platform: 'whatsapp' | 'messenger' | 'facebook' | 'website' | string;
   page_id: string; messages: Message[]; last_message: string; last_time: string;
+}
+interface WebsiteSettings {
+  business_slug: string;
+  slide1_img: string; slide1_tag: string; slide1_title: string; slide1_desc: string;
+  slide2_img: string; slide2_tag: string; slide2_title: string; slide2_desc: string;
+  slide3_img: string; slide3_tag: string; slide3_title: string; slide3_desc: string;
+  footer_desc: string;
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -108,6 +116,21 @@ const Dashboard = () => {
   const [websiteError,     setWebsiteError]     = useState('');
   const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
 
+  // Website Settings (slider + footer) state
+  const emptySettings: WebsiteSettings = {
+    business_slug: '',
+    slide1_img: '', slide1_tag: '', slide1_title: '', slide1_desc: '',
+    slide2_img: '', slide2_tag: '', slide2_title: '', slide2_desc: '',
+    slide3_img: '', slide3_tag: '', slide3_title: '', slide3_desc: '',
+    footer_desc: '',
+  };
+  const [showSettings,     setShowSettings]     = useState(false);
+  const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
+  const [settingsLoading,  setSettingsLoading]  = useState(false);
+  const [settingsSaving,   setSettingsSaving]   = useState(false);
+  const [settingsSaved,    setSettingsSaved]    = useState(false);
+  const [settingsUploading, setSettingsUploading] = useState<string>(''); // holds which field is uploading, e.g. 'slide1_img'
+
   // Current site_id (from websiteResult or localStorage)
   const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
     try { return localStorage.getItem('automorai_site_id') || ''; } catch { return ''; }
@@ -184,6 +207,11 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId]);
 
   useEffect(() => {
+    if (activeTab !== 'website' || !currentSiteId || !showSettings) return;
+    loadWebsiteSettings();
+  }, [activeTab, currentSiteId, showSettings]);
+
+  useEffect(() => {
     if (activeTab !== 'orders' || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
@@ -231,6 +259,54 @@ const Dashboard = () => {
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
+  };
+
+  const loadWebsiteSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const res = await fetch(`${SETTINGS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setWebsiteSettings({ ...data.settings, business_slug: currentSiteId });
+      }
+    } catch {}
+    setSettingsLoading(false);
+  };
+
+  const handleSettingsChange = (field: keyof WebsiteSettings, value: string) =>
+    setWebsiteSettings(prev => ({ ...prev, [field]: value }));
+
+  const handleSettingsImageUpload = async (field: keyof WebsiteSettings, file: File | null) => {
+    if (!file) return;
+    setSettingsUploading(field);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `slide-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/product-images/${fileName}`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+        body: file,
+      });
+      if (res.ok) {
+        const url = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
+        handleSettingsChange(field, url);
+      }
+    } catch {}
+    setSettingsUploading('');
+  };
+
+  const handleSaveSettings = async () => {
+    if (!currentSiteId) return;
+    setSettingsSaving(true); setSettingsSaved(false);
+    try {
+      const res = await fetch(`${SETTINGS_API}/save`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...websiteSettings, business_slug: currentSiteId }),
+      });
+      const data = await res.json();
+      if (data.success) { setSettingsSaved(true); setTimeout(() => setSettingsSaved(false), 2500); }
+    } catch {}
+    setSettingsSaving(false);
   };
 
   const handleImageUpload = async (files: FileList | null) => {
@@ -523,6 +599,62 @@ const Dashboard = () => {
                   style={{ width: '100%', padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   📦 Products Add করুন
                 </button>
+                <button onClick={() => setShowSettings(s => !s)}
+                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                  ⚙️ Slider ও Footer Settings {showSettings ? '▲' : '▼'}
+                </button>
+
+                {showSettings && (
+                  <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '20px' }}>
+                    {settingsLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center' }}>লোড হচ্ছে...</p>}
+                    {!settingsLoading && (
+                      <>
+                        <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 16px' }}>হোমপেজের স্লাইডার (৩টা) আর ফুটারের লেখা এখান থেকে বদলান — Save করলেই সাথে সাথে ওয়েবসাইটে দেখা যাবে, নতুন করে website build করা লাগবে না।</p>
+                        {[1, 2, 3].map(n => {
+                          const imgField = `slide${n}_img` as keyof WebsiteSettings;
+                          const tagField = `slide${n}_tag` as keyof WebsiteSettings;
+                          const titleField = `slide${n}_title` as keyof WebsiteSettings;
+                          const descField = `slide${n}_desc` as keyof WebsiteSettings;
+                          return (
+                            <div key={n} style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                              <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>স্লাইড {n}</p>
+                              <FormField label="ছবি">
+                                {websiteSettings[imgField] && (
+                                  <img src={websiteSettings[imgField]} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
+                                )}
+                                <input type="file" accept="image/*"
+                                  onChange={e => handleSettingsImageUpload(imgField, e.target.files?.[0] || null)}
+                                  style={{ ...inputStyle, padding: '8px' }} />
+                                {settingsUploading === imgField && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>আপলোড হচ্ছে...</p>}
+                              </FormField>
+                              <FormField label="ট্যাগ (ছোট লেখা)">
+                                <input type="text" placeholder="যেমন: নতুন কালেকশন" value={websiteSettings[tagField]}
+                                  onChange={e => handleSettingsChange(tagField, e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="টাইটেল">
+                                <input type="text" placeholder="যেমন: সেরা মানের পণ্য" value={websiteSettings[titleField]}
+                                  onChange={e => handleSettingsChange(titleField, e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="ডেসক্রিপশন">
+                                <input type="text" placeholder="ছোট বিবরণ লিখুন" value={websiteSettings[descField]}
+                                  onChange={e => handleSettingsChange(descField, e.target.value)} style={inputStyle} />
+                              </FormField>
+                            </div>
+                          );
+                        })}
+                        <FormField label="ফুটারের বিবরণ (Footer Description)">
+                          <textarea value={websiteSettings.footer_desc}
+                            onChange={e => handleSettingsChange('footer_desc', e.target.value)}
+                            style={{ ...inputStyle, height: '70px' }} placeholder="আপনার দোকান সম্পর্কে ছোট লেখা..." />
+                        </FormField>
+                        <button onClick={handleSaveSettings} disabled={settingsSaving}
+                          style={btnStyle(settingsSaved ? '#c8ff5c' : '#7c5cff', settingsSaved ? '#06070a' : 'white')}>
+                          {settingsSaving ? '⏳ Save হচ্ছে...' : settingsSaved ? '✅ Save হয়েছে!' : '💾 Save করুন'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
