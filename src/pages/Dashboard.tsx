@@ -394,6 +394,7 @@ const Dashboard = () => {
   };
   const handleWhatsAppConnect = () => { window.location.href = '/connect-whatsapp'; };
   const handleTenderConnect   = () => { window.location.href = '/connect-tender'; };
+    const handlePixelGAConnect  = () => { window.location.href = '/connect-pixel-ga'; };
 
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
     if (type === 'comment') setCommentReply(value); else setMessengerReply(value);
