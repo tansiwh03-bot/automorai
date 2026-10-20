@@ -6,6 +6,7 @@ const REDIRECT_URI = 'https://automorai.com/dashboard';
 const WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/new-customer';
 const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
+const REPLY_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox/reply';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
@@ -106,6 +107,9 @@ const Dashboard = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [inboxLoading,         setInboxLoading]         = useState(false);
   const [inboxError,           setInboxError]           = useState('');
+  const [replyText,            setReplyText]            = useState('');
+  const [replySending,         setReplySending]         = useState(false);
+  const [replyError,           setReplyError]           = useState('');
 
   // Website Builder state
   const [websiteForm, setWebsiteForm] = useState<WebsiteForm>({
@@ -259,6 +263,38 @@ const Dashboard = () => {
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
+  };
+
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !selectedConversation || !user) return;
+    setReplySending(true); setReplyError('');
+    const messageToSend = replyText.trim();
+    try {
+      const res = await fetch(REPLY_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.email,
+          platform: selectedConversation.platform,
+          sender_id: selectedConversation.sender_id,
+          page_id: selectedConversation.page_id,
+          message: messageToSend,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const sentMsg = { role: 'business', message: messageToSend, timestamp: new Date().toISOString() };
+        setSelectedConversation(prev => prev ? { ...prev, messages: [...prev.messages, sentMsg] } : prev);
+        setConversations(prev => prev.map(c => c.id === selectedConversation.id
+          ? { ...c, messages: [...c.messages, sentMsg], last_message: messageToSend, last_time: sentMsg.timestamp }
+          : c));
+        setReplyText('');
+      } else {
+        setReplyError(data.message || 'Reply পাঠাতে পারেনি।');
+      }
+    } catch {
+      setReplyError('Connection error।');
+    }
+    setReplySending(false);
   };
 
   const loadWebsiteSettings = async () => {
@@ -510,7 +546,7 @@ const Dashboard = () => {
               <div style={{ padding: '24px', color: '#8b90a3', textAlign: 'center', fontSize: '0.9rem' }}>No conversations yet.<br />Connect Facebook or WhatsApp to start.</div>
             )}
             {conversations.map(conv => (
-              <div key={conv.id} onClick={() => setSelectedConversation(conv)} style={{ padding: '14px 16px',
+              <div key={conv.id} onClick={() => { setSelectedConversation(conv); setReplyText(''); setReplyError(''); }} style={{ padding: '14px 16px',
                 borderBottom: '1px solid #1a1d27', cursor: 'pointer',
                 background: selectedConversation?.id === conv.id ? '#181b26' : 'transparent', transition: 'background 0.15s' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -556,9 +592,21 @@ const Dashboard = () => {
                       );
                     })}
                 </div>
+                {replyError && (
+                  <div style={{ padding: '8px 20px', background: '#1f0e0e', color: '#ff5c5c', fontSize: '0.8rem' }}>❌ {replyError}</div>
+                )}
                 <div style={{ padding: '14px 20px', borderTop: '1px solid #262a38', background: '#12141c', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input placeholder="Reply coming soon..." disabled style={{ flex: 1, padding: '10px 14px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '10px', color: '#8b90a3', fontSize: '0.9rem', outline: 'none' }} />
-                  <button disabled style={{ padding: '10px 18px', background: '#7c5cff44', color: '#7c5cff', border: 'none', borderRadius: '10px', cursor: 'not-allowed', fontWeight: 600 }}>Send</button>
+                  <input placeholder="আপনার reply লিখুন..." value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !replySending) handleSendReply(); }}
+                    disabled={replySending}
+                    style={{ flex: 1, padding: '10px 14px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '10px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
+                  <button onClick={handleSendReply} disabled={replySending || !replyText.trim()}
+                    style={{ padding: '10px 18px', background: replySending || !replyText.trim() ? '#7c5cff44' : '#7c5cff',
+                      color: replySending || !replyText.trim() ? '#7c5cff' : 'white', border: 'none', borderRadius: '10px',
+                      cursor: replySending || !replyText.trim() ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                    {replySending ? '...' : 'Send'}
+                  </button>
                 </div>
               </>
             )}
