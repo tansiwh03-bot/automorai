@@ -508,6 +508,7 @@ const Dashboard = () => {
             )}
             <button onClick={handleWhatsAppConnect} style={btnStyle('#25D366', 'white')}>Connect WhatsApp Business</button>
             <button onClick={handleTenderConnect} style={btnStyle('#ffb84c', '#1a1200')}>Connect Tender Automation</button>
+            <button onClick={handlePixelGAConnect} style={btnStyle('#0099FF', 'white')}>Facebook Pixel ও Google Analytics Setup</button>
             {waPageId && (
               <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
                 <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>🌐 Your Website Widget Code</p>
