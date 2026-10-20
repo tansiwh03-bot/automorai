@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Index from './pages/Index';
@@ -6,6 +7,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ConnectWhatsApp from './pages/ConnectWhatsApp';
 import ConnectTender from './pages/ConnectTender';
+import ConnectPixelGA from './pages/ConnectPixelGA'; 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -47,9 +49,14 @@ const AppRoutes = () => {
           <ConnectWhatsApp />
         </ProtectedRoute>
       } />
-            <Route path="/connect-tender" element={
+                        <Route path="/connect-tender" element={
         <ProtectedRoute>
           <ConnectTender />
+        </ProtectedRoute>
+      } />
+      <Route path="/connect-pixel-ga" element={
+        <ProtectedRoute>
+          <ConnectPixelGA />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
