@@ -579,14 +579,15 @@ const Dashboard = () => {
     <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white', display: 'flex' }}>
 
       <style>{`
+        .amr-sidebar { width: 220px; min-width: 220px; position: sticky; top: 0; left: auto; }
         .amr-sidebar-overlay { display: none; }
         .amr-mobile-topbar { display: none; }
         @media (max-width: 768px) {
           .amr-sidebar {
-            position: fixed; left: -240px; top: 0; z-index: 210; width: 240px;
+            position: fixed !important; left: -240px; top: 0; z-index: 210; width: 240px; min-width: 240px;
             box-shadow: 8px 0 24px rgba(0,0,0,0.5); transition: left 0.25s;
           }
-          .amr-sidebar.open { left: 0; }
+          .amr-sidebar.open { left: 0 !important; }
           .amr-sidebar-overlay.open {
             display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 205;
           }
@@ -596,8 +597,8 @@ const Dashboard = () => {
       `}</style>
 
       {/* ── Sidebar ── */}
-      <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: '220px', minWidth: '220px', background: '#0d0e14', borderRight: '1px solid #1e2130',
-        display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
+      <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ background: '#0d0e14', borderRight: '1px solid #1e2130',
+        display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
           <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
