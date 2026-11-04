@@ -483,6 +483,19 @@ const Dashboard = () => {
     } catch {}
   };
 
+  const isSampleProduct = (p: Product) => (p.description || '').includes('নমুনা পণ্য');
+
+  const handleDeleteAllSamples = async () => {
+    const samples = products.filter(isSampleProduct);
+    if (!samples.length) return;
+    if (!confirm(`${samples.length}টা নমুনা পণ্য মুছে ফেলা হবে। নিশ্চিত?`)) return;
+    for (const p of samples) {
+      if (!p.product_id) continue;
+      try { await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(p.product_id)}`, { method: 'DELETE' }); } catch {}
+    }
+    loadProducts();
+  };
+
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
@@ -1006,9 +1019,17 @@ const Dashboard = () => {
               <h2 style={{ color: '#7c5cff', margin: 0 }}>📦 Product Management</h2>
               <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'এখনো তৈরি হয়নি'}</p>
             </div>
-            <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
-              + Add Product
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {products.some(isSampleProduct) && (
+                <button onClick={handleDeleteAllSamples} style={{ padding: '10px 18px', background: '#1f0e0e', color: '#ff5c5c',
+                  border: '1px solid #ff5c5c44', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem' }}>
+                  🗑️ সব নমুনা পণ্য মুছুন
+                </button>
+              )}
+              <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
+                + Add Product
+              </button>
+            </div>
           </div>
 
           {/* Add Product Modal */}
@@ -1091,6 +1112,10 @@ const Dashboard = () => {
               {products.map(p => (
                 <div key={p.product_id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '12px', overflow: 'hidden' }}>
                   <div style={{ height: '160px', background: '#181b26', position: 'relative' }}>
+                    {isSampleProduct(p) && (
+                      <span style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 2, background: '#ffb84c', color: '#1a1200',
+                        fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '20px' }}>নমুনা</span>
+                    )}
                     {p.images && p.images[0] ? (
                       <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '2rem' }}>🛍️</div>}
