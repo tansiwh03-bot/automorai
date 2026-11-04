@@ -64,6 +64,33 @@ const btnStyle = (bg: string, fg: string): React.CSSProperties => ({
   cursor: 'pointer', marginBottom: '12px', fontSize: '0.9rem', transition: 'all 0.2s'
 });
 
+const taskCardStyle: React.CSSProperties = {
+  background: '#12141c', border: '1px solid #262a38', borderRadius: '14px',
+  padding: '22px', display: 'flex', flexDirection: 'column',
+};
+const taskCardIconStyle: React.CSSProperties = {
+  fontSize: '1.6rem', marginBottom: '12px',
+};
+const taskCardTitleStyle: React.CSSProperties = {
+  fontWeight: 700, fontSize: '0.98rem', marginBottom: '6px',
+};
+const taskCardDescStyle: React.CSSProperties = {
+  color: '#8b90a3', fontSize: '0.82rem', lineHeight: 1.6, marginBottom: '16px', flex: 1,
+};
+const taskCardBtnStyle: React.CSSProperties = {
+  padding: '9px 16px', background: '#7c5cff', color: 'white', border: 'none',
+  borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', alignSelf: 'flex-start',
+};
+
+const TaskCard = ({ icon, title, desc, action, done }: { icon: string; title: string; desc: string; action?: { label: string; onClick: () => void }; done?: boolean }) => (
+  <div style={taskCardStyle}>
+    <div style={taskCardIconStyle}>{icon}</div>
+    <div style={{ ...taskCardTitleStyle, color: done ? '#c8ff5c' : 'white' }}>{done ? `✅ ${title}` : title}</div>
+    <div style={taskCardDescStyle}>{desc}</div>
+    {action && <button onClick={action.onClick} style={taskCardBtnStyle}>{action.label}</button>}
+  </div>
+);
+
 const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div style={{ marginBottom: '16px' }}>
     <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.82rem', color: '#aab0c0', fontWeight: 600 }}>{label}</label>
@@ -526,85 +553,101 @@ const Dashboard = () => {
   const commonSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
   const commonColors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Gray', 'Navy', 'Brown'];
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white' }}>
+  const navTabs = [
+    { key: 'home' as const, label: 'Home', icon: '🏠' },
+    { key: 'inbox' as const, label: 'Inbox', icon: '💬' },
+    { key: 'website' as const, label: 'Website', icon: '🌐' },
+    { key: 'products' as const, label: 'Products', icon: '📦' },
+    { key: 'orders' as const, label: 'Orders', icon: '🛍️' },
+  ];
 
-      {/* ── Top Nav ── */}
-      <div style={{ background: '#12141c', borderBottom: '1px solid #262a38', padding: '0 24px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '56px' }}>
-        <span style={{ color: '#7c5cff', fontWeight: 700, fontSize: '1.1rem' }}>Automorai</span>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {([
-            { key: 'home', label: '🏠 Home' },
-            { key: 'inbox', label: '💬 Inbox' },
-            { key: 'website', label: '🌐 Website' },
-            { key: 'products', label: '📦 Products' },
-            { key: 'orders', label: '🛍️ Orders' },
-          ] as const).map(tab => (
+  return (
+    <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white', display: 'flex' }}>
+
+      {/* ── Sidebar ── */}
+      <div style={{ width: '220px', minWidth: '220px', background: '#0d0e14', borderRight: '1px solid #1e2130',
+        display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
+        <div style={{ padding: '22px 20px 18px' }}>
+          <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
+        </div>
+        <div style={{ flex: 1, padding: '0 12px', overflowY: 'auto' }}>
+          {navTabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-              padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-              fontWeight: 600, fontSize: '0.85rem',
-              background: activeTab === tab.key ? '#7c5cff' : 'transparent',
-              color: activeTab === tab.key ? 'white' : '#8b90a3', transition: 'all 0.2s',
-            }}>{tab.label}</button>
+              display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
+              padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
+              fontWeight: 600, fontSize: '0.88rem',
+              background: activeTab === tab.key ? '#7c5cff22' : 'transparent',
+              color: activeTab === tab.key ? '#7c5cff' : '#8b90a3', transition: 'all 0.15s',
+            }}>
+              <span>{tab.icon}</span><span>{tab.label}</span>
+            </button>
           ))}
         </div>
-        <span style={{ color: '#8b90a3', fontSize: '0.85rem' }}>{user.email}</span>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #1e2130' }}>
+          <div style={{ color: '#8b90a3', fontSize: '0.76rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
+          <button onClick={logout} style={{ width: '100%', padding: '8px', background: 'transparent',
+            color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer' }}>
+            Logout
+          </button>
+        </div>
       </div>
+
+      {/* ── Main content ── */}
+      <div style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto' }}>
 
       {/* ════════ HOME TAB ════════ */}
       {activeTab === 'home' && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
-          <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px',
-            padding: '40px', width: '100%', maxWidth: '480px' }}>
-            <h1 style={{ color: '#7c5cff', marginBottom: '8px' }}>Welcome to Automorai</h1>
-            <p style={{ color: '#8b90a3', marginBottom: '24px' }}>Hello, {user.email}!</p>
-            {status && (
-              <div style={{ background: '#181b26', border: '1px solid #7c5cff', borderRadius: '8px',
-                padding: '12px', marginBottom: '16px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
-            )}
-            {connectedPage ? (
-              <div style={{ background: '#181b26', border: '1px solid #c8ff5c', borderRadius: '10px',
-                padding: '14px', marginBottom: '16px', color: '#c8ff5c', fontWeight: 600 }}>
-                ✅ {connectedPage} Connected
-              </div>
-            ) : (
-              <button onClick={handleFacebookConnect} style={btnStyle('#7c5cff', 'white')}>Connect Facebook Page</button>
-            )}
-            <button onClick={handleWhatsAppConnect} style={btnStyle('#25D366', 'white')}>Connect WhatsApp Business</button>
-            <button onClick={handleTenderConnect} style={btnStyle('#ffb84c', '#1a1200')}>Connect Tender Automation</button>
-            <button onClick={handlePixelGAConnect} style={btnStyle('#0099FF', 'white')}>Facebook Pixel ও Google Analytics Setup</button>
-            {waPageId && (
-              <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
-                <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>🌐 Your Website Widget Code</p>
-                <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>এই code টা আপনার website এ paste করুন</p>
-                <pre style={{ background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', padding: '12px',
-                  fontSize: '0.72rem', color: '#c8ff5c', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                  {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`}
-                </pre>
-                <button onClick={() => { navigator.clipboard.writeText(`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
-                  style={{ width: '100%', padding: '10px', background: widgetCopied ? '#c8ff5c' : '#7c5cff',
-                    color: widgetCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px',
-                    fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-                  {widgetCopied ? '✅ Copied!' : '📋 Copy Code'}
-                </button>
-              </div>
-            )}
+        <div style={{ padding: '40px 32px', maxWidth: '1000px', margin: '0 auto' }}>
+          <h1 style={{ margin: '0 0 6px', fontSize: '1.6rem' }}>Welcome to Automorai</h1>
+          <p style={{ color: '#8b90a3', margin: '0 0 28px' }}>Hello, {user.email}!</p>
+
+          {status && (
+            <div style={{ background: '#181b26', border: '1px solid #7c5cff', borderRadius: '8px',
+              padding: '12px', marginBottom: '20px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+            <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
+              desc={connectedPage ? `${connectedPage} যুক্ত আছে।` : 'কমেন্ট ও Messenger-এ স্বয়ংক্রিয় উত্তর দিতে আপনার Facebook পেজ যুক্ত করুন।'}
+              action={connectedPage ? undefined : { label: 'Connect', onClick: handleFacebookConnect }} />
+            <TaskCard icon="💬" title="Connect WhatsApp Business"
+              desc="WhatsApp-এ গ্রাহকদের সাথে স্বয়ংক্রিয়ভাবে কথা বলুন, পণ্য দেখান।"
+              action={{ label: 'Connect', onClick: handleWhatsAppConnect }} />
+            <TaskCard icon="📋" title="Connect Tender Automation"
+              desc="টেন্ডার সংক্রান্ত স্বয়ংক্রিয় নোটিফিকেশন চালু করুন।"
+              action={{ label: 'Connect', onClick: handleTenderConnect }} />
+            <TaskCard icon="📊" title="Pixel ও Analytics Setup"
+              desc="Facebook Pixel আর Google Analytics বসিয়ে ভিজিটরদের আচরণ ট্র্যাক করুন।"
+              action={{ label: 'Setup', onClick: handlePixelGAConnect }} />
+          </div>
+
+          {waPageId && (
+            <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>🌐 Your Website Widget Code</p>
+              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>এই code টা আপনার website এ paste করুন</p>
+              <pre style={{ background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', padding: '12px',
+                fontSize: '0.72rem', color: '#c8ff5c', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`}
+              </pre>
+              <button onClick={() => { navigator.clipboard.writeText(`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
+                style={{ width: '100%', padding: '10px', background: widgetCopied ? '#c8ff5c' : '#7c5cff',
+                  color: widgetCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px',
+                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                {widgetCopied ? '✅ Copied!' : '📋 Copy Code'}
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px' }}>
             <Toggle label="Comment Auto-Reply" desc="Auto-reply to Facebook comments" value={commentReply} onChange={v => handleToggleChange('comment', v)} />
-            <div style={{ marginBottom: '12px' }} />
             <Toggle label="Messenger Auto-Reply" desc="Auto-reply to Messenger messages" value={messengerReply} onChange={v => handleToggleChange('messenger', v)} />
-            <div style={{ height: '24px' }} />
-            <button onClick={logout} style={{ width: '100%', padding: '14px', background: 'transparent',
-              color: '#8b90a3', border: '1px solid #262a38', borderRadius: '10px', fontSize: '1rem', cursor: 'pointer' }}>
-              Logout
-            </button>
           </div>
         </div>
       )}
 
       {/* ════════ INBOX TAB ════════ */}
       {activeTab === 'inbox' && (
-        <div style={{ display: 'flex', height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
           <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #262a38', overflowY: 'auto', background: '#0e1018' }}>
             <div style={{ padding: '16px', borderBottom: '1px solid #262a38', fontWeight: 700, fontSize: '1rem', color: '#7c5cff' }}>💬 Unified Inbox</div>
             {inboxLoading && <div style={{ padding: '24px', color: '#8b90a3', textAlign: 'center' }}>Loading conversations...</div>}
@@ -1030,6 +1073,7 @@ const Dashboard = () => {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 };
