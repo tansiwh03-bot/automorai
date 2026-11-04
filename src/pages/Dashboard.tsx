@@ -32,6 +32,7 @@ interface WebsiteSettings {
   slide2_img: string; slide2_tag: string; slide2_title: string; slide2_desc: string;
   slide3_img: string; slide3_tag: string; slide3_title: string; slide3_desc: string;
   footer_desc: string;
+  logo_img: string;
   nav_menu: NavItem[];
   custom_blocks: CustomBlock[];
 }
@@ -162,6 +163,7 @@ const Dashboard = () => {
     slide2_img: '', slide2_tag: '', slide2_title: '', slide2_desc: '',
     slide3_img: '', slide3_tag: '', slide3_title: '', slide3_desc: '',
     footer_desc: '',
+    logo_img: '',
     nav_menu: [],
     custom_blocks: [],
   };
@@ -768,6 +770,21 @@ const Dashboard = () => {
                     {!settingsLoading && (
                       <>
                         <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 16px' }}>হোমপেজের স্লাইডার (৩টা) আর ফুটারের লেখা এখান থেকে বদলান — Save করলেই সাথে সাথে ওয়েবসাইটে দেখা যাবে, নতুন করে website build করা লাগবে না।</p>
+
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Logo</p>
+                          <FormField label="লোগো ছবি">
+                            {websiteSettings.logo_img && (
+                              <img src={websiteSettings.logo_img} alt="" style={{ height: '48px', objectFit: 'contain', marginBottom: '8px', background: '#181b26', borderRadius: '6px', padding: '6px' }} />
+                            )}
+                            <input type="file" accept="image/*"
+                              onChange={e => handleSettingsImageUpload('logo_img', e.target.files?.[0] || null)}
+                              style={{ ...inputStyle, padding: '8px' }} />
+                            {settingsUploading === 'logo_img' && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>আপলোড হচ্ছে...</p>}
+                            <p style={{ color: '#8b90a3', fontSize: '0.75rem', margin: '6px 0 0' }}>লোগো না দিলে দোকানের নাম (টেক্সট) দেখাবে।</p>
+                          </FormField>
+                        </div>
+
                         {[1, 2, 3].map(n => {
                           const imgField = `slide${n}_img` as keyof WebsiteSettings;
                           const tagField = `slide${n}_tag` as keyof WebsiteSettings;
