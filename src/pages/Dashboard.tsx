@@ -308,9 +308,9 @@ const Dashboard = () => {
   };
 
   const handleSaveProduct = async () => {
-    if (!productForm.title.trim()) { setProductError('Product title দিন'); return; }
-    if (!productForm.price) { setProductError('Price দিন'); return; }
-    if (!currentSiteId) { setProductError('আগে Website তৈরি করুন'); return; }
+    if (!productForm.title.trim()) { setProductError('Enter product title'); return; }
+    if (!productForm.price) { setProductError('Enter price'); return; }
+    if (!currentSiteId) { setProductError('Create a website first'); return; }
     setProductSaving(true); setProductError('');
     try {
       const res = await fetch(`${PRODUCTS_API}/add`, {
@@ -323,7 +323,7 @@ const Dashboard = () => {
         setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
         setSizeInput(''); setColorInput(''); setImageInput('');
         loadProducts();
-      } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
+      } else { setProductError('Could not save. Please try again.'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
   };
@@ -352,7 +352,7 @@ const Dashboard = () => {
           : c));
         setReplyText('');
       } else {
-        setReplyError(data.message || 'Reply পাঠাতে পারেনি।');
+        setReplyError(data.message || 'Could not send reply.');
       }
     } catch {
       setReplyError('Connection error।');
@@ -476,19 +476,34 @@ const Dashboard = () => {
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('এই product টা delete করবেন?')) return;
+    if (!confirm('Delete this product?')) return;
     try {
       await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(productId)}`, { method: 'DELETE' });
       loadProducts();
     } catch {}
   };
 
-  const isSampleProduct = (p: Product) => (p.description || '').includes('নমুনা পণ্য');
+  // Titles the website builder auto-generates as placeholder products (see n8n "Add Sample Products").
+  // Matched by title rather than a marker in the description, since the description shown to real
+  // customers is a normal-looking product description with no "this is a sample" wording.
+  const SAMPLE_PRODUCT_TITLES = new Set([
+    'Party Frock', 'Cotton Dress', 'T-Shirt Set', 'Shorts Set', 'Baby Onesie', 'Soft Blanket', 'Baby Cap', 'Socks Set',
+    'Floral Dress', 'Casual Top', 'Cotton Shirt', 'Denim Jeans', 'Wool Sweater', 'Puffer Jacket', 'Leather Belt', 'Sunglasses',
+    'Smartphone Case', 'Screen Protector', 'Laptop Sleeve', 'Cooling Pad', 'Wireless Earbuds', 'Bluetooth Speaker', 'Power Bank', 'USB Cable',
+    'Premium Rice 5kg', 'Organic Wheat Flour', 'Fresh Vegetable Box', 'Organic Greens Pack', 'Fresh Fish Pack', 'Chicken Pack', 'Spice Mix Pack', 'Turmeric Powder',
+    'Face Serum', 'Moisturizer Cream', 'Lipstick Set', 'Foundation', 'Hair Oil', 'Shampoo Set', 'Eau de Parfum', 'Body Mist',
+    'Vitamin C Tablets', 'Pain Relief Tablets', 'Hand Sanitizer', 'First Aid Kit', 'Baby Lotion', 'Diaper Pack', 'Digital Thermometer', 'BP Monitor',
+    'Wooden Side Table', 'Cushion Chair', 'Wall Clock', 'Framed Wall Art', 'Table Lamp', 'LED String Light', 'Storage Basket', 'Photo Frame Set',
+    'Running Shoes', 'Sports Sneakers', 'Track Suit', 'Gym T-Shirt', 'Yoga Mat', 'Dumbbell Set', 'Sports Water Bottle', 'Sports Cap',
+    'Silver Ring', 'Gold-Plated Ring', 'Pendant Necklace', 'Chain Necklace', 'Stud Earrings', 'Hoop Earrings', 'Analog Watch', 'Smart Watch',
+    'Trending Item', 'Bestseller Item', 'New Arrival', 'Just Launched', 'Discount Pick', 'Special Offer Item', 'Featured Pick', 'Staff Favorite',
+  ]);
+  const isSampleProduct = (p: Product) => SAMPLE_PRODUCT_TITLES.has(p.title);
 
   const handleDeleteAllSamples = async () => {
     const samples = products.filter(isSampleProduct);
     if (!samples.length) return;
-    if (!confirm(`${samples.length}টা নমুনা পণ্য মুছে ফেলা হবে। নিশ্চিত?`)) return;
+    if (!confirm(`${samples.length} sample product(s) will be deleted. Are you sure?`)) return;
     for (const p of samples) {
       if (!p.product_id) continue;
       try { await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(p.product_id)}`, { method: 'DELETE' }); } catch {}
@@ -527,8 +542,8 @@ const Dashboard = () => {
     setWebsiteForm(prev => ({ ...prev, [field]: value }));
 
   const handleBuildWebsite = async () => {
-    if (!websiteForm.business_name.trim()) { setWebsiteError('Business name দিন'); return; }
-    if (!websiteForm.whatsapp_number.trim()) { setWebsiteError('WhatsApp Number দিন'); return; }
+    if (!websiteForm.business_name.trim()) { setWebsiteError('Enter business name'); return; }
+    if (!websiteForm.whatsapp_number.trim()) { setWebsiteError('Enter WhatsApp number'); return; }
     setWebsiteBuilding(true); setWebsiteError(''); setWebsiteResult(null);
     try {
       const res = await fetch(WEBSITE_BUILDER_API, {
@@ -549,8 +564,8 @@ const Dashboard = () => {
           try { localStorage.setItem('automorai_site_id', data.slug); } catch {}
           setProductForm(prev => ({ ...prev, business_slug: data.slug }));
         }
-      } else { setWebsiteError('Website তৈরি করতে পারেনি। আবার চেষ্টা করুন।'); }
-    } catch { setWebsiteError('Connection error। আবার চেষ্টা করুন।'); }
+      } else { setWebsiteError('Could not create website. Please try again.'); }
+    } catch { setWebsiteError('Connection error. Please try again.'); }
     setWebsiteBuilding(false);
   };
 
@@ -570,11 +585,11 @@ const Dashboard = () => {
   const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad' };
 
   const niches = [
-    { value: 'kids_wear', label: '👶 শিশুদের পোশাক' }, { value: 'clothing', label: '👗 ফ্যাশন / পোশাক' },
-    { value: 'electronics', label: '⚡ ইলেকট্রনিক্স' }, { value: 'food', label: '🌿 খাদ্যপণ্য' },
-    { value: 'beauty', label: '💄 বিউটি / কসমেটিক্স' }, { value: 'pharmacy', label: '💊 ফার্মেসি' },
-    { value: 'home_decor', label: '🏠 হোম ডেকর' }, { value: 'sports', label: '🏀 স্পোর্টস' },
-    { value: 'jewelry', label: '💍 জুয়েলারি' }, { value: 'general', label: '🛒 সাধারণ দোকান' },
+    { value: 'kids_wear', label: '👶 Kids Wear' }, { value: 'clothing', label: '👗 Fashion / Clothing' },
+    { value: 'electronics', label: '⚡ Electronics' }, { value: 'food', label: '🌿 Food' },
+    { value: 'beauty', label: '💄 Beauty / Cosmetics' }, { value: 'pharmacy', label: '💊 Pharmacy' },
+    { value: 'home_decor', label: '🏠 Home Decor' }, { value: 'sports', label: '🏀 Sports' },
+    { value: 'jewelry', label: '💍 Jewelry' }, { value: 'general', label: '🛒 General Store' },
   ];
 
   const commonSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
@@ -672,39 +687,39 @@ const Dashboard = () => {
             <div>
               <div style={{ fontSize: '1.7rem', marginBottom: '8px' }}>🚀</div>
               <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>
-                {websiteResult ? 'আপনার Website দেখুন ও এডিট করুন' : 'আপনার Website বানান'}
+                {websiteResult ? 'View & Edit Your Website' : 'Build Your Website'}
               </div>
               <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
-                {websiteResult ? 'স্লাইডার, পণ্য, মেনু — সব এখান থেকে ম্যানেজ করুন।' : 'কয়েক মিনিটে AI দিয়ে একটা সুন্দর website তৈরি করুন, বিনামূল্যে।'}
+                {websiteResult ? 'Manage slider, products, menu — all from here.' : 'Create a beautiful website with AI in minutes, for free.'}
               </div>
             </div>
             <button onClick={e => { e.stopPropagation(); setActiveTab('website'); }} style={{
               padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
               fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
             }}>
-              {websiteResult ? 'দেখুন →' : 'শুরু করুন →'}
+              {websiteResult ? 'View →' : 'Get Started →'}
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px', marginBottom: '20px' }}>
             <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
-              desc={connectedPage ? `${connectedPage} যুক্ত আছে।` : 'কমেন্ট ও Messenger-এ স্বয়ংক্রিয় উত্তর দিতে আপনার Facebook পেজ যুক্ত করুন।'}
+              desc={connectedPage ? `${connectedPage} is connected.` : 'Connect your Facebook Page to auto-reply to comments and Messenger.'}
               action={connectedPage ? undefined : { label: 'Connect', onClick: handleFacebookConnect }} />
             <TaskCard icon="💬" title="Connect WhatsApp Business"
-              desc="WhatsApp-এ গ্রাহকদের সাথে স্বয়ংক্রিয়ভাবে কথা বলুন, পণ্য দেখান।"
+              desc="Automatically chat with customers and show products on WhatsApp."
               action={{ label: 'Connect', onClick: handleWhatsAppConnect }} />
             <TaskCard icon="📋" title="Connect Tender Automation"
-              desc="টেন্ডার সংক্রান্ত স্বয়ংক্রিয় নোটিফিকেশন চালু করুন।"
+              desc="Enable automatic tender-related notifications."
               action={{ label: 'Connect', onClick: handleTenderConnect }} />
-            <TaskCard icon="📊" title="Pixel ও Analytics Setup"
-              desc="Facebook Pixel আর Google Analytics বসিয়ে ভিজিটরদের আচরণ ট্র্যাক করুন।"
+            <TaskCard icon="📊" title="Pixel and Analytics Setup"
+              desc="Track visitor behavior with Facebook Pixel and Google Analytics."
               action={{ label: 'Setup', onClick: handlePixelGAConnect }} />
           </div>
 
           {waPageId && (
             <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
               <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>🌐 Your Website Widget Code</p>
-              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>এই code টা আপনার website এ paste করুন</p>
+              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>Paste this code into your website</p>
               <pre style={{ background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', padding: '12px',
                 fontSize: '0.72rem', color: '#c8ff5c', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`}
@@ -786,7 +801,7 @@ const Dashboard = () => {
                   <div style={{ padding: '8px 20px', background: '#1f0e0e', color: '#ff5c5c', fontSize: '0.8rem' }}>❌ {replyError}</div>
                 )}
                 <div style={{ padding: '14px 20px', borderTop: '1px solid #262a38', background: '#12141c', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input placeholder="আপনার reply লিখুন..." value={replyText}
+                  <input placeholder="Type your reply..." value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !replySending) handleSendReply(); }}
                     disabled={replySending}
@@ -810,13 +825,13 @@ const Dashboard = () => {
           <div style={{ width: '100%', maxWidth: '580px' }}>
             <div style={{ marginBottom: '28px' }}>
               <h2 style={{ color: '#7c5cff', margin: '0 0 6px', fontSize: '1.4rem' }}>🌐 Website Builder</h2>
-              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.9rem' }}>AI আপনার জন্য একটি সুন্দর website তৈরি করে দেবে।</p>
+              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.9rem' }}>AI will build a beautiful website for you.</p>
             </div>
 
             {websiteResult && (
               <div style={{ background: '#0d1f12', border: '1px solid #c8ff5c', borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
-                <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website তৈরি হয়ে গেছে!</p>
-                <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} এর website live আছে।</p>
+                <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
+                <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
                 <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'block', color: '#7c5cff', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
                   {websiteResult.url}
@@ -825,41 +840,41 @@ const Dashboard = () => {
                   <button onClick={() => { navigator.clipboard.writeText(websiteResult.url); setWebsiteUrlCopied(true); setTimeout(() => setWebsiteUrlCopied(false), 2000); }}
                     style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#7c5cff',
                       color: websiteUrlCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
-                    {websiteUrlCopied ? '✅ Copied!' : '📋 URL Copy করুন'}
+                    {websiteUrlCopied ? '✅ Copied!' : '📋 Copy URL'}
                   </button>
                   <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
                     style={{ flex: 1, padding: '10px', background: '#1e2130', color: 'white', border: '1px solid #262a38',
                       borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    🔗 Website দেখুন
+                    🔗 View Website
                   </a>
                 </div>
                 <button onClick={() => { setActiveTab('products'); }}
                   style={{ width: '100%', padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
-                  📦 Products Add করুন
+                  📦 Add Products
                 </button>
                 <button onClick={() => setShowSettings(s => !s)}
                   style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
-                  ⚙️ Slider ও Footer Settings {showSettings ? '▲' : '▼'}
+                  ⚙️ Slider and Footer Settings {showSettings ? '▲' : '▼'}
                 </button>
 
                 {showSettings && (
                   <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '20px' }}>
-                    {settingsLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center' }}>লোড হচ্ছে...</p>}
+                    {settingsLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center' }}>Loading...</p>}
                     {!settingsLoading && (
                       <>
-                        <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 16px' }}>হোমপেজের স্লাইডার (৩টা) আর ফুটারের লেখা এখান থেকে বদলান — Save করলেই সাথে সাথে ওয়েবসাইটে দেখা যাবে, নতুন করে website build করা লাগবে না।</p>
+                        <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 16px' }}>Change the homepage slider (3 slides) and footer text here — changes appear on the website immediately after saving, no rebuild needed.</p>
 
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
                           <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Logo</p>
-                          <FormField label="লোগো ছবি">
+                          <FormField label="Logo Image">
                             {websiteSettings.logo_img && (
                               <img src={websiteSettings.logo_img} alt="" style={{ height: '48px', objectFit: 'contain', marginBottom: '8px', background: '#181b26', borderRadius: '6px', padding: '6px' }} />
                             )}
                             <input type="file" accept="image/*"
                               onChange={e => handleSettingsImageUpload('logo_img', e.target.files?.[0] || null)}
                               style={{ ...inputStyle, padding: '8px' }} />
-                            {settingsUploading === 'logo_img' && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>আপলোড হচ্ছে...</p>}
-                            <p style={{ color: '#8b90a3', fontSize: '0.75rem', margin: '6px 0 0' }}>লোগো না দিলে দোকানের নাম (টেক্সট) দেখাবে।</p>
+                            {settingsUploading === 'logo_img' && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
+                            <p style={{ color: '#8b90a3', fontSize: '0.75rem', margin: '6px 0 0' }}>If no logo is set, the business name (text) will be shown instead.</p>
                           </FormField>
                         </div>
 
@@ -870,101 +885,101 @@ const Dashboard = () => {
                           const descField = `slide${n}_desc` as keyof WebsiteSettings;
                           return (
                             <div key={n} style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                              <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>স্লাইড {n}</p>
-                              <FormField label="ছবি">
+                              <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Slide {n}</p>
+                              <FormField label="Image">
                                 {String(websiteSettings[imgField] || '') && (
                                   <img src={String(websiteSettings[imgField] || '')} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
                                 )}
                                 <input type="file" accept="image/*"
                                   onChange={e => handleSettingsImageUpload(imgField, e.target.files?.[0] || null)}
                                   style={{ ...inputStyle, padding: '8px' }} />
-                                {settingsUploading === imgField && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>আপলোড হচ্ছে...</p>}
+                                {settingsUploading === imgField && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
                               </FormField>
-                              <FormField label="ট্যাগ (ছোট লেখা)">
-                                <input type="text" placeholder="যেমন: নতুন কালেকশন" value={String(websiteSettings[tagField] || '')}
+                              <FormField label="Tag (short label)">
+                                <input type="text" placeholder="e.g. New Collection" value={String(websiteSettings[tagField] || '')}
                                   onChange={e => handleSettingsChange(tagField, e.target.value)} style={inputStyle} />
                               </FormField>
-                              <FormField label="টাইটেল">
-                                <input type="text" placeholder="যেমন: সেরা মানের পণ্য" value={String(websiteSettings[titleField] || '')}
+                              <FormField label="Title">
+                                <input type="text" placeholder="e.g. Best Quality Products" value={String(websiteSettings[titleField] || '')}
                                   onChange={e => handleSettingsChange(titleField, e.target.value)} style={inputStyle} />
                               </FormField>
-                              <FormField label="ডেসক্রিপশন">
-                                <input type="text" placeholder="ছোট বিবরণ লিখুন" value={String(websiteSettings[descField] || '')}
+                              <FormField label="Description">
+                                <input type="text" placeholder="Write a short description" value={String(websiteSettings[descField] || '')}
                                   onChange={e => handleSettingsChange(descField, e.target.value)} style={inputStyle} />
                               </FormField>
                             </div>
                           );
                         })}
-                        <FormField label="ফুটারের বিবরণ (Footer Description)">
+                        <FormField label="Footer Description">
                           <textarea value={websiteSettings.footer_desc}
                             onChange={e => handleSettingsChange('footer_desc', e.target.value)}
-                            style={{ ...inputStyle, height: '70px' }} placeholder="আপনার দোকান সম্পর্কে ছোট লেখা..." />
+                            style={{ ...inputStyle, height: '70px' }} placeholder="A short note about your shop..." />
                         </FormField>
 
                         {/* ── Navigation Menu ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
                           <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>উপরের মেনুর আইটেম — চাইলে সাব-মেনুও (Men → Shirt, Pant) যোগ করতে পারবেন।</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>Top menu items — you can also add sub-items (e.g. Men → Shirt, Pant).</p>
                           {websiteSettings.nav_menu.map((item, idx) => (
                             <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
                               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <input type="text" placeholder="মেনুর নাম" value={item.label} onChange={e => updateNavItem(idx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                                <input type="text" placeholder="লিংক (ঐচ্ছিক)" value={item.link} onChange={e => updateNavItem(idx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                                <button onClick={() => removeNavItem(idx)} style={{ padding: '0 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>মুছুন</button>
+                                <input type="text" placeholder="Menu label" value={item.label} onChange={e => updateNavItem(idx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                                <input type="text" placeholder="Link (optional)" value={item.link} onChange={e => updateNavItem(idx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                                <button onClick={() => removeNavItem(idx)} style={{ padding: '0 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>Remove</button>
                               </div>
                               {(item.children || []).map((sub, subIdx) => (
                                 <div key={subIdx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', paddingLeft: '16px' }}>
-                                  <input type="text" placeholder="সাব-আইটেম নাম" value={sub.label} onChange={e => updateSubItem(idx, subIdx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
-                                  <input type="text" placeholder="লিংক (ঐচ্ছিক)" value={sub.link} onChange={e => updateSubItem(idx, subIdx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
+                                  <input type="text" placeholder="Sub-item label" value={sub.label} onChange={e => updateSubItem(idx, subIdx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
+                                  <input type="text" placeholder="Link (optional)" value={sub.link} onChange={e => updateSubItem(idx, subIdx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
                                   <button onClick={() => removeSubItem(idx, subIdx)} style={{ padding: '0 8px', background: 'transparent', color: '#ff5c5c', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                                 </div>
                               ))}
-                              <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#7c5cff', border: '1px dashed #7c5cff44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ সাব-আইটেম</button>
+                              <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#7c5cff', border: '1px dashed #7c5cff44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ Sub-item</button>
                             </div>
                           ))}
-                          <button onClick={addNavItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ মেনু আইটেম যোগ করুন</button>
+                          <button onClick={addNavItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add menu item</button>
                         </div>
 
                         {/* ── Testimonials ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>গ্রাহকের মতামত (Testimonials)</p>
-                          <Toggle label="এই সেকশন দেখাও" desc="সাইটে গ্রাহকের মতামত সেকশন চালু/বন্ধ করুন" value={getTestimonialBlock().enabled} onChange={v => setBlock({ ...getTestimonialBlock(), enabled: v })} />
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Testimonials</p>
+                          <Toggle label="Show this section" desc="Turn the testimonials section on the site on/off" value={getTestimonialBlock().enabled} onChange={v => setBlock({ ...getTestimonialBlock(), enabled: v })} />
                           <div style={{ height: '12px' }} />
-                          <FormField label="সেকশনের টাইটেল">
+                          <FormField label="Section Title">
                             <input type="text" placeholder="What Our Customers Say" value={getTestimonialBlock().title} onChange={e => setBlock({ ...getTestimonialBlock(), title: e.target.value })} style={inputStyle} />
                           </FormField>
                           {getTestimonialBlock().items.map((it, idx) => (
                             <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
                               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <input type="text" placeholder="গ্রাহকের নাম" value={it.name} onChange={e => updateTestimonialItem(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
-                                <input type="number" placeholder="রেটিং" min={1} max={5} value={it.rating} onChange={e => updateTestimonialItem(idx, 'rating', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                                <input type="text" placeholder="Customer's name" value={it.name} onChange={e => updateTestimonialItem(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
+                                <input type="number" placeholder="Rating" min={1} max={5} value={it.rating} onChange={e => updateTestimonialItem(idx, 'rating', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                               </div>
-                              <textarea placeholder="মতামত লিখুন" value={it.text} onChange={e => updateTestimonialItem(idx, 'text', e.target.value)} style={{ ...inputStyle, height: '50px', marginBottom: '8px' }} />
-                              <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>মুছুন</button>
+                              <textarea placeholder="Write the testimonial" value={it.text} onChange={e => updateTestimonialItem(idx, 'text', e.target.value)} style={{ ...inputStyle, height: '50px', marginBottom: '8px' }} />
+                              <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Remove</button>
                             </div>
                           ))}
-                          <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ মতামত যোগ করুন</button>
+                          <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add testimonial</button>
                         </div>
 
                         {/* ── About / Our Story ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>আমাদের গল্প (About)</p>
-                          <Toggle label="এই সেকশন দেখাও" desc="সাইটে 'আমাদের গল্প' সেকশন চালু/বন্ধ করুন" value={getAboutBlock().enabled} onChange={v => setBlock({ ...getAboutBlock(), enabled: v })} />
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>About</p>
+                          <Toggle label="Show this section" desc="Turn the 'About' section on the site on/off" value={getAboutBlock().enabled} onChange={v => setBlock({ ...getAboutBlock(), enabled: v })} />
                           <div style={{ height: '12px' }} />
-                          <FormField label="টাইটেল">
+                          <FormField label="Title">
                             <input type="text" value={getAboutBlock().title} onChange={e => setBlock({ ...getAboutBlock(), title: e.target.value })} style={inputStyle} />
                           </FormField>
-                          <FormField label="লেখা">
+                          <FormField label="Body Text">
                             <textarea value={getAboutBlock().body} onChange={e => setBlock({ ...getAboutBlock(), body: e.target.value })} style={{ ...inputStyle, height: '70px' }} />
                           </FormField>
-                          <FormField label="ছবির লিংক">
+                          <FormField label="Image Link">
                             <input type="text" value={getAboutBlock().img} onChange={e => setBlock({ ...getAboutBlock(), img: e.target.value })} style={inputStyle} />
                           </FormField>
                         </div>
 
                         <button onClick={handleSaveSettings} disabled={settingsSaving}
                           style={btnStyle(settingsSaved ? '#c8ff5c' : '#7c5cff', settingsSaved ? '#06070a' : 'white')}>
-                          {settingsSaving ? '⏳ Save হচ্ছে...' : settingsSaved ? '✅ Save হয়েছে!' : '💾 Save করুন'}
+                          {settingsSaving ? '⏳ Saving...' : settingsSaved ? '✅ Saved!' : '💾 Save'}
                         </button>
                       </>
                     )}
@@ -980,11 +995,11 @@ const Dashboard = () => {
                 )}
 
                 <FormField label="Business Name *">
-                  <input type="text" placeholder="যেমন: Dhaka Fashion House" value={websiteForm.business_name}
+                  <input type="text" placeholder="e.g. Dhaka Fashion House" value={websiteForm.business_name}
                     onChange={e => handleWebsiteFormChange('business_name', e.target.value)} style={inputStyle} />
                 </FormField>
 
-                <FormField label="ব্যবসার ধরন (Niche) *">
+                <FormField label="Business Type (Niche) *">
                   <select value={websiteForm.niche} onChange={e => handleWebsiteFormChange('niche', e.target.value)}
                     style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
                     {niches.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -996,14 +1011,14 @@ const Dashboard = () => {
                     onChange={e => handleWebsiteFormChange('whatsapp_number', e.target.value)} style={inputStyle} />
                 </FormField>
 
-                <FormField label="থিম কালার (Accent Color)">
+                <FormField label="Theme Color (Accent Color)">
                   <input type="color" value={websiteForm.accent_color}
                     onChange={e => handleWebsiteFormChange('accent_color', e.target.value)}
                     style={{ width: '100%', height: '42px', padding: '4px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer' }} />
                 </FormField>
 
                 <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#7c5cff', 'white')}>
-                  {websiteBuilding ? '⏳ Website তৈরি হচ্ছে... (৩০-৬০ সেকেণ্ড)' : '🚀 Website তৈরি করুন'}
+                  {websiteBuilding ? '⏳ Creating website... (30-60 seconds)' : '🚀 Create Website'}
                 </button>
               </div>
             )}
@@ -1017,13 +1032,13 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
               <h2 style={{ color: '#7c5cff', margin: 0 }}>📦 Product Management</h2>
-              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'এখনো তৈরি হয়নি'}</p>
+              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {products.some(isSampleProduct) && (
                 <button onClick={handleDeleteAllSamples} style={{ padding: '10px 18px', background: '#1f0e0e', color: '#ff5c5c',
                   border: '1px solid #ff5c5c44', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem' }}>
-                  🗑️ সব নমুনা পণ্য মুছুন
+                  🗑️ Remove all sample products
                 </button>
               )}
               <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
@@ -1040,11 +1055,11 @@ const Dashboard = () => {
                 {productError && <div style={{ color: '#ff5c5c', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
                 
                 <FormField label="Title *">
-                  <input type="text" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} style={inputStyle} placeholder="যেমন: Premium Cotton Shirt" />
+                  <input type="text" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} style={inputStyle} placeholder="e.g. Premium Cotton Shirt" />
                 </FormField>
 
                 <FormField label="Category">
-                  <input type="text" value={productForm.category || ''} onChange={e => setProductForm({ ...productForm, category: e.target.value })} style={inputStyle} placeholder="যেমন: Women, Men — ওয়েবসাইটের ক্যাটাগরির নামের সাথে মিলিয়ে লিখুন" />
+                  <input type="text" value={productForm.category || ''} onChange={e => setProductForm({ ...productForm, category: e.target.value })} style={inputStyle} placeholder="e.g. Women, Men — match your website's category names" />
                 </FormField>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -1057,7 +1072,7 @@ const Dashboard = () => {
                 </div>
 
                 <FormField label="Description">
-                  <textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} style={{ ...inputStyle, height: '70px' }} placeholder="পণ্যের বিবরণ..." />
+                  <textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} style={{ ...inputStyle, height: '70px' }} placeholder="Product description..." />
                 </FormField>
 
                 {/* Multi Image Upload */}
@@ -1077,7 +1092,7 @@ const Dashboard = () => {
                     </button>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <input type="text" value={imageInput} onChange={e => setImageInput(e.target.value)} placeholder="অথবা Image URL দিন" style={inputStyle} />
+                    <input type="text" value={imageInput} onChange={e => setImageInput(e.target.value)} placeholder="Or enter image URL" style={inputStyle} />
                     <button onClick={() => { if(imageInput){ setProductForm(p => ({ ...p, images: [...p.images, imageInput] })); setImageInput(''); } }} style={{ padding: '0 12px', background: '#262a38', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Add</button>
                   </div>
                 </FormField>
@@ -1114,7 +1129,7 @@ const Dashboard = () => {
                   <div style={{ height: '160px', background: '#181b26', position: 'relative' }}>
                     {isSampleProduct(p) && (
                       <span style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 2, background: '#ffb84c', color: '#1a1200',
-                        fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '20px' }}>নমুনা</span>
+                        fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '20px' }}>Sample</span>
                     )}
                     {p.images && p.images[0] ? (
                       <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
