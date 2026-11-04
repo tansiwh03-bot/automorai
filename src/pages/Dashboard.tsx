@@ -174,6 +174,18 @@ const Dashboard = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const fbCode    = urlParams.get('code');
 
+  // Restore the "website already built" view on reload/re-login using the slug saved in
+  // localStorage, since websiteResult itself is only ever set in-memory when a site is built.
+  useEffect(() => {
+    if (websiteResult || !currentSiteId) return;
+    const displayName = currentSiteId.replace(/-\d{6}$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    setWebsiteResult({
+      url: `https://${currentSiteId}.tansiwh03.workers.dev`,
+      business_name: displayName || currentSiteId,
+      site_id: currentSiteId,
+    });
+  }, [currentSiteId, websiteResult]);
+
   useEffect(() => {
     if (fbCode && !connectedPage && user) {
       setStatus('Facebook connected! Exchanging token...');
