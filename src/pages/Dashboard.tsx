@@ -39,7 +39,7 @@ interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
 }
 interface Product {
-  product_id?: string; business_slug: string; title: string; description: string;
+  product_id?: string; business_slug: string; title: string; description: string; category?: string;
   price: number; original_price?: number; images: string[]; sizes: string[]; colors: string[];
   stock: number; is_active?: boolean;
 }
@@ -182,7 +182,7 @@ const Dashboard = () => {
   const [productsLoading, setProductsLoading] = useState(false);
   const [showAddProduct,  setShowAddProduct]  = useState(false);
   const [productForm,     setProductForm]     = useState<Omit<Product, 'product_id' | 'is_active'>>({
-    business_slug: currentSiteId, title: '', description: '', price: 0, original_price: 0,
+    business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0,
     images: [], sizes: [], colors: [], stock: 10,
   });
   const [productSaving,   setProductSaving]   = useState(false);
@@ -306,7 +306,7 @@ const Dashboard = () => {
       const data = await res.json();
       if (data.success) {
         setShowAddProduct(false);
-        setProductForm({ business_slug: currentSiteId, title: '', description: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
+        setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
         setSizeInput(''); setColorInput(''); setImageInput('');
         loadProducts();
       } else { setProductError('Save করতে পারেনি। আবার চেষ্টা করুন।'); }
@@ -938,6 +938,10 @@ const Dashboard = () => {
                 
                 <FormField label="Title *">
                   <input type="text" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} style={inputStyle} placeholder="যেমন: Premium Cotton Shirt" />
+                </FormField>
+
+                <FormField label="Category">
+                  <input type="text" value={productForm.category || ''} onChange={e => setProductForm({ ...productForm, category: e.target.value })} style={inputStyle} placeholder="যেমন: Women, Men — ওয়েবসাইটের ক্যাটাগরির নামের সাথে মিলিয়ে লিখুন" />
                 </FormField>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
