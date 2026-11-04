@@ -176,7 +176,11 @@ const Dashboard = () => {
 
   // Current site_id (from websiteResult or localStorage)
   const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
-    try { return localStorage.getItem('automorai_site_id') || ''; } catch { return ''; }
+    try {
+      const setSite = new URLSearchParams(window.location.search).get('set_site');
+      if (setSite) { localStorage.setItem('automorai_site_id', setSite); return setSite; }
+      return localStorage.getItem('automorai_site_id') || '';
+    } catch { return ''; }
   });
 
   // Products state
@@ -202,6 +206,13 @@ const Dashboard = () => {
   // ── Facebook OAuth ──
   const urlParams = new URLSearchParams(window.location.search);
   const fbCode    = urlParams.get('code');
+
+  // The site switch (?set_site=slug) itself already happened in currentSiteId's initializer above,
+  // so this just tidies the URL afterward.
+  useEffect(() => {
+    if (urlParams.get('set_site')) window.history.replaceState({}, '', '/dashboard');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Restore the "website already built" view on reload/re-login using the slug saved in
   // localStorage, since websiteResult itself is only ever set in-memory when a site is built.
