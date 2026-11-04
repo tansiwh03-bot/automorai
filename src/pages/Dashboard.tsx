@@ -129,6 +129,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders'>('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Home state
   const [commentReply,   setCommentReply]   = useState(true);
@@ -577,15 +578,35 @@ const Dashboard = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white', display: 'flex' }}>
 
+      <style>{`
+        .amr-sidebar-overlay { display: none; }
+        .amr-mobile-topbar { display: none; }
+        @media (max-width: 768px) {
+          .amr-sidebar {
+            position: fixed; left: -240px; top: 0; z-index: 210; width: 240px;
+            box-shadow: 8px 0 24px rgba(0,0,0,0.5); transition: left 0.25s;
+          }
+          .amr-sidebar.open { left: 0; }
+          .amr-sidebar-overlay.open {
+            display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 205;
+          }
+          .amr-mobile-topbar { display: flex !important; }
+          .amr-sidebar-close { display: inline-flex !important; }
+        }
+      `}</style>
+
       {/* ── Sidebar ── */}
-      <div style={{ width: '220px', minWidth: '220px', background: '#0d0e14', borderRight: '1px solid #1e2130',
+      <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: '220px', minWidth: '220px', background: '#0d0e14', borderRight: '1px solid #1e2130',
         display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
-        <div style={{ padding: '22px 20px 18px' }}>
+        <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
+          <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
+            display: 'none', background: 'transparent', border: 'none', color: '#8b90a3', fontSize: '1.3rem', cursor: 'pointer',
+          }}>✕</button>
         </div>
         <div style={{ flex: 1, padding: '0 12px', overflowY: 'auto' }}>
           {navTabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+            <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
               display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
               padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
               fontWeight: 600, fontSize: '0.88rem',
@@ -605,8 +626,19 @@ const Dashboard = () => {
         </div>
       </div>
 
+      <div className={`amr-sidebar-overlay${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen(false)} />
+
       {/* ── Main content ── */}
       <div style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto' }}>
+        <div className="amr-mobile-topbar" style={{
+          alignItems: 'center', gap: '14px', padding: '14px 18px', background: '#0d0e14',
+          borderBottom: '1px solid #1e2130', position: 'sticky', top: 0, zIndex: 100,
+        }}>
+          <button onClick={() => setSidebarOpen(true)} style={{
+            background: 'transparent', border: 'none', color: 'white', fontSize: '1.4rem', cursor: 'pointer', padding: 0,
+          }}>☰</button>
+          <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.1rem' }}>Automorai</span>
+        </div>
 
       {/* ════════ HOME TAB ════════ */}
       {activeTab === 'home' && (
