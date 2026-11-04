@@ -20,12 +20,20 @@ interface Conversation {
   platform: 'whatsapp' | 'messenger' | 'facebook' | 'website' | string;
   page_id: string; messages: Message[]; last_message: string; last_time: string;
 }
+interface NavSubItem { label: string; link: string; }
+interface NavItem { label: string; link: string; children?: NavSubItem[]; }
+interface TestimonialItem { name: string; text: string; rating: number; }
+interface TestimonialBlock { type: 'testimonial'; enabled: boolean; title: string; items: TestimonialItem[]; }
+interface AboutBlock { type: 'about'; enabled: boolean; title: string; body: string; img: string; }
+type CustomBlock = TestimonialBlock | AboutBlock;
 interface WebsiteSettings {
   business_slug: string;
   slide1_img: string; slide1_tag: string; slide1_title: string; slide1_desc: string;
   slide2_img: string; slide2_tag: string; slide2_title: string; slide2_desc: string;
   slide3_img: string; slide3_tag: string; slide3_title: string; slide3_desc: string;
   footer_desc: string;
+  nav_menu: NavItem[];
+  custom_blocks: CustomBlock[];
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -127,6 +135,8 @@ const Dashboard = () => {
     slide2_img: '', slide2_tag: '', slide2_title: '', slide2_desc: '',
     slide3_img: '', slide3_tag: '', slide3_title: '', slide3_desc: '',
     footer_desc: '',
+    nav_menu: [],
+    custom_blocks: [],
   };
   const [showSettings,     setShowSettings]     = useState(false);
   const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
@@ -303,7 +313,13 @@ const Dashboard = () => {
       const res = await fetch(`${SETTINGS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
       const data = await res.json();
       if (data.success && data.settings) {
-        setWebsiteSettings({ ...data.settings, business_slug: currentSiteId });
+        setWebsiteSettings({
+          ...emptySettings,
+          ...data.settings,
+          business_slug: currentSiteId,
+          nav_menu: Array.isArray(data.settings.nav_menu) ? data.settings.nav_menu : [],
+          custom_blocks: Array.isArray(data.settings.custom_blocks) ? data.settings.custom_blocks : [],
+        });
       }
     } catch {}
     setSettingsLoading(false);
@@ -311,6 +327,43 @@ const Dashboard = () => {
 
   const handleSettingsChange = (field: keyof WebsiteSettings, value: string) =>
     setWebsiteSettings(prev => ({ ...prev, [field]: value }));
+
+  // ── Navigation menu helpers ──
+  const addNavItem = () =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: [...prev.nav_menu, { label: '', link: '', children: [] }] }));
+  const removeNavItem = (idx: number) =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: prev.nav_menu.filter((_, i) => i !== idx) }));
+  const updateNavItem = (idx: number, field: 'label' | 'link', value: string) =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: prev.nav_menu.map((it, i) => i === idx ? { ...it, [field]: value } : it) }));
+  const addSubItem = (idx: number) =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: prev.nav_menu.map((it, i) => i === idx ? { ...it, children: [...(it.children || []), { label: '', link: '' }] } : it) }));
+  const removeSubItem = (idx: number, subIdx: number) =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: prev.nav_menu.map((it, i) => i === idx ? { ...it, children: (it.children || []).filter((_, si) => si !== subIdx) } : it) }));
+  const updateSubItem = (idx: number, subIdx: number, field: 'label' | 'link', value: string) =>
+    setWebsiteSettings(prev => ({ ...prev, nav_menu: prev.nav_menu.map((it, i) => i === idx ? { ...it, children: (it.children || []).map((c, si) => si === subIdx ? { ...c, [field]: value } : c) } : it) }));
+
+  // ── Extra sections (testimonial / about) helpers ──
+  const getTestimonialBlock = (): TestimonialBlock =>
+    (websiteSettings.custom_blocks.find(b => b.type === 'testimonial') as TestimonialBlock) || { type: 'testimonial', enabled: false, title: '', items: [] };
+  const getAboutBlock = (): AboutBlock =>
+    (websiteSettings.custom_blocks.find(b => b.type === 'about') as AboutBlock) || { type: 'about', enabled: false, title: '', body: '', img: '' };
+  const setBlock = (block: CustomBlock) =>
+    setWebsiteSettings(prev => {
+      const rest = prev.custom_blocks.filter(b => b.type !== block.type);
+      return { ...prev, custom_blocks: [...rest, block] };
+    });
+  const addTestimonialItem = () => {
+    const b = getTestimonialBlock();
+    setBlock({ ...b, items: [...b.items, { name: '', text: '', rating: 5 }] });
+  };
+  const removeTestimonialItem = (idx: number) => {
+    const b = getTestimonialBlock();
+    setBlock({ ...b, items: b.items.filter((_, i) => i !== idx) });
+  };
+  const updateTestimonialItem = (idx: number, field: keyof TestimonialItem, value: string) => {
+    const b = getTestimonialBlock();
+    setBlock({ ...b, items: b.items.map((it, i) => i === idx ? { ...it, [field]: field === 'rating' ? (parseInt(value) || 5) : value } : it) });
+  };
 
   const handleSettingsImageUpload = async (field: keyof WebsiteSettings, file: File | null) => {
     if (!file) return;
@@ -669,8 +722,8 @@ const Dashboard = () => {
                             <div key={n} style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
                               <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>স্লাইড {n}</p>
                               <FormField label="ছবি">
-                                {websiteSettings[imgField] && (
-                                  <img src={websiteSettings[imgField]} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
+                                {String(websiteSettings[imgField] || '') && (
+                                  <img src={String(websiteSettings[imgField] || '')} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
                                 )}
                                 <input type="file" accept="image/*"
                                   onChange={e => handleSettingsImageUpload(imgField, e.target.files?.[0] || null)}
@@ -678,15 +731,15 @@ const Dashboard = () => {
                                 {settingsUploading === imgField && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>আপলোড হচ্ছে...</p>}
                               </FormField>
                               <FormField label="ট্যাগ (ছোট লেখা)">
-                                <input type="text" placeholder="যেমন: নতুন কালেকশন" value={websiteSettings[tagField]}
+                                <input type="text" placeholder="যেমন: নতুন কালেকশন" value={String(websiteSettings[tagField] || '')}
                                   onChange={e => handleSettingsChange(tagField, e.target.value)} style={inputStyle} />
                               </FormField>
                               <FormField label="টাইটেল">
-                                <input type="text" placeholder="যেমন: সেরা মানের পণ্য" value={websiteSettings[titleField]}
+                                <input type="text" placeholder="যেমন: সেরা মানের পণ্য" value={String(websiteSettings[titleField] || '')}
                                   onChange={e => handleSettingsChange(titleField, e.target.value)} style={inputStyle} />
                               </FormField>
                               <FormField label="ডেসক্রিপশন">
-                                <input type="text" placeholder="ছোট বিবরণ লিখুন" value={websiteSettings[descField]}
+                                <input type="text" placeholder="ছোট বিবরণ লিখুন" value={String(websiteSettings[descField] || '')}
                                   onChange={e => handleSettingsChange(descField, e.target.value)} style={inputStyle} />
                               </FormField>
                             </div>
@@ -697,6 +750,68 @@ const Dashboard = () => {
                             onChange={e => handleSettingsChange('footer_desc', e.target.value)}
                             style={{ ...inputStyle, height: '70px' }} placeholder="আপনার দোকান সম্পর্কে ছোট লেখা..." />
                         </FormField>
+
+                        {/* ── Navigation Menu ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>উপরের মেনুর আইটেম — চাইলে সাব-মেনুও (Men → Shirt, Pant) যোগ করতে পারবেন।</p>
+                          {websiteSettings.nav_menu.map((item, idx) => (
+                            <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
+                              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                <input type="text" placeholder="মেনুর নাম" value={item.label} onChange={e => updateNavItem(idx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                                <input type="text" placeholder="লিংক (ঐচ্ছিক)" value={item.link} onChange={e => updateNavItem(idx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                                <button onClick={() => removeNavItem(idx)} style={{ padding: '0 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>মুছুন</button>
+                              </div>
+                              {(item.children || []).map((sub, subIdx) => (
+                                <div key={subIdx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', paddingLeft: '16px' }}>
+                                  <input type="text" placeholder="সাব-আইটেম নাম" value={sub.label} onChange={e => updateSubItem(idx, subIdx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
+                                  <input type="text" placeholder="লিংক (ঐচ্ছিক)" value={sub.link} onChange={e => updateSubItem(idx, subIdx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
+                                  <button onClick={() => removeSubItem(idx, subIdx)} style={{ padding: '0 8px', background: 'transparent', color: '#ff5c5c', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                                </div>
+                              ))}
+                              <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#7c5cff', border: '1px dashed #7c5cff44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ সাব-আইটেম</button>
+                            </div>
+                          ))}
+                          <button onClick={addNavItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ মেনু আইটেম যোগ করুন</button>
+                        </div>
+
+                        {/* ── Testimonials ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>গ্রাহকের মতামত (Testimonials)</p>
+                          <Toggle label="এই সেকশন দেখাও" desc="সাইটে গ্রাহকের মতামত সেকশন চালু/বন্ধ করুন" value={getTestimonialBlock().enabled} onChange={v => setBlock({ ...getTestimonialBlock(), enabled: v })} />
+                          <div style={{ height: '12px' }} />
+                          <FormField label="সেকশনের টাইটেল">
+                            <input type="text" placeholder="What Our Customers Say" value={getTestimonialBlock().title} onChange={e => setBlock({ ...getTestimonialBlock(), title: e.target.value })} style={inputStyle} />
+                          </FormField>
+                          {getTestimonialBlock().items.map((it, idx) => (
+                            <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
+                              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                <input type="text" placeholder="গ্রাহকের নাম" value={it.name} onChange={e => updateTestimonialItem(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
+                                <input type="number" placeholder="রেটিং" min={1} max={5} value={it.rating} onChange={e => updateTestimonialItem(idx, 'rating', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                              </div>
+                              <textarea placeholder="মতামত লিখুন" value={it.text} onChange={e => updateTestimonialItem(idx, 'text', e.target.value)} style={{ ...inputStyle, height: '50px', marginBottom: '8px' }} />
+                              <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>মুছুন</button>
+                            </div>
+                          ))}
+                          <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ মতামত যোগ করুন</button>
+                        </div>
+
+                        {/* ── About / Our Story ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>আমাদের গল্প (About)</p>
+                          <Toggle label="এই সেকশন দেখাও" desc="সাইটে 'আমাদের গল্প' সেকশন চালু/বন্ধ করুন" value={getAboutBlock().enabled} onChange={v => setBlock({ ...getAboutBlock(), enabled: v })} />
+                          <div style={{ height: '12px' }} />
+                          <FormField label="টাইটেল">
+                            <input type="text" value={getAboutBlock().title} onChange={e => setBlock({ ...getAboutBlock(), title: e.target.value })} style={inputStyle} />
+                          </FormField>
+                          <FormField label="লেখা">
+                            <textarea value={getAboutBlock().body} onChange={e => setBlock({ ...getAboutBlock(), body: e.target.value })} style={{ ...inputStyle, height: '70px' }} />
+                          </FormField>
+                          <FormField label="ছবির লিংক">
+                            <input type="text" value={getAboutBlock().img} onChange={e => setBlock({ ...getAboutBlock(), img: e.target.value })} style={inputStyle} />
+                          </FormField>
+                        </div>
+
                         <button onClick={handleSaveSettings} disabled={settingsSaving}
                           style={btnStyle(settingsSaved ? '#c8ff5c' : '#7c5cff', settingsSaved ? '#06070a' : 'white')}>
                           {settingsSaving ? '⏳ Save হচ্ছে...' : settingsSaved ? '✅ Save হয়েছে!' : '💾 Save করুন'}
