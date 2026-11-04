@@ -652,6 +652,27 @@ const Dashboard = () => {
               padding: '12px', marginBottom: '20px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
           )}
 
+          <div onClick={() => setActiveTab('website')} style={{
+            background: 'linear-gradient(135deg,#7c5cff,#5b3ff0)', borderRadius: '16px', padding: '28px',
+            marginBottom: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
+          }}>
+            <div>
+              <div style={{ fontSize: '1.7rem', marginBottom: '8px' }}>🚀</div>
+              <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>
+                {websiteResult ? 'আপনার Website দেখুন ও এডিট করুন' : 'আপনার Website বানান'}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
+                {websiteResult ? 'স্লাইডার, পণ্য, মেনু — সব এখান থেকে ম্যানেজ করুন।' : 'কয়েক মিনিটে AI দিয়ে একটা সুন্দর website তৈরি করুন, বিনামূল্যে।'}
+              </div>
+            </div>
+            <button onClick={e => { e.stopPropagation(); setActiveTab('website'); }} style={{
+              padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
+              fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>
+              {websiteResult ? 'দেখুন →' : 'শুরু করুন →'}
+            </button>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px', marginBottom: '20px' }}>
             <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
               desc={connectedPage ? `${connectedPage} যুক্ত আছে।` : 'কমেন্ট ও Messenger-এ স্বয়ংক্রিয় উত্তর দিতে আপনার Facebook পেজ যুক্ত করুন।'}
