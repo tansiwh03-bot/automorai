@@ -767,18 +767,23 @@ const Dashboard = () => {
               {mySites.map(s => {
                 const isActive = s.business_slug === currentSiteId;
                 return (
-                  <button key={s.business_slug} onClick={() => {
+                  <div key={s.business_slug} onClick={() => {
                     setCurrentSiteId(s.business_slug);
                     try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
                     setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
                   }} style={{
-                    display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                    width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
                     background: isActive ? '#7c5cff22' : '#181b26', color: 'white',
                     border: isActive ? '1px solid #7c5cff' : '1px solid #262a38', borderRadius: '8px',
                     cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
                   }}>
-                    {isActive ? '✓ ' : ''}{s.business_name} <span style={{ color: '#8b90a3', fontWeight: 400 }}>— {s.website_url}</span>
-                  </button>
+                    <span>{isActive ? '✓ ' : ''}{s.business_name}</span>
+                    <a href={s.website_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      style={{ color: '#7c5cff', fontWeight: 400, fontSize: '0.8rem', whiteSpace: 'nowrap', textDecoration: 'underline' }}>
+                      Open ↗
+                    </a>
+                  </div>
                 );
               })}
             </div>
