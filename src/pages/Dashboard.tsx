@@ -102,12 +102,18 @@ const TaskCard = ({ icon, title, desc, action, done }: { icon: string; title: st
   </div>
 );
 
-const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div style={{ marginBottom: '16px' }}>
-    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.82rem', color: '#aab0c0', fontWeight: 600 }}>{label}</label>
-    {children}
-  </div>
-);
+const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  const isRequired = label.endsWith(' *');
+  const labelText = isRequired ? label.slice(0, -2) : label;
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.82rem', color: '#aab0c0', fontWeight: 600 }}>
+        {labelText}{isRequired && <span style={{ color: '#e5484d' }}> *</span>}
+      </label>
+      {children}
+    </div>
+  );
+};
 
 const Toggle = ({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContents: 'space-between', background: '#181b26', padding: '12px 16px', borderRadius: '10px' }}>
