@@ -42,6 +42,8 @@ interface WebsiteSettings {
   bkash_number: string;
   nagad_number: string;
   bank_details: string;
+  delivery_charge_dhaka: string;
+  delivery_charge_outside: string;
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -56,6 +58,7 @@ interface Order {
   selected_size: string; selected_color: string; quantity: number;
   customer_name: string; customer_phone: string; customer_address: string;
   payment_method: string; transaction_id: string; status: string;
+  delivery_location: string; delivery_charge: number;
   created_at: string;
 }
 
@@ -179,6 +182,8 @@ const Dashboard = () => {
     bkash_number: '',
     nagad_number: '',
     bank_details: '',
+    delivery_charge_dhaka: '',
+    delivery_charge_outside: '',
   };
   const [showSettings,     setShowSettings]     = useState(false);
   const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
@@ -1027,6 +1032,24 @@ const Dashboard = () => {
                           </FormField>
                         </div>
 
+                        {/* ── Delivery Charge ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Delivery Charge</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                            Customers pick Dhaka or Outside Dhaka at checkout and this charge is added to their total automatically. Defaults to ৳60 / ৳120 if left blank.
+                          </p>
+                          <div style={{ display: 'flex', gap: '12px' }}>
+                            <FormField label="Dhaka (৳)">
+                              <input type="number" placeholder="60" value={websiteSettings.delivery_charge_dhaka}
+                                onChange={e => handleSettingsChange('delivery_charge_dhaka', e.target.value)} style={inputStyle} />
+                            </FormField>
+                            <FormField label="Outside Dhaka (৳)">
+                              <input type="number" placeholder="120" value={websiteSettings.delivery_charge_outside}
+                                onChange={e => handleSettingsChange('delivery_charge_outside', e.target.value)} style={inputStyle} />
+                            </FormField>
+                          </div>
+                        </div>
+
                         {/* ── Navigation Menu ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
                           <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
@@ -1286,12 +1309,16 @@ const Dashboard = () => {
                         <div>{o.customer_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.customer_phone}</div>
                         <div style={{ fontSize: '0.7rem', color: '#666' }}>{o.customer_address}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#8b90a3' }}>{o.delivery_location === 'outside' ? '🚴 Outside Dhaka' : '🚴 Dhaka'}</div>
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div>{paymentLabels[o.payment_method] || o.payment_method}</div>
                         {o.transaction_id && <div style={{ fontSize: '0.72rem', color: '#c8ff5c' }}>TrxID: {o.transaction_id}</div>}
                       </td>
-                      <td style={{ padding: '12px', fontWeight: 700, color: '#7c5cff' }}>৳{o.product_price * o.quantity}</td>
+                      <td style={{ padding: '12px', fontWeight: 700, color: '#7c5cff' }}>
+                        ৳{o.product_price * o.quantity + (o.delivery_charge || 0)}
+                        <div style={{ fontSize: '0.68rem', color: '#8b90a3', fontWeight: 400 }}>incl. ৳{o.delivery_charge || 0} delivery</div>
+                      </td>
                       <td style={{ padding: '12px' }}>
                         <select value={o.status} onChange={e => handleUpdateOrderStatus(o.id, e.target.value)}
                           style={{ background: '#1e2130', color: statusColors[o.status] || 'white', border: '1px solid #262a38', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', cursor: 'pointer' }}>
