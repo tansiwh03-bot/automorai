@@ -56,7 +56,7 @@ interface Product {
 interface Order {
   id: string; site_id: string; product_title: string; product_price: number;
   selected_size: string; selected_color: string; quantity: number;
-  customer_name: string; customer_phone: string; customer_address: string;
+  customer_name: string; customer_phone: string; customer_email: string; customer_address: string;
   payment_method: string; transaction_id: string; status: string;
   delivery_location: string; delivery_charge: number;
   created_at: string;
@@ -1318,6 +1318,7 @@ const Dashboard = () => {
                       <td style={{ padding: '12px' }}>
                         <div>{o.customer_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.customer_phone}</div>
+                        {o.customer_email && <div style={{ fontSize: '0.72rem', color: '#8b90a3' }}>{o.customer_email}</div>}
                         <div style={{ fontSize: '0.7rem', color: '#666' }}>{o.customer_address}</div>
                         <div style={{ fontSize: '0.7rem', color: '#8b90a3' }}>{o.delivery_location === 'outside' ? '🚴 Outside Dhaka' : '🚴 Dhaka'}</div>
                       </td>
