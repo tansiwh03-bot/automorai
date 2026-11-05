@@ -249,18 +249,17 @@ const Dashboard = () => {
   // instead of showing "Build Your Website" to someone who already has one.
   const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string }[]>([]);
   useEffect(() => {
-    if (currentSiteId || !user?.email) return;
+    if (!user?.email) return;
     fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`)
       .then(res => res.json())
       .then(data => {
         const sites = data.sites || [];
-        if (sites.length === 1) {
+        setMySites(sites);
+        if (!currentSiteId && sites.length === 1) {
           const s = sites[0];
           setCurrentSiteId(s.business_slug);
           try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
           setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
-        } else if (sites.length > 1) {
-          setMySites(sites);
         }
       })
       .catch(() => {});
@@ -760,22 +759,28 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {!websiteResult && mySites.length > 1 && (
+          {mySites.length > 1 && (
             <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-              <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>You have {mySites.length} websites — which one do you want to manage?</p>
-              {mySites.map(s => (
-                <button key={s.business_slug} onClick={() => {
-                  setCurrentSiteId(s.business_slug);
-                  try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
-                  setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
-                }} style={{
-                  display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
-                  background: '#181b26', color: 'white', border: '1px solid #262a38', borderRadius: '8px',
-                  cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
-                }}>
-                  {s.business_name} <span style={{ color: '#8b90a3', fontWeight: 400 }}>— {s.website_url}</span>
-                </button>
-              ))}
+              <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>
+                {websiteResult ? `You have ${mySites.length} websites — switch between them:` : `You have ${mySites.length} websites — which one do you want to manage?`}
+              </p>
+              {mySites.map(s => {
+                const isActive = s.business_slug === currentSiteId;
+                return (
+                  <button key={s.business_slug} onClick={() => {
+                    setCurrentSiteId(s.business_slug);
+                    try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
+                    setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
+                  }} style={{
+                    display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
+                    background: isActive ? '#7c5cff22' : '#181b26', color: 'white',
+                    border: isActive ? '1px solid #7c5cff' : '1px solid #262a38', borderRadius: '8px',
+                    cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
+                  }}>
+                    {isActive ? '✓ ' : ''}{s.business_name} <span style={{ color: '#8b90a3', fontWeight: 400 }}>— {s.website_url}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
