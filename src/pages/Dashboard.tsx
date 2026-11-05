@@ -10,6 +10,8 @@ const REPLY_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox/reply';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
 const WEBSITE_UPDATE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/update-website-template';
 const MY_WEBSITES_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-websites';
+const ORDERS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orders';
+const ORDER_STATUS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orders/update-status';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
@@ -37,6 +39,9 @@ interface WebsiteSettings {
   logo_img: string;
   nav_menu: NavItem[];
   custom_blocks: CustomBlock[];
+  bkash_number: string;
+  nagad_number: string;
+  bank_details: string;
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -171,6 +176,9 @@ const Dashboard = () => {
     logo_img: '',
     nav_menu: [],
     custom_blocks: [],
+    bkash_number: '',
+    nagad_number: '',
+    bank_details: '',
   };
   const [showSettings,     setShowSettings]     = useState(false);
   const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
@@ -325,11 +333,9 @@ const Dashboard = () => {
   const loadOrders = async () => {
     setOrdersLoading(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?site_id=eq.${currentSiteId}&order=created_at.desc`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      });
+      const res = await fetch(`${ORDERS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      setOrders(data.success && Array.isArray(data.orders) ? data.orders : []);
     } catch { setOrders([]); }
     setOrdersLoading(false);
   };
@@ -540,10 +546,10 @@ const Dashboard = () => {
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ status }),
+      await fetch(ORDER_STATUS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, status }),
       });
       loadOrders();
     } catch {}
@@ -630,7 +636,7 @@ const Dashboard = () => {
   const statusColors: Record<string, string> = {
     pending: '#ffb84c', confirmed: '#7c5cff', shipped: '#0099FF', delivered: '#25D366', cancelled: '#ff5c5c'
   };
-  const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad' };
+  const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad', bank: '🏦 Bank Transfer' };
 
   const niches = [
     { value: 'kids_wear', label: '👶 Kids Wear' }, { value: 'clothing', label: '👗 Fashion / Clothing' },
@@ -999,6 +1005,27 @@ const Dashboard = () => {
                             onChange={e => handleSettingsChange('footer_desc', e.target.value)}
                             style={{ ...inputStyle, height: '70px' }} placeholder="A short note about your shop..." />
                         </FormField>
+
+                        {/* ── Payment Methods ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Payment Methods</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                            Customers can pay by Cash on Delivery, bKash, Nagad, or Bank Transfer. Fill in the numbers/details below for the ones you accept — leave blank to hide that option's details (customers can still select it, but will not see where to send money).
+                          </p>
+                          <FormField label="bKash Number">
+                            <input type="text" placeholder="e.g. 01712345678" value={websiteSettings.bkash_number}
+                              onChange={e => handleSettingsChange('bkash_number', e.target.value)} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Nagad Number">
+                            <input type="text" placeholder="e.g. 01712345678" value={websiteSettings.nagad_number}
+                              onChange={e => handleSettingsChange('nagad_number', e.target.value)} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Bank Details">
+                            <textarea value={websiteSettings.bank_details}
+                              onChange={e => handleSettingsChange('bank_details', e.target.value)}
+                              style={{ ...inputStyle, height: '60px' }} placeholder="Bank name, account number, account name..." />
+                          </FormField>
+                        </div>
 
                         {/* ── Navigation Menu ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
