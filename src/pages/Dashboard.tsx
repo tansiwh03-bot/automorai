@@ -8,6 +8,7 @@ const CONFIG_ID = '1766373457898596';
 const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
 const REPLY_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox/reply';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
+const WEBSITE_UPDATE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/update-website-template';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
@@ -155,6 +156,8 @@ const Dashboard = () => {
   const [websiteBuilding,  setWebsiteBuilding]  = useState(false);
   const [websiteResult,    setWebsiteResult]    = useState<{ url: string; business_name: string; site_id?: string } | null>(null);
   const [websiteError,     setWebsiteError]     = useState('');
+  const [websiteUpdating,  setWebsiteUpdating]  = useState(false);
+  const [websiteUpdateMsg, setWebsiteUpdateMsg] = useState('');
   const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
 
   // Website Settings (slider + footer) state
@@ -569,6 +572,27 @@ const Dashboard = () => {
     setWebsiteBuilding(false);
   };
 
+  const handleUpdateWebsite = async () => {
+    if (!currentSiteId) return;
+    if (!confirm('Update this website to the latest design and features? Your products and settings stay exactly as they are — only the site’s look and features get refreshed.')) return;
+    setWebsiteUpdating(true); setWebsiteUpdateMsg('');
+    try {
+      const res = await fetch(WEBSITE_UPDATE_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_slug: currentSiteId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWebsiteUpdateMsg('Updated! Your website now has the latest design and features.');
+      } else {
+        setWebsiteUpdateMsg('Could not update the website. Please try again.');
+      }
+    } catch {
+      setWebsiteUpdateMsg('Connection error. Please try again.');
+    }
+    setWebsiteUpdating(false);
+  };
+
   const formatTime = (ts: string) => {
     if (!ts) return '';
     try {
@@ -856,6 +880,13 @@ const Dashboard = () => {
                   style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   ⚙️ Slider and Footer Settings {showSettings ? '▲' : '▼'}
                 </button>
+                <button onClick={handleUpdateWebsite} disabled={websiteUpdating}
+                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#22c55e22', color: '#22c55e', border: '1px solid #22c55e', borderRadius: '8px', cursor: websiteUpdating ? 'default' : 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                  {websiteUpdating ? 'Updating…' : '⬆️ Update to Latest Design'}
+                </button>
+                {websiteUpdateMsg && (
+                  <p style={{ fontSize: '0.8rem', color: websiteUpdateMsg.startsWith('Updated') ? '#22c55e' : '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{websiteUpdateMsg}</p>
+                )}
                 <button onClick={() => {
                   if (!confirm('Build a new website? This switches the dashboard to a new site (your current site and its data stay as they are, you just won’t be managing it from here anymore).')) return;
                   try { localStorage.removeItem('automorai_site_id'); } catch {}
