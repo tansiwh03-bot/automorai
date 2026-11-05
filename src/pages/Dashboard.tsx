@@ -856,6 +856,16 @@ const Dashboard = () => {
                   style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   ⚙️ Slider and Footer Settings {showSettings ? '▲' : '▼'}
                 </button>
+                <button onClick={() => {
+                  if (!confirm('Build a new website? This switches the dashboard to a new site (your current site and its data stay as they are, you just won’t be managing it from here anymore).')) return;
+                  try { localStorage.removeItem('automorai_site_id'); } catch {}
+                  setCurrentSiteId('');
+                  setWebsiteResult(null);
+                  setShowSettings(false);
+                }}
+                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px dashed #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+                  + Build a new website
+                </button>
 
                 {showSettings && (
                   <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '20px' }}>
