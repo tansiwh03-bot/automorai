@@ -27,6 +27,7 @@ const content = {
     ctaBtn: "Get Started Free →",
     footer: "© 2026 Automorai. Built in Dhaka, Bangladesh.",
     features: [
+      { icon: "🛍️", title: "Website Builder", desc: "Get a full online store built for you in minutes — products, cart, checkout, payment and delivery, all set up." },
       { icon: "💬", title: "Website Chat Widget", desc: "Add an AI chat bubble to your website — visitors can chat and get instant replies." },
       { icon: "📱", title: "WhatsApp Auto-Reply", desc: "AI instantly replies to WhatsApp messages — handles prices, stock, and orders." },
       { icon: "🤖", title: "Facebook Auto-Reply", desc: "AI replies to Facebook comments and Messenger 24/7. No manual work needed." },
@@ -46,8 +47,8 @@ const content = {
         name: "Pro",
         price: "৳2,499",
         period: "/month",
-        desc: "For most businesses",
-        features: ["All Starter features", "WhatsApp Auto-Reply", "Messenger Auto-Reply", "Image & Voice Recognition", "Unified Inbox", "Priority Support"],
+        desc: "Get your own website — Unified Inbox and Analytics included",
+        features: ["Full Website + Online Store (included free)", "Unified Inbox — all channels in one place", "Pixel & Analytics Dashboard", "WhatsApp Auto-Reply", "Messenger Auto-Reply", "Image & Voice Recognition", "Priority Support"],
         highlighted: true,
       },
       {
@@ -85,6 +86,7 @@ const content = {
     ctaBtn: "Free তে শুরু করুন →",
     footer: "© 2026 Automorai. Built in Dhaka, Bangladesh.",
     features: [
+      { icon: "🛍️", title: "Website Builder", desc: "কয়েক মিনিটে পুরো একটা অনলাইন দোকান তৈরি করে দেওয়া হয় — পণ্য, কার্ট, চেকআউট, পেমেন্ট ও ডেলিভারি, সব রেডি।" },
       { icon: "💬", title: "Website Chat Widget", desc: "আপনার website এ AI chat bubble বসান — visitor রা সরাসরি chat করতে পারবে, AI instantly reply করবে।" },
       { icon: "📱", title: "WhatsApp Auto-Reply", desc: "WhatsApp এ customer message করলে AI তাৎক্ষণিক reply করে। পণ্যের দাম, stock, order — সব handle করে।" },
       { icon: "🤖", title: "Facebook Auto-Reply", desc: "Facebook comment ও Messenger এ AI 24/7 reply করে। কোনো manual কাজ নাই।" },
@@ -104,8 +106,8 @@ const content = {
         name: "Pro",
         price: "৳2,499",
         period: "/মাস",
-        desc: "বেশিরভাগ ব্যবসার জন্য",
-        features: ["সব Starter features", "WhatsApp Auto-Reply", "Messenger Auto-Reply", "Image & Voice Recognition", "Unified Inbox", "Priority Support"],
+        desc: "নিজের ওয়েবসাইট পাবেন — সাথে Unified Inbox ও Analytics ফ্রি",
+        features: ["সম্পূর্ণ Website + অনলাইন দোকান (ফ্রি সহ)", "Unified Inbox — সব চ্যানেল এক জায়গায়", "Pixel ও Analytics Dashboard", "WhatsApp Auto-Reply", "Messenger Auto-Reply", "Image & Voice Recognition", "Priority Support"],
         highlighted: true,
       },
       {
