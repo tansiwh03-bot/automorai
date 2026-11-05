@@ -650,14 +650,14 @@ const Dashboard = () => {
 
       {/* ── Sidebar ── */}
       <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ background: '#0d0e14', borderRight: '1px solid #1e2130',
-        display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto' }}>
         <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
           <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
             display: 'none', background: 'transparent', border: 'none', color: '#8b90a3', fontSize: '1.3rem', cursor: 'pointer',
           }}>✕</button>
         </div>
-        <div style={{ flex: 1, padding: '0 12px', overflowY: 'auto' }}>
+        <div style={{ flex: '1 0 auto', padding: '0 12px' }}>
           {navTabs.map(tab => (
             <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
               display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
