@@ -211,6 +211,7 @@ const Dashboard = () => {
   const [products,        setProducts]        = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [showAddProduct,  setShowAddProduct]  = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productForm,     setProductForm]     = useState<Omit<Product, 'product_id' | 'is_active'>>({
     business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0,
     images: [], sizes: [], colors: [], stock: 10,
@@ -356,19 +357,33 @@ const Dashboard = () => {
     if (!currentSiteId) { setProductError('Create a website first'); return; }
     setProductSaving(true); setProductError('');
     try {
-      const res = await fetch(`${PRODUCTS_API}/add`, {
+      const url = editingProductId ? `${PRODUCTS_API}/update` : `${PRODUCTS_API}/add`;
+      const body = editingProductId
+        ? { ...productForm, product_id: editingProductId, business_slug: currentSiteId }
+        : { ...productForm, business_slug: currentSiteId };
+      const res = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...productForm, business_slug: currentSiteId }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {
         setShowAddProduct(false);
+        setEditingProductId(null);
         setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 });
         setSizeInput(''); setColorInput(''); setImageInput('');
         loadProducts();
       } else { setProductError('Could not save. Please try again.'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
+  };
+
+  const handleEditProduct = (p: Product) => {
+    setEditingProductId(p.product_id || null);
+    setProductForm({
+      business_slug: currentSiteId, title: p.title, description: p.description || '', category: p.category || '',
+      price: p.price, original_price: p.original_price || 0, images: p.images || [], sizes: p.sizes || [], colors: p.colors || [], stock: p.stock,
+    });
+    setShowAddProduct(true);
   };
 
   const handleSendReply = async () => {
@@ -1191,17 +1206,17 @@ const Dashboard = () => {
                   🗑️ Remove all sample products
                 </button>
               )}
-              <button onClick={() => setShowAddProduct(true)} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
+              <button onClick={() => { setEditingProductId(null); setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 }); setShowAddProduct(true); }} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
                 + Add Product
               </button>
             </div>
           </div>
 
-          {/* Add Product Modal */}
+          {/* Add/Edit Product Modal */}
           {showAddProduct && (
             <div style={{ fixed: 'inset-0', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99, padding: '20px' }}>
               <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#7c5cff' }}>Add New Product</h3>
+                <h3 style={{ margin: '0 0 16px', color: '#7c5cff' }}>{editingProductId ? 'Edit Product' : 'Add New Product'}</h3>
                 {productError && <div style={{ color: '#ff5c5c', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
                 
                 <FormField label="Title *">
@@ -1281,9 +1296,9 @@ const Dashboard = () => {
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                   <button onClick={handleSaveProduct} disabled={productSaving} style={{ ...btnStyle('#7c5cff', 'white'), flex: 1, margin: 0 }}>
-                    {productSaving ? 'Saving...' : 'Save Product'}
+                    {productSaving ? 'Saving...' : (editingProductId ? 'Update Product' : 'Save Product')}
                   </button>
-                  <button onClick={() => setShowAddProduct(false)} style={{ ...btnStyle('#262a38', '#8b90a3'), flex: 1, margin: 0 }}>Cancel</button>
+                  <button onClick={() => { setShowAddProduct(false); setEditingProductId(null); }} style={{ ...btnStyle('#262a38', '#8b90a3'), flex: 1, margin: 0 }}>Cancel</button>
                 </div>
               </div>
             </div>
@@ -1307,7 +1322,10 @@ const Dashboard = () => {
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
                     <div style={{ color: '#7c5cff', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
                     <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
-                    <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ width: '100%', marginTop: '10px', padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <button onClick={() => handleEditProduct(p)} style={{ flex: 1, padding: '6px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
+                      <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ flex: 1, padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                    </div>
                   </div>
                 </div>
               ))}
