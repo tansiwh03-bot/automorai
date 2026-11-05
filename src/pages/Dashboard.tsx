@@ -1257,6 +1257,24 @@ const Dashboard = () => {
                   </div>
                 </FormField>
 
+                <FormField label="Colors (optional)">
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    {productForm.colors.map(c => (
+                      <span key={c} style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: '#7c5cff', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {c}
+                        <span onClick={() => setProductForm(p => ({ ...p, colors: p.colors.filter(x => x !== c) }))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input type="text" value={colorInput} onChange={e => setColorInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
+                      placeholder="e.g. Red, Blue, Black" style={inputStyle} />
+                    <button onClick={() => { if (colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
+                      style={{ padding: '0 12px', background: '#262a38', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Add</button>
+                  </div>
+                </FormField>
+
                 <FormField label="Stock Quantity">
                   <input type="number" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} style={inputStyle} />
                 </FormField>
