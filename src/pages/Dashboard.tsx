@@ -9,6 +9,7 @@ const INBOX_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox';
 const REPLY_API = 'https://n8n2.kingpurefood.com/webhook/automorai/inbox/reply';
 const WEBSITE_BUILDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/build-website-template';
 const WEBSITE_UPDATE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/update-website-template';
+const MY_WEBSITES_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-websites';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
@@ -229,6 +230,29 @@ const Dashboard = () => {
       site_id: currentSiteId,
     });
   }, [currentSiteId, websiteResult]);
+
+  // localStorage only remembers a site on the browser/device that built it. If this browser
+  // has no site reference but the account does (on the backend, keyed by user_id), look it up
+  // instead of showing "Build Your Website" to someone who already has one.
+  const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string }[]>([]);
+  useEffect(() => {
+    if (currentSiteId || !user?.email) return;
+    fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`)
+      .then(res => res.json())
+      .then(data => {
+        const sites = data.sites || [];
+        if (sites.length === 1) {
+          const s = sites[0];
+          setCurrentSiteId(s.business_slug);
+          try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
+          setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
+        } else if (sites.length > 1) {
+          setMySites(sites);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, currentSiteId]);
 
   useEffect(() => {
     if (fbCode && !connectedPage && user) {
@@ -724,6 +748,25 @@ const Dashboard = () => {
               {websiteResult ? 'View →' : 'Get Started →'}
             </button>
           </div>
+
+          {!websiteResult && mySites.length > 1 && (
+            <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+              <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>You have {mySites.length} websites — which one do you want to manage?</p>
+              {mySites.map(s => (
+                <button key={s.business_slug} onClick={() => {
+                  setCurrentSiteId(s.business_slug);
+                  try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
+                  setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
+                }} style={{
+                  display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
+                  background: '#181b26', color: 'white', border: '1px solid #262a38', borderRadius: '8px',
+                  cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
+                }}>
+                  {s.business_name} <span style={{ color: '#8b90a3', fontWeight: 400 }}>— {s.website_url}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px', marginBottom: '20px' }}>
             <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
