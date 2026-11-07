@@ -44,6 +44,9 @@ interface WebsiteSettings {
   bank_details: string;
   delivery_charge_dhaka: string;
   delivery_charge_outside: string;
+  return_policy: string;
+  shop_address: string;
+  shop_hours: string;
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -190,6 +193,9 @@ const Dashboard = () => {
     bank_details: '',
     delivery_charge_dhaka: '',
     delivery_charge_outside: '',
+    return_policy: '',
+    shop_address: '',
+    shop_hours: '',
   };
   const [showSettings,     setShowSettings]     = useState(false);
   const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
@@ -1079,6 +1085,27 @@ const Dashboard = () => {
                                 onChange={e => handleSettingsChange('delivery_charge_outside', e.target.value)} style={inputStyle} />
                             </FormField>
                           </div>
+                        </div>
+
+                        {/* ── Shop Info (used by the chat assistant) ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Shop Info</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                            Your chat assistant uses this to answer customer questions about your shop. Leave any field blank if it doesn't apply — the assistant will then honestly say it doesn't have that info instead of guessing.
+                          </p>
+                          <FormField label="Shop Address">
+                            <input type="text" placeholder="e.g. House 12, Road 5, Dhanmondi, Dhaka" value={websiteSettings.shop_address}
+                              onChange={e => handleSettingsChange('shop_address', e.target.value)} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Shop Hours">
+                            <input type="text" placeholder="e.g. Everyday 10am - 9pm" value={websiteSettings.shop_hours}
+                              onChange={e => handleSettingsChange('shop_hours', e.target.value)} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Return / Exchange / Warranty Policy">
+                            <textarea value={websiteSettings.return_policy}
+                              onChange={e => handleSettingsChange('return_policy', e.target.value)}
+                              style={{ ...inputStyle, height: '70px' }} placeholder="e.g. Exchange within 3 days with original tag. No cash refund, store credit only." />
+                          </FormField>
                         </div>
 
                         {/* ── Navigation Menu ── */}
