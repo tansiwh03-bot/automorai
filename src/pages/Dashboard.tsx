@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
+
+// Attaches the logged-in user's Supabase session token so backend endpoints can verify
+// the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
+const getAuthHeader = async (): Promise<Record<string, string>> => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const FACEBOOK_APP_ID = '1458889719428985';
 const REDIRECT_URI = 'https://automorai.com/dashboard';
@@ -340,7 +349,9 @@ const Dashboard = () => {
   const loadProducts = async () => {
     setProductsLoading(true);
     try {
-      const res = await fetch(`${PRODUCTS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
+      const res = await fetch(`${PRODUCTS_API}?business_slug=${encodeURIComponent(currentSiteId)}`, {
+        headers: await getAuthHeader(),
+      });
       const data = await res.json();
       setProducts(data.success && Array.isArray(data.products) ? data.products : []);
     } catch { setProducts([]); }
@@ -368,7 +379,7 @@ const Dashboard = () => {
         ? { ...productForm, product_id: editingProductId, business_slug: currentSiteId }
         : { ...productForm, business_slug: currentSiteId };
       const res = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -542,7 +553,9 @@ const Dashboard = () => {
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Delete this product?')) return;
     try {
-      await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(productId)}`, { method: 'DELETE' });
+      await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(productId)}`, {
+        method: 'DELETE', headers: await getAuthHeader(),
+      });
       loadProducts();
     } catch {}
   };
@@ -570,7 +583,11 @@ const Dashboard = () => {
     if (!confirm(`${samples.length} sample product(s) will be deleted. Are you sure?`)) return;
     for (const p of samples) {
       if (!p.product_id) continue;
-      try { await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(p.product_id)}`, { method: 'DELETE' }); } catch {}
+      try {
+        await fetch(`${PRODUCTS_API}/delete?product_id=${encodeURIComponent(p.product_id)}`, {
+          method: 'DELETE', headers: await getAuthHeader(),
+        });
+      } catch {}
     }
     loadProducts();
   };
