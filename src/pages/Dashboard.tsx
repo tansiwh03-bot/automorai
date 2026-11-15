@@ -438,7 +438,9 @@ const Dashboard = () => {
   const loadWebsiteSettings = async () => {
     setSettingsLoading(true);
     try {
-      const res = await fetch(`${SETTINGS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
+      const res = await fetch(`${SETTINGS_API}?business_slug=${encodeURIComponent(currentSiteId)}`, {
+        headers: await getAuthHeader(),
+      });
       const data = await res.json();
       if (data.success && data.settings) {
         setWebsiteSettings({
@@ -517,7 +519,7 @@ const Dashboard = () => {
     setSettingsSaving(true); setSettingsSaved(false);
     try {
       const res = await fetch(`${SETTINGS_API}/save`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({ ...websiteSettings, business_slug: currentSiteId }),
       });
       const data = await res.json();
