@@ -77,6 +77,7 @@ const TenderTrial = () => {
             <li>✅ ৭ দিন free — কোনো টাকা লাগবে না</li>
             <li>✅ আপনার নিজের ৩টা টেন্ডারে DEMO ডকুমেন্ট</li>
             <li>✅ কয়েক মিনিটেই ডকুমেন্ট আপনার Telegram-এ</li>
+            <li>✅ eGP ফর্ম bot নিজে fill করে — Demo bot-এ ভিডিও দেখুন</li>
             <li>✅ কোনো eGP password লাগবে না</li>
           </ul>
           <p className="text-xs text-gray-500 mt-6">
