@@ -54,22 +54,34 @@ const BuyPackage = () => {
     if (!screenshotFile) { setError('Upload a screenshot of the payment.'); return; }
 
     setSubmitting(true);
+    let screenshotUrl = '';
     try {
       setUploading(true);
       const ext = screenshotFile.name.split('.').pop();
       const fileName = `payment-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/product-images/${fileName}`, {
         method: 'POST',
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': screenshotFile.type },
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': screenshotFile.type || 'application/octet-stream' },
         body: screenshotFile,
       });
+      if (!uploadRes.ok) {
+        const t = await uploadRes.text().catch(() => '');
+        throw new Error(`Upload failed (${uploadRes.status}): ${t.slice(0, 200)}`);
+      }
+      screenshotUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
+    } catch (err: any) {
+      setError(`Screenshot upload failed: ${err?.message || err}`);
+      setSubmitting(false);
       setUploading(false);
-      if (!uploadRes.ok) throw new Error('Screenshot upload failed');
-      const screenshotUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
+      return;
+    }
+    setUploading(false);
 
+    try {
+      const headers = { 'Content-Type': 'application/json', ...(await getAuthHeader()) };
       const res = await fetch(PAYMENT_REQUEST_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        headers,
         body: JSON.stringify({
           business_name: businessName,
           package: pkg,
@@ -79,11 +91,13 @@ const BuyPackage = () => {
           screenshot_url: screenshotUrl,
         }),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error('Request failed');
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { throw new Error(`Bad response (${res.status}): ${text.slice(0, 200)}`); }
+      if (!data.success) throw new Error(data.error || `Request failed (${res.status})`);
       setSubmitted(true);
-    } catch (err) {
-      setError('Something went wrong. Please try again in a moment.');
+    } catch (err: any) {
+      setError(`Submission failed: ${err?.message || err}`);
     } finally {
       setSubmitting(false);
     }
