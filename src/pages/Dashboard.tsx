@@ -272,7 +272,7 @@ const Dashboard = () => {
   const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string }[]>([]);
   useEffect(() => {
     if (!user?.email) return;
-    fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`)
+    getAuthHeader().then(headers => fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`, { headers }))
       .then(res => res.json())
       .then(data => {
         const sites = data.sites || [];
@@ -664,7 +664,7 @@ const Dashboard = () => {
     setWebsiteUpdating(true); setWebsiteUpdateMsg('');
     try {
       const res = await fetch(WEBSITE_UPDATE_API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({ business_slug: currentSiteId }),
       });
       const data = await res.json();
