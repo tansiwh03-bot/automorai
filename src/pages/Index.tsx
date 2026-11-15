@@ -8,6 +8,7 @@ const content = {
     heroDesc: "Automorai handles your website, WhatsApp, and Facebook with AI — so your business runs even while you sleep.",
     getStarted: "Get Started Free",
     demo: "See Demo →",
+    tenderCta: "🏗️ eGP tender contractor? Try the Tender System free for 7 days →",
     usedBy: "Used by businesses worldwide",
     aiActive: "AI always active",
     replyTime: "reply time",
@@ -67,6 +68,7 @@ const content = {
     heroDesc: "Automorai আপনার website, WhatsApp, Facebook — সব জায়গায় AI দিয়ে customer দের সাথে কথা বলে। আপনি ঘুমালেও business চলে।",
     getStarted: "Free তে শুরু করুন",
     demo: "Demo দেখুন →",
+    tenderCta: "🏗️ eGP টেন্ডার ঠিকাদার? Tender System ৭ দিন free দেখুন →",
     usedBy: "বাংলাদেশের ব্যবসায়ীরা ব্যবহার করছেন",
     aiActive: "AI সবসময় active",
     replyTime: "reply time",
@@ -186,6 +188,11 @@ const Index = () => {
           <a href="https://kingpurefood.com" target="_blank" rel="noopener noreferrer" className="inline-block px-8 py-3 rounded-md border border-gray-700 hover:border-purple-500 font-semibold transition">
             {t.demo}
           </a>
+        </div>
+        <div className="mt-6">
+          <Link to="/tender-trial" className="text-sm text-purple-300 hover:text-purple-200 underline underline-offset-4">
+            {t.tenderCta}
+          </Link>
         </div>
       </section>
 
