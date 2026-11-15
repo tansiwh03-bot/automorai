@@ -316,17 +316,21 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`https://n8n2.kingpurefood.com/webhook/automorai/inbox?user_id=${encodeURIComponent(user.email)}`)
-      .then(r => r.json()).then(data => { if (data.wa_page_ids?.length > 0) setWaPageId(data.wa_page_ids[0]); })
-      .catch(() => {});
+    getAuthHeader().then(headers =>
+      fetch(`https://n8n2.kingpurefood.com/webhook/automorai/inbox?user_id=${encodeURIComponent(user.email)}`, { headers })
+        .then(r => r.json()).then(data => { if (data.wa_page_ids?.length > 0) setWaPageId(data.wa_page_ids[0]); })
+        .catch(() => {})
+    );
   }, [user]);
 
   useEffect(() => {
     if (activeTab !== 'inbox' || !user) return;
     setInboxLoading(true); setInboxError('');
-    fetch(`${INBOX_API}?user_id=${encodeURIComponent(user.email)}`)
-      .then(r => r.json()).then(data => { setConversations(data.conversations || []); setInboxLoading(false); })
-      .catch(() => { setInboxError('Could not load conversations. Please try again.'); setInboxLoading(false); });
+    getAuthHeader().then(headers =>
+      fetch(`${INBOX_API}?user_id=${encodeURIComponent(user.email)}`, { headers })
+        .then(r => r.json()).then(data => { setConversations(data.conversations || []); setInboxLoading(false); })
+        .catch(() => { setInboxError('Could not load conversations. Please try again.'); setInboxLoading(false); })
+    );
   }, [activeTab, user]);
 
   useEffect(() => {
@@ -361,7 +365,9 @@ const Dashboard = () => {
   const loadOrders = async () => {
     setOrdersLoading(true);
     try {
-      const res = await fetch(`${ORDERS_API}?business_slug=${encodeURIComponent(currentSiteId)}`);
+      const res = await fetch(`${ORDERS_API}?business_slug=${encodeURIComponent(currentSiteId)}`, {
+        headers: await getAuthHeader(),
+      });
       const data = await res.json();
       setOrders(data.success && Array.isArray(data.orders) ? data.orders : []);
     } catch { setOrders([]); }
@@ -409,7 +415,7 @@ const Dashboard = () => {
     const messageToSend = replyText.trim();
     try {
       const res = await fetch(REPLY_API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           user_id: user.email,
           platform: selectedConversation.platform,
@@ -598,7 +604,7 @@ const Dashboard = () => {
     try {
       await fetch(ORDER_STATUS_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({ order_id: orderId, status }),
       });
       loadOrders();
