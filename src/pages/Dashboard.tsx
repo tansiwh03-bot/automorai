@@ -23,6 +23,7 @@ const ORDERS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orde
 const ORDER_STATUS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orders/update-status';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
+const MY_PACKAGE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-package';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -158,6 +159,7 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [packages, setPackages] = useState<string[]>(['automation']);
 
   // Home state
   const [commentReply,   setCommentReply]   = useState(true);
@@ -270,6 +272,15 @@ const Dashboard = () => {
   // has no site reference but the account does (on the backend, keyed by user_id), look it up
   // instead of showing "Build Your Website" to someone who already has one.
   const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string }[]>([]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    getAuthHeader().then(headers => fetch(MY_PACKAGE_API, { headers }))
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data.packages)) setPackages(data.packages); })
+      .catch(() => {});
+  }, [user]);
+
   useEffect(() => {
     if (!user?.email) return;
     getAuthHeader().then(headers => fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`, { headers }))
@@ -848,9 +859,15 @@ const Dashboard = () => {
             <TaskCard icon="💬" title="Connect WhatsApp Business"
               desc="Automatically chat with customers and show products on WhatsApp."
               action={{ label: 'Connect', onClick: handleWhatsAppConnect }} />
-            <TaskCard icon="📋" title="Connect Tender Automation"
-              desc="Enable automatic tender-related notifications."
-              action={{ label: 'Connect', onClick: handleTenderConnect }} />
+            {packages.includes('tender') ? (
+              <TaskCard icon="📋" title="Connect Tender Automation"
+                desc="Enable automatic tender-related notifications."
+                action={{ label: 'Connect', onClick: handleTenderConnect }} />
+            ) : (
+              <TaskCard icon="📋" title="Tender Automation"
+                desc="Separate package — ৳20,000 installation (covers 1st month), then ৳5,000/month."
+                action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=tender'; } }} />
+            )}
             <TaskCard icon="📊" title="Pixel and Analytics Setup"
               desc="Track visitor behavior with Facebook Pixel and Google Analytics."
               action={{ label: 'Setup', onClick: handlePixelGAConnect }} />

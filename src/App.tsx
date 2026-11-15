@@ -7,7 +7,8 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ConnectWhatsApp from './pages/ConnectWhatsApp';
 import ConnectTender from './pages/ConnectTender';
-import ConnectPixelGA from './pages/ConnectPixelGA'; 
+import ConnectPixelGA from './pages/ConnectPixelGA';
+import BuyPackage from './pages/BuyPackage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -57,6 +58,11 @@ const AppRoutes = () => {
       <Route path="/connect-pixel-ga" element={
         <ProtectedRoute>
           <ConnectPixelGA />
+        </ProtectedRoute>
+      } />
+      <Route path="/buy-package" element={
+        <ProtectedRoute>
+          <BuyPackage />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
