@@ -11,6 +11,7 @@ import ConnectPixelGA from './pages/ConnectPixelGA';
 import BuyPackage from './pages/BuyPackage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TenderTrial from './pages/TenderTrial';
+import TenderGuide from './pages/TenderGuide';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -40,6 +41,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/tender-trial" element={<TenderTrial />} />
+      <Route path="/tender-guide" element={<TenderGuide />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <Signup />} />
       <Route path="/dashboard" element={

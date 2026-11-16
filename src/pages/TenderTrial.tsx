@@ -83,6 +83,7 @@ const TenderTrial = () => {
           <p className="text-xs text-gray-500 mt-6">
             Trial-এর ডকুমেন্টে "DEMO" লেখা থাকে, জমা দেওয়া যায় না। কিনলে পরিষ্কার Word + PDF, নিজের প্যাড-সই-সিল সহ।
           </p>
+          <p className="text-sm mt-3"><Link to="/tender-guide" className="text-purple-400 hover:underline">দাম, কেনার পর চালু করার ধাপ আর শর্ত দেখুন →</Link></p>
         </section>
 
         <section className="rounded-xl border border-gray-800 bg-[#0f0f16] p-6">
