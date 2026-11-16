@@ -647,7 +647,7 @@ const Dashboard = () => {
     setWebsiteBuilding(true); setWebsiteError(''); setWebsiteResult(null);
     try {
       const res = await fetch(WEBSITE_BUILDER_API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           business_name: websiteForm.business_name,
           niche: websiteForm.niche,
@@ -664,7 +664,13 @@ const Dashboard = () => {
           try { localStorage.setItem('automorai_site_id', data.slug); } catch {}
           setProductForm(prev => ({ ...prev, business_slug: data.slug }));
         }
-      } else { setWebsiteError('Could not create website. Please try again.'); }
+      } else if (data.error_code === 'no_package') {
+        window.location.href = '/buy-package?package=automation';
+      } else if (data.error_code === 'limit_reached') {
+        setWebsiteError('You already have a website on this account. Contact support to add another.');
+      } else {
+        setWebsiteError('Could not create website. Please try again.');
+      }
     } catch { setWebsiteError('Connection error. Please try again.'); }
     setWebsiteBuilding(false);
   };
