@@ -24,6 +24,7 @@ const ORDER_STATUS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/websit
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const MY_PACKAGE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-package';
+const COURIER_SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier-settings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -215,6 +216,16 @@ const Dashboard = () => {
   const [settingsSaved,    setSettingsSaved]    = useState(false);
   const [settingsUploading, setSettingsUploading] = useState<string>(''); // holds which field is uploading, e.g. 'slide1_img'
 
+  // Courier (delivery) integration — account-level credentials, not per-site
+  const [courierProvider, setCourierProvider] = useState<'none' | 'steadfast' | 'pathao'>('none');
+  const [courierConfigured, setCourierConfigured] = useState<{ steadfast: boolean; pathao: boolean }>({ steadfast: false, pathao: false });
+  const [courierForm, setCourierForm] = useState({
+    steadfast_api_key: '', steadfast_secret_key: '',
+    pathao_client_id: '', pathao_client_secret: '', pathao_username: '', pathao_password: '',
+  });
+  const [courierSaving, setCourierSaving] = useState(false);
+  const [courierSaved, setCourierSaved] = useState(false);
+
   // Current site_id (from websiteResult or localStorage)
   const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
     try {
@@ -352,6 +363,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (activeTab !== 'website' || !currentSiteId || !showSettings) return;
     loadWebsiteSettings();
+    loadCourierSettings();
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
@@ -529,6 +541,37 @@ const Dashboard = () => {
       }
     } catch {}
     setSettingsUploading('');
+  };
+
+  const loadCourierSettings = async () => {
+    try {
+      const res = await fetch(COURIER_SETTINGS_API, { headers: await getAuthHeader() });
+      const data = await res.json();
+      if (data.success) {
+        setCourierProvider((data.provider as 'none' | 'steadfast' | 'pathao') || 'none');
+        setCourierConfigured({ steadfast: !!data.steadfast_configured, pathao: !!data.pathao_configured });
+      }
+    } catch {}
+  };
+
+  const handleCourierFormChange = (field: keyof typeof courierForm, value: string) =>
+    setCourierForm(prev => ({ ...prev, [field]: value }));
+
+  const handleSaveCourierSettings = async () => {
+    setCourierSaving(true); setCourierSaved(false);
+    try {
+      const res = await fetch(`${COURIER_SETTINGS_API}/save`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ provider: courierProvider, ...courierForm }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCourierSaved(true); setTimeout(() => setCourierSaved(false), 2500);
+        setCourierForm({ steadfast_api_key: '', steadfast_secret_key: '', pathao_client_id: '', pathao_client_secret: '', pathao_username: '', pathao_password: '' });
+        loadCourierSettings();
+      }
+    } catch {}
+    setCourierSaving(false);
   };
 
   const handleSaveSettings = async () => {
@@ -1133,6 +1176,62 @@ const Dashboard = () => {
                                 onChange={e => handleSettingsChange('delivery_charge_outside', e.target.value)} style={inputStyle} />
                             </FormField>
                           </div>
+                        </div>
+
+                        {/* ── Courier Integration ── */}
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
+                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Courier Integration</p>
+                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                            Connect your own Steadfast or Pathao courier account. Each business needs its own courier account (parcels are picked up from your own shop) — this just saves your credentials securely for now; automatic booking is coming soon.
+                          </p>
+                          <FormField label="Courier Provider">
+                            <select value={courierProvider} onChange={e => setCourierProvider(e.target.value as 'none' | 'steadfast' | 'pathao')} style={inputStyle}>
+                              <option value="none">Not connected</option>
+                              <option value="steadfast">Steadfast Courier</option>
+                              <option value="pathao">Pathao Courier</option>
+                            </select>
+                          </FormField>
+
+                          {courierProvider === 'steadfast' && (
+                            <>
+                              <FormField label={`Steadfast API Key${courierConfigured.steadfast ? ' (✓ saved — leave blank to keep)' : ''}`}>
+                                <input type="password" placeholder="API Key" value={courierForm.steadfast_api_key}
+                                  onChange={e => handleCourierFormChange('steadfast_api_key', e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="Steadfast Secret Key">
+                                <input type="password" placeholder="Secret Key" value={courierForm.steadfast_secret_key}
+                                  onChange={e => handleCourierFormChange('steadfast_secret_key', e.target.value)} style={inputStyle} />
+                              </FormField>
+                            </>
+                          )}
+
+                          {courierProvider === 'pathao' && (
+                            <>
+                              <FormField label={`Pathao Client ID${courierConfigured.pathao ? ' (✓ saved — leave blank to keep)' : ''}`}>
+                                <input type="password" placeholder="Client ID" value={courierForm.pathao_client_id}
+                                  onChange={e => handleCourierFormChange('pathao_client_id', e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="Pathao Client Secret">
+                                <input type="password" placeholder="Client Secret" value={courierForm.pathao_client_secret}
+                                  onChange={e => handleCourierFormChange('pathao_client_secret', e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="Pathao Username">
+                                <input type="text" placeholder="Merchant panel username/email" value={courierForm.pathao_username}
+                                  onChange={e => handleCourierFormChange('pathao_username', e.target.value)} style={inputStyle} />
+                              </FormField>
+                              <FormField label="Pathao Password">
+                                <input type="password" placeholder="Merchant panel password" value={courierForm.pathao_password}
+                                  onChange={e => handleCourierFormChange('pathao_password', e.target.value)} style={inputStyle} />
+                              </FormField>
+                            </>
+                          )}
+
+                          {courierProvider !== 'none' && (
+                            <button onClick={handleSaveCourierSettings} disabled={courierSaving}
+                              style={{ ...btnStyle(courierSaved ? '#c8ff5c' : '#7c5cff', courierSaved ? '#06070a' : 'white'), marginTop: '6px' }}>
+                              {courierSaving ? '⏳ Saving...' : courierSaved ? '✅ Saved!' : '💾 Save Courier Settings'}
+                            </button>
+                          )}
                         </div>
 
                         {/* ── Shop Info (used by the chat assistant) ── */}
