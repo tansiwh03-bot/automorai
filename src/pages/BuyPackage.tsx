@@ -15,9 +15,9 @@ const PACKAGE_INFO: Record<string, { name: string; amount: number; note: string 
     note: 'Installation charge (covers the first month). From the 2nd month, ৳5,000/month.',
   },
   automation: {
-    name: 'Automation (Website + Facebook + WhatsApp + Inbox + Analysis)',
-    amount: 2500,
-    note: '৳2,500/month.',
+    name: 'Automation — Business (Online shop + WhatsApp + Messenger AI + Inbox + Pixel/Analytics)',
+    amount: 2490,
+    note: '৳2,490/month.',
   },
 };
 
