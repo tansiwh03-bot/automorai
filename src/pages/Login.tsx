@@ -15,7 +15,7 @@ import {
   Button,
 } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -24,11 +24,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
     setLoading(true);
     try {
       const result = await login(email, password);
@@ -36,10 +38,10 @@ export default function Login() {
         toast.success('Logged in successfully!');
         navigate('/dashboard');
       } else {
-        toast.error(result.error || 'Login failed. Please check your email and password.');
+        setLoginError('These credentials do not match our records.');
       }
     } catch (err) {
-      toast.error('Login failed. Please check your email and password.');
+      setLoginError('These credentials do not match our records.');
     } finally {
       setLoading(false);
     }
@@ -80,10 +82,17 @@ export default function Login() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setLoginError(''); }}
                 required
                 disabled={loading}
+                className={loginError ? 'border-destructive focus-visible:ring-destructive' : ''}
               />
+              {loginError && (
+                <p className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle size={14} />
+                  {loginError}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -103,7 +112,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setLoginError(''); }}
                   required
                   disabled={loading}
                   className="pr-10"
