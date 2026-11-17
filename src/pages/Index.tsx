@@ -80,7 +80,7 @@ const content = {
     ],
     finalTitle: "আজই আপনার অনলাইন দোকান খুলুন",
     finalDesc: "account খোলা বিনামূল্যে। প্রশ্ন থাকলে WhatsApp-এ লিখুন।",
-    footer: { tag: "আপনি ঘুমান, ব্যবসা চলুক।", links: "লিংক", contact: "যোগাযোগ", privacy: "Privacy Policy", tenderGuide: "Tender System — গাইড ও শর্ত", tenderTrial: "Tender System ফ্রি trial", copy: "© ২০২৬ Automorai · ঢাকা, বাংলাদেশ" },
+    footer: { tag: "আপনি ঘুমান, ব্যবসা চলুক।", desc: "বাংলাদেশের দোকানদারদের জন্য অনলাইন দোকান আর AI উত্তর — Facebook, Messenger, WhatsApp এক জায়গায়।", product: "সেবা", company: "Automorai", contact: "যোগাযোগ", shop: "অনলাইন দোকান", ai: "AI উত্তর", pricing: "দাম", demo: "নমুনা দোকান", login: "লগইন", signup: "বিনামূল্যে শুরু", privacy: "Privacy Policy", pay: "পেমেন্ট", waCta: "WhatsApp-এ লিখুন", tm: "eGP টেন্ডার ঠিকাদার?", tmLink: "Tender Master BD দেখুন →", copy: "© ২০২৬ Automorai · ঢাকা, বাংলাদেশ" },
   },
   en: {
     nav: { login: "Log in", signup: "Get started" },
@@ -148,7 +148,7 @@ const content = {
     ],
     finalTitle: "Open your online shop today",
     finalDesc: "Creating an account is free. Questions? Message us on WhatsApp.",
-    footer: { tag: "You sleep, your business runs.", links: "Links", contact: "Contact", privacy: "Privacy Policy", tenderGuide: "Tender System — guide & terms", tenderTrial: "Tender System free trial", copy: "© 2026 Automorai · Dhaka, Bangladesh" },
+    footer: { tag: "You sleep, your business runs.", desc: "Online shop and AI replies for Bangladeshi sellers — Facebook, Messenger and WhatsApp in one place.", product: "Product", company: "Automorai", contact: "Contact", shop: "Online shop", ai: "AI replies", pricing: "Pricing", demo: "Sample shop", login: "Log in", signup: "Start free", privacy: "Privacy Policy", pay: "Payments", waCta: "Message on WhatsApp", tm: "eGP tender contractor?", tmLink: "See Tender Master BD →", copy: "© 2026 Automorai · Dhaka, Bangladesh" },
   },
 };
 
@@ -316,7 +316,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-800 antialiased overflow-x-hidden" style={font}>
+    <div id="top" className="min-h-screen bg-white text-slate-800 antialiased overflow-x-hidden" style={font}>
       <style>{`
         [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
         [data-reveal].am-in{opacity:1;transform:none}
@@ -496,21 +496,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Tender System */}
-      <section id="tender" className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-        <div data-reveal className="rounded-3xl bg-slate-900 text-white p-7 sm:p-12 grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <span className="inline-block text-sm font-medium text-amber-300 bg-white/10 rounded-full px-3 py-1 mb-4">{t.tender.tag}</span>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3">{t.tender.title}</h2>
-            <p className="text-slate-300 text-lg mb-6">{t.tender.desc}</p>
-            <ul className="space-y-3">{t.tender.points.map((x) => <li key={x} className="flex gap-3 text-slate-100"><Check c="text-amber-300 mt-0.5" />{x}</li>)}</ul>
-          </div>
-          <div className="lg:col-span-2 flex flex-col justify-center gap-4">
-            <p className="text-slate-300 text-sm leading-relaxed bg-white/5 rounded-xl p-4">{t.tender.price}</p>
-            <Link to="/tender-trial" className="text-center px-6 py-3.5 rounded-full bg-amber-400 text-slate-900 font-bold text-lg hover:bg-amber-300 transition">{t.tender.trial}</Link>
-            <Link to="/tender-guide" className="text-center text-slate-300 hover:text-white underline underline-offset-4">{t.tender.guide}</Link>
-          </div>
-        </div>
+      {/* Tender — its own brand now (tendermasterbd.com): one slim link only (user 2026-11-17) */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+        <a href="https://tendermasterbd.com" target="_blank" rel="noopener" data-reveal
+           className="am-lift flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl bg-slate-900 text-white px-6 py-5">
+          <span><span className="font-semibold text-amber-300">{t.footer.tm}</span> <span className="text-slate-300">{lang === "bn" ? "টেন্ডারের কাগজ মিনিটে, প্রতিদিনের নতুন টেন্ডার — আমাদের আলাদা সেবা।" : "Tender documents in minutes and daily new tenders — our separate service."}</span></span>
+          <span className="whitespace-nowrap font-semibold text-amber-300">{t.footer.tmLink}</span>
+        </a>
       </section>
 
       {/* FAQ */}
@@ -542,22 +534,51 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid sm:grid-cols-3 gap-8 text-sm">
-          <div><div className="text-xl font-bold text-slate-900">Automorai<span className="text-teal-600">.</span></div><p className="text-slate-600 mt-2">{t.footer.tag}</p></div>
-          <div><div className="font-semibold text-slate-900 mb-3">{t.footer.links}</div>
-            <ul className="space-y-2 text-slate-600">
-              <li><Link to="/privacy" className="hover:text-teal-700">{t.footer.privacy}</Link></li>
-              <li><Link to="/tender-guide" className="hover:text-teal-700">{t.footer.tenderGuide}</Link></li>
-              <li><Link to="/tender-trial" className="hover:text-teal-700">{t.footer.tenderTrial}</Link></li>
-            </ul></div>
-          <div><div className="font-semibold text-slate-900 mb-3">{t.footer.contact}</div>
-            <ul className="space-y-2 text-slate-600">
-              <li><a href={waLink("Hi Automorai")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-green-700"><WaIcon className="w-4 h-4" /> 01615-763484</a></li>
-              <li>tansiwh03@gmail.com</li>
-            </ul></div>
+      <footer className="bg-slate-950 text-slate-300">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-8">
+          <div className="grid gap-10 grid-cols-2 lg:grid-cols-12">
+            <div className="col-span-2 lg:col-span-4">
+              <div className="text-2xl font-bold text-white">Automorai<span className="text-teal-400">.</span></div>
+              <p className="mt-1 text-teal-300 font-medium">{t.footer.tag}</p>
+              <p className="mt-3 text-sm text-slate-400 max-w-sm">{t.footer.desc}</p>
+              <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer"
+                 className="mt-5 inline-flex items-center gap-2 rounded-full bg-green-600 px-5 py-2.5 font-semibold text-white hover:bg-green-500 transition"><WaIcon />{t.footer.waCta}</a>
+            </div>
+            <div className="lg:col-span-2">
+              <div className="font-semibold text-white mb-3">{t.footer.product}</div>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#top" className="hover:text-white">{t.footer.shop}</a></li>
+                <li><a href="#pricing" className="hover:text-white">{t.footer.pricing}</a></li>
+                <li><a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="hover:text-white">{t.footer.demo} ↗</a></li>
+              </ul>
+            </div>
+            <div className="lg:col-span-2">
+              <div className="font-semibold text-white mb-3">{t.footer.company}</div>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/signup" className="hover:text-white">{t.footer.signup}</Link></li>
+                <li><Link to="/login" className="hover:text-white">{t.footer.login}</Link></li>
+                <li><Link to="/privacy" className="hover:text-white">{t.footer.privacy}</Link></li>
+              </ul>
+            </div>
+            <div className="col-span-2 lg:col-span-4">
+              <div className="font-semibold text-white mb-3">{t.footer.contact}</div>
+              <ul className="space-y-2 text-sm">
+                <li><a href={waLink("Hi Automorai")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><WaIcon className="w-4 h-4" /> 01615-763484</a></li>
+                <li>tansiwh03@gmail.com</li>
+              </ul>
+              <div className="font-semibold text-white mt-6 mb-3">{t.footer.pay}</div>
+              <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-md bg-[#e2136e] text-white px-3 py-1.5">bKash</span>
+                <span className="rounded-md bg-[#f6921e] text-white px-3 py-1.5">Nagad</span>
+                <span className="rounded-md bg-slate-800 text-slate-200 px-3 py-1.5">{lang === "bn" ? "ক্যাশ অন ডেলিভারি" : "Cash on delivery"}</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row gap-3 justify-between text-xs text-slate-500">
+            <span>{t.footer.copy}</span>
+            <a href="https://tendermasterbd.com" target="_blank" rel="noopener" className="hover:text-slate-300">{t.footer.tm} {t.footer.tmLink}</a>
+          </div>
         </div>
-        <div className="text-center text-xs text-slate-500 pb-8">{t.footer.copy}</div>
       </footer>
     </div>
   );
