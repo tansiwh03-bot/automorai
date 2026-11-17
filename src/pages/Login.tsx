@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
+const CHECK_EMAIL_API = 'https://n8n2.kingpurefood.com/webhook/automorai/check-email-exists';
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,23 +27,50 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [loginErrorField, setLoginErrorField] = useState<'email' | 'password' | null>(null);
   const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
 
+  const clearLoginError = () => { setLoginError(''); setLoginErrorField(null); };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError('');
+    clearLoginError();
     setLoading(true);
     try {
       const result = await login(email, password);
       if (result.success) {
         toast.success('Logged in successfully!');
         navigate('/dashboard');
-      } else {
+        return;
+      }
+
+      // Login failed — check whether this email is even registered, so we can
+      // tell the user specifically which field is wrong instead of one generic message.
+      try {
+        const checkRes = await fetch(CHECK_EMAIL_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const checkData = await checkRes.json();
+        if (checkData.success && checkData.exists) {
+          setLoginError('Incorrect password. Please try again.');
+          setLoginErrorField('password');
+        } else if (checkData.success && !checkData.exists) {
+          setLoginError('No account found with this email.');
+          setLoginErrorField('email');
+        } else {
+          setLoginError('These credentials do not match our records.');
+          setLoginErrorField('email');
+        }
+      } catch {
         setLoginError('These credentials do not match our records.');
+        setLoginErrorField('email');
       }
     } catch (err) {
       setLoginError('These credentials do not match our records.');
+      setLoginErrorField('email');
     } finally {
       setLoading(false);
     }
@@ -82,12 +111,12 @@ export default function Login() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setLoginError(''); }}
+                onChange={(e) => { setEmail(e.target.value); clearLoginError(); }}
                 required
                 disabled={loading}
-                className={loginError ? 'border-destructive focus-visible:ring-destructive' : ''}
+                className={loginErrorField === 'email' ? 'border-destructive focus-visible:ring-destructive' : ''}
               />
-              {loginError && (
+              {loginErrorField === 'email' && (
                 <p className="flex items-center gap-1.5 text-sm text-destructive">
                   <AlertCircle size={14} />
                   {loginError}
@@ -112,10 +141,10 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setLoginError(''); }}
+                  onChange={(e) => { setPassword(e.target.value); clearLoginError(); }}
                   required
                   disabled={loading}
-                  className="pr-10"
+                  className={`pr-10 ${loginErrorField === 'password' ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                 />
                 <button
                   type="button"
@@ -127,6 +156,12 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {loginErrorField === 'password' && (
+                <p className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle size={14} />
+                  {loginError}
+                </p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
