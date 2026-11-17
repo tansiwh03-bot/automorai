@@ -184,11 +184,18 @@ const Dashboard = () => {
     business_name: '', niche: 'kids_wear', whatsapp_number: '', accent_color: '#7c5cff',
   });
   const [websiteBuilding,  setWebsiteBuilding]  = useState(false);
-  const [websiteResult,    setWebsiteResult]    = useState<{ url: string; business_name: string; site_id?: string } | null>(null);
+  const [websiteResult,    setWebsiteResult]    = useState<{ url: string; business_name: string; site_id?: string; status?: 'draft' | 'active' } | null>(null);
   const [websiteError,     setWebsiteError]     = useState('');
   const [websiteUpdating,  setWebsiteUpdating]  = useState(false);
   const [websiteUpdateMsg, setWebsiteUpdateMsg] = useState('');
   const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
+  // Free draft sites are only previewed here (never deployed) until the Automation package is bought.
+  const [previewHtml,      setPreviewHtml]      = useState('');
+  const [previewLoading,   setPreviewLoading]   = useState(false);
+  const [previewReloadKey, setPreviewReloadKey] = useState(0);
+  const [goingLive,        setGoingLive]        = useState(false);
+  const [goLiveError,      setGoLiveError]      = useState('');
+  const isDraftSite = websiteResult?.status === 'draft';
 
   // Website Settings (slider + footer) state
   const emptySettings: WebsiteSettings = {
@@ -267,22 +274,9 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Restore the "website already built" view on reload/re-login using the slug saved in
-  // localStorage, since websiteResult itself is only ever set in-memory when a site is built.
-  useEffect(() => {
-    if (websiteResult || !currentSiteId) return;
-    const displayName = currentSiteId.replace(/-\d{6}$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    setWebsiteResult({
-      url: `https://${currentSiteId}.tansiwh03.workers.dev`,
-      business_name: displayName || currentSiteId,
-      site_id: currentSiteId,
-    });
-  }, [currentSiteId, websiteResult]);
-
-  // localStorage only remembers a site on the browser/device that built it. If this browser
-  // has no site reference but the account does (on the backend, keyed by user_id), look it up
-  // instead of showing "Build Your Website" to someone who already has one.
-  const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string }[]>([]);
+  // The account's sites (and whether each is a free draft or live) come from the backend,
+  // so the right view shows on any browser/device, not just the one that built the site.
+  const [mySites, setMySites] = useState<{ business_slug: string; business_name: string; website_url: string; status?: string }[]>([]);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -297,14 +291,16 @@ const Dashboard = () => {
     getAuthHeader().then(headers => fetch(`${MY_WEBSITES_API}?user_id=${encodeURIComponent(user.email)}`, { headers }))
       .then(res => res.json())
       .then(data => {
-        const sites = data.sites || [];
+        const sites: typeof mySites = data.sites || [];
         setMySites(sites);
-        if (!currentSiteId && sites.length === 1) {
-          const s = sites[0];
+        const s = sites.find(x => x.business_slug === currentSiteId) || (sites.length === 1 ? sites[0] : undefined);
+        if (!s) return;
+        if (s.business_slug !== currentSiteId) {
           setCurrentSiteId(s.business_slug);
           try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
-          setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
         }
+        setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug,
+          status: s.status === 'draft' ? 'draft' : 'active' });
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -377,6 +373,25 @@ const Dashboard = () => {
     if (activeTab !== 'orders' || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
+
+  // A draft is never deployed, so its preview HTML is regenerated on demand (no deploy happens).
+  const loadDraftPreview = async (slug: string) => {
+    setPreviewLoading(true);
+    try {
+      const res = await fetch(WEBSITE_UPDATE_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ business_slug: slug, preview_only: true }),
+      });
+      const data = await res.json();
+      if (data.success && data.preview_html) setPreviewHtml(data.preview_html);
+    } catch {}
+    setPreviewLoading(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'website' && isDraftSite && currentSiteId && !previewHtml && !previewLoading) loadDraftPreview(currentSiteId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isDraftSite, currentSiteId]);
 
   if (!user) return <p style={{ color: 'white' }}>Please login</p>;
 
@@ -707,15 +722,16 @@ const Dashboard = () => {
         }),
       });
       const data = await res.json();
-      if (data.success && data.website_url) {
-        setWebsiteResult({ url: data.website_url, business_name: websiteForm.business_name, site_id: data.slug });
+      if (data.success && (data.website_url || data.status === 'draft')) {
+        const isDraft = data.status === 'draft';
+        setWebsiteResult({ url: data.website_url || '', business_name: websiteForm.business_name, site_id: data.slug,
+          status: isDraft ? 'draft' : 'active' });
+        setPreviewHtml(isDraft ? (data.preview_html || '') : '');
         if (data.slug) {
           setCurrentSiteId(data.slug);
           try { localStorage.setItem('automorai_site_id', data.slug); } catch {}
           setProductForm(prev => ({ ...prev, business_slug: data.slug }));
         }
-      } else if (data.error_code === 'no_package') {
-        window.location.href = '/buy-package?package=automation';
       } else if (data.error_code === 'limit_reached') {
         setWebsiteError('You already have a website on this account. Contact support to add another.');
       } else {
@@ -724,6 +740,36 @@ const Dashboard = () => {
     } catch { setWebsiteError('Connection error. Please try again.'); }
     setWebsiteBuilding(false);
   };
+
+  const handleGoLive = async () => {
+    if (!currentSiteId) return;
+    setGoingLive(true); setGoLiveError('');
+    try {
+      const res = await fetch(WEBSITE_UPDATE_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ business_slug: currentSiteId }),
+      });
+      const data = await res.json();
+      if (data.success && data.website_url) {
+        setWebsiteResult(prev => prev ? { ...prev, url: data.website_url, status: 'active' } : prev);
+        setPreviewHtml('');
+      } else {
+        setGoLiveError('Could not make the website live. Please try again.');
+      }
+    } catch {
+      setGoLiveError('Connection error. Please try again.');
+    }
+    setGoingLive(false);
+  };
+
+  // Shown only inside the sandboxed preview: orders/chat are refused server-side for drafts anyway,
+  // this just tells the owner why instead of looking broken.
+  const PREVIEW_GUARD = '<script>(function(){var f=window.fetch;window.fetch=function(u,o){var s=String(u||"");'
+    + 'if(s.indexOf("/new-order")>-1){alert("Preview mode: orders start working once your website is live.");'
+    + 'return Promise.resolve(new Response(JSON.stringify({success:false}),{headers:{"Content-Type":"application/json"}}));}'
+    + 'if(s.indexOf("/storefront-chat")>-1){return Promise.resolve(new Response(JSON.stringify({reply:"Preview mode: chat works once the website is live."}),{headers:{"Content-Type":"application/json"}}));}'
+    + 'return f.apply(this,arguments);};})();</' + 'script>';
+  const previewDoc = previewHtml ? previewHtml.replace(/<head[^>]*>/i, m => m + PREVIEW_GUARD) : '';
 
   const handleUpdateWebsite = async () => {
     if (!currentSiteId) return;
@@ -858,34 +904,28 @@ const Dashboard = () => {
           )}
 
           {(() => {
-            const needsPackage = !websiteResult && !packages.includes('automation');
-            const goToWebsite = () => {
-              if (needsPackage) { window.location.href = '/buy-package?package=automation'; return; }
-              setActiveTab('website');
-            };
+            const title = !websiteResult ? 'Build Your Website' : isDraftSite ? 'Your Website Preview Is Ready' : 'View & Edit Your Website';
+            const desc = !websiteResult
+              ? 'Build your website with AI for free and preview it. Make it live with the Automation package.'
+              : isDraftSite
+                ? (packages.includes('automation') ? 'Your package is active — make your website live now.' : 'Only you can see it. Buy the Automation package to make it live.')
+                : 'Manage slider, products, menu — all from here.';
+            const cta = !websiteResult ? 'Get Started →' : isDraftSite ? 'View Preview →' : 'View →';
             return (
-              <div onClick={goToWebsite} style={{
+              <div onClick={() => setActiveTab('website')} style={{
                 background: 'linear-gradient(135deg,#7c5cff,#5b3ff0)', borderRadius: '16px', padding: '28px',
                 marginBottom: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
               }}>
                 <div>
                   <div style={{ fontSize: '1.7rem', marginBottom: '8px' }}>🚀</div>
-                  <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>
-                    {websiteResult ? 'View & Edit Your Website' : 'Build Your Website'}
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
-                    {websiteResult
-                      ? 'Manage slider, products, menu — all from here.'
-                      : needsPackage
-                        ? 'Buy the Automation package to build your website with AI.'
-                        : 'Create a beautiful website with AI in minutes.'}
-                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>{title}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>{desc}</div>
                 </div>
-                <button onClick={e => { e.stopPropagation(); goToWebsite(); }} style={{
+                <button onClick={e => { e.stopPropagation(); setActiveTab('website'); }} style={{
                   padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
                   fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
                 }}>
-                  {websiteResult ? 'View →' : needsPackage ? 'Buy Package →' : 'Get Started →'}
+                  {cta}
                 </button>
               </div>
             );
@@ -902,7 +942,9 @@ const Dashboard = () => {
                   <div key={s.business_slug} onClick={() => {
                     setCurrentSiteId(s.business_slug);
                     try { localStorage.setItem('automorai_site_id', s.business_slug); } catch {}
-                    setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug });
+                    setWebsiteResult({ url: s.website_url, business_name: s.business_name, site_id: s.business_slug,
+                      status: s.status === 'draft' ? 'draft' : 'active' });
+                    setPreviewHtml('');
                   }} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
                     width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
@@ -1073,25 +1115,60 @@ const Dashboard = () => {
             </div>
 
             {websiteResult && (
-              <div style={{ background: '#0d1f12', border: '1px solid #c8ff5c', borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
-                <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
-                <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
-                <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', color: '#7c5cff', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
-                  {websiteResult.url}
-                </a>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                  <button onClick={() => { navigator.clipboard.writeText(websiteResult.url); setWebsiteUrlCopied(true); setTimeout(() => setWebsiteUrlCopied(false), 2000); }}
-                    style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#7c5cff',
-                      color: websiteUrlCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
-                    {websiteUrlCopied ? '✅ Copied!' : '📋 Copy URL'}
-                  </button>
-                  <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, padding: '10px', background: '#1e2130', color: 'white', border: '1px solid #262a38',
-                      borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    🔗 View Website
-                  </a>
-                </div>
+              <div style={{ background: isDraftSite ? '#141024' : '#0d1f12', border: `1px solid ${isDraftSite ? '#7c5cff' : '#c8ff5c'}`, borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
+                {isDraftSite ? (
+                  <>
+                    <p style={{ color: '#b9a8ff', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>👀 Website preview (not live yet)</p>
+                    <p style={{ color: '#8b90a3', margin: '0 0 14px', fontSize: '0.85rem' }}>
+                      Only you can see this. Add your products and settings now — when you make it live, this exact website goes online for your customers.
+                    </p>
+                    {packages.includes('automation') ? (
+                      <button onClick={handleGoLive} disabled={goingLive} style={btnStyle('#22c55e', 'white')}>
+                        {goingLive ? '⏳ Making it live... (30-60 seconds)' : '🚀 Go Live Now'}
+                      </button>
+                    ) : (
+                      <button onClick={() => { window.location.href = '/buy-package?package=automation'; }} style={btnStyle('#7c5cff', 'white')}>
+                        💳 Buy Package to Go Live
+                      </button>
+                    )}
+                    {goLiveError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{goLiveError}</p>}
+                    <div style={{ marginTop: '14px', border: '1px solid #262a38', borderRadius: '10px', overflow: 'hidden', background: '#fff' }}>
+                      {previewDoc ? (
+                        <iframe key={previewReloadKey} title="Website preview" srcDoc={previewDoc}
+                          sandbox="allow-scripts allow-modals" style={{ width: '100%', height: '560px', border: 'none', display: 'block' }} />
+                      ) : (
+                        <div style={{ padding: '40px', textAlign: 'center', color: '#8b90a3', fontSize: '0.85rem', background: '#0e0f16' }}>
+                          {previewLoading ? '⏳ Loading preview...' : 'Preview not available.'}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => (previewDoc ? setPreviewReloadKey(k => k + 1) : currentSiteId && loadDraftPreview(currentSiteId))}
+                      style={{ width: '100%', padding: '8px', marginTop: '8px', marginBottom: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
+                      🔄 Reload preview (after editing products or settings)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
+                    <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
+                    <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'block', color: '#7c5cff', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
+                      {websiteResult.url}
+                    </a>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <button onClick={() => { navigator.clipboard.writeText(websiteResult.url); setWebsiteUrlCopied(true); setTimeout(() => setWebsiteUrlCopied(false), 2000); }}
+                        style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#7c5cff',
+                          color: websiteUrlCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
+                        {websiteUrlCopied ? '✅ Copied!' : '📋 Copy URL'}
+                      </button>
+                      <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
+                        style={{ flex: 1, padding: '10px', background: '#1e2130', color: 'white', border: '1px solid #262a38',
+                          borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        🔗 View Website
+                      </a>
+                    </div>
+                  </>
+                )}
                 <button onClick={() => { setActiveTab('products'); }}
                   style={{ width: '100%', padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   📦 Add Products
@@ -1100,23 +1177,15 @@ const Dashboard = () => {
                   style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   ⚙️ Slider and Footer Settings {showSettings ? '▲' : '▼'}
                 </button>
-                <button onClick={handleUpdateWebsite} disabled={websiteUpdating}
-                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#22c55e22', color: '#22c55e', border: '1px solid #22c55e', borderRadius: '8px', cursor: websiteUpdating ? 'default' : 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
-                  {websiteUpdating ? 'Updating…' : '⬆️ Update to Latest Design'}
-                </button>
+                {!isDraftSite && (
+                  <button onClick={handleUpdateWebsite} disabled={websiteUpdating}
+                    style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#22c55e22', color: '#22c55e', border: '1px solid #22c55e', borderRadius: '8px', cursor: websiteUpdating ? 'default' : 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                    {websiteUpdating ? 'Updating…' : '⬆️ Update to Latest Design'}
+                  </button>
+                )}
                 {websiteUpdateMsg && (
                   <p style={{ fontSize: '0.8rem', color: websiteUpdateMsg.startsWith('Updated') ? '#22c55e' : '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{websiteUpdateMsg}</p>
                 )}
-                <button onClick={() => {
-                  if (!confirm('Build a new website? This switches the dashboard to a new site (your current site and its data stay as they are, you just won’t be managing it from here anymore).')) return;
-                  try { localStorage.removeItem('automorai_site_id'); } catch {}
-                  setCurrentSiteId('');
-                  setWebsiteResult(null);
-                  setShowSettings(false);
-                }}
-                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px dashed #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
-                  + Build a new website
-                </button>
 
                 {showSettings && (
                   <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '20px' }}>
@@ -1394,6 +1463,11 @@ const Dashboard = () => {
                     style={{ width: '100%', height: '42px', padding: '4px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer' }} />
                 </FormField>
 
+                {!packages.includes('automation') && (
+                  <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 12px' }}>
+                    Free: you'll get a private preview of your website. Buy the Automation package anytime to make this same website live. One website per account.
+                  </p>
+                )}
                 <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#7c5cff', 'white')}>
                   {websiteBuilding ? '⏳ Creating website... (30-60 seconds)' : '🚀 Create Website'}
                 </button>
