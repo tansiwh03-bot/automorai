@@ -91,7 +91,7 @@ const TenderGuide = () => (
             <p>মাসিক টাকা না দিলে পরের মাস থেকে সেবা বন্ধ হয়। চাইলে আপনার সব তথ্য আর ফাইল মুছে দেওয়া হবে — আমাদের জানালেই হবে।</p>
           </Rule>
           <Rule title="যোগাযোগ">
-            <p>যেকোনো প্রশ্নে: <a href="mailto:tansiwh03@gmail.com" className="text-purple-400 hover:underline">tansiwh03@gmail.com</a></p>
+            <p>যেকোনো প্রশ্নে: <a href="mailto:info@tendermasterbd.com" className="text-purple-400 hover:underline">info@tendermasterbd.com</a></p>
           </Rule>
         </div>
         <p className="text-xs text-gray-600 mt-8">সর্বশেষ হালনাগাদ: ১৬ নভেম্বর ২০২৬</p>

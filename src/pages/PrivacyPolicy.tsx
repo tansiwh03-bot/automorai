@@ -81,8 +81,8 @@ const PrivacyPolicy = () => {
             <p>
               If you have questions about this Privacy Policy or your data,
               contact us at{" "}
-              <a href="mailto:tansiwh03@gmail.com" className="text-purple-400 hover:underline">
-                tansiwh03@gmail.com
+              <a href="mailto:info@automorai.com" className="text-purple-400 hover:underline">
+                info@automorai.com
               </a>
               .
             </p>

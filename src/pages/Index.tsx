@@ -564,7 +564,7 @@ const Index = () => {
               <div className="font-semibold text-white mb-3">{t.footer.contact}</div>
               <ul className="space-y-2 text-sm">
                 <li><a href={waLink("Hi Automorai")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><WaIcon className="w-4 h-4" /> 01615-763484</a></li>
-                <li>tansiwh03@gmail.com</li>
+                <li><a href="mailto:info@automorai.com" className="hover:text-white">info@automorai.com</a></li>
               </ul>
               <div className="font-semibold text-white mt-6 mb-3">{t.footer.pay}</div>
               <div className="flex flex-wrap gap-2 text-xs font-semibold">
