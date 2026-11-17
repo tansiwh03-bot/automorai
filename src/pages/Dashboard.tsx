@@ -195,6 +195,7 @@ const Dashboard = () => {
   const [previewReloadKey, setPreviewReloadKey] = useState(0);
   const [goingLive,        setGoingLive]        = useState(false);
   const [goLiveError,      setGoLiveError]      = useState('');
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
   const isDraftSite = websiteResult?.status === 'draft';
 
   // Website Settings (slider + footer) state
@@ -1105,6 +1106,34 @@ const Dashboard = () => {
         </div>
       )}
 
+      {previewFullscreen && isDraftSite && previewDoc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#06070a', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '10px 16px',
+            background: '#12141c', borderBottom: '1px solid #262a38', flexWrap: 'wrap' }}>
+            <span style={{ color: '#b9a8ff', fontWeight: 700, fontSize: '0.9rem' }}>👀 Preview — not live yet</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {packages.includes('automation') ? (
+                <button onClick={handleGoLive} disabled={goingLive}
+                  style={{ padding: '8px 14px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  {goingLive ? '⏳ Going live...' : '🚀 Go Live Now'}
+                </button>
+              ) : (
+                <button onClick={() => { window.location.href = '/buy-package?package=automation'; }}
+                  style={{ padding: '8px 14px', background: '#7c5cff', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  💳 Buy Package to Go Live
+                </button>
+              )}
+              <button onClick={() => setPreviewFullscreen(false)}
+                style={{ padding: '8px 14px', background: 'transparent', color: 'white', border: '1px solid #262a38', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          <iframe title="Full page website preview" srcDoc={previewDoc} sandbox="allow-scripts allow-modals"
+            style={{ flex: 1, width: '100%', border: 'none', background: '#fff' }} />
+        </div>
+      )}
+
       {/* ════════ WEBSITE BUILDER TAB ════════ */}
       {activeTab === 'website' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
@@ -1132,6 +1161,12 @@ const Dashboard = () => {
                       </button>
                     )}
                     {goLiveError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{goLiveError}</p>}
+                    {previewDoc && (
+                      <button onClick={() => setPreviewFullscreen(true)}
+                        style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#7c5cff22', color: '#b9a8ff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                        🖥️ Open full page preview
+                      </button>
+                    )}
                     <div style={{ marginTop: '14px', border: '1px solid #262a38', borderRadius: '10px', overflow: 'hidden', background: '#fff' }}>
                       {previewDoc ? (
                         <iframe key={previewReloadKey} title="Website preview" srcDoc={previewDoc}
