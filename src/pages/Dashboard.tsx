@@ -160,7 +160,7 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [packages, setPackages] = useState<string[]>(['automation']);
+  const [packages, setPackages] = useState<string[]>([]);
 
   // Home state
   const [commentReply,   setCommentReply]   = useState(true);
@@ -321,16 +321,23 @@ const Dashboard = () => {
             setStatus('❌ Token exchange failed: ' + (tokenData.error || 'unknown error')); return;
           }
           setStatus('Setting up automation...');
-          return fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.email, email: user.email, page_id: 'pending',
-              page_access_token: tokenData.access_token, comment_reply_enabled: true,
-              messenger_reply_enabled: true, timestamp: new Date().toISOString() }) })
-            .then(r => r.json())
-            .then(webhookData => {
-              setConnectedPage(webhookData.page_name || 'Facebook Page');
-              setStatus('✅ Connected successfully!');
-              window.history.replaceState({}, '', '/dashboard');
-            });
+          return getAuthHeader().then(authHeaders =>
+            fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({ user_id: user.email, email: user.email, page_id: 'pending',
+                page_access_token: tokenData.access_token, comment_reply_enabled: true,
+                messenger_reply_enabled: true, timestamp: new Date().toISOString() }) })
+              .then(r => r.json())
+              .then(webhookData => {
+                if (webhookData.error_code === 'no_package') {
+                  setStatus('');
+                  window.location.href = '/buy-package?package=automation';
+                  return;
+                }
+                setConnectedPage(webhookData.page_name || 'Facebook Page');
+                setStatus('✅ Connected successfully!');
+                window.history.replaceState({}, '', '/dashboard');
+              })
+          );
         })
         .catch(() => setStatus('❌ Connection failed. Please try again.'));
     }
@@ -902,12 +909,24 @@ const Dashboard = () => {
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-            <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
-              desc={connectedPage ? `${connectedPage} is connected.` : 'Connect your Facebook Page to auto-reply to comments and Messenger.'}
-              action={connectedPage ? undefined : { label: 'Connect', onClick: handleFacebookConnect }} />
-            <TaskCard icon="💬" title="Connect WhatsApp Business"
-              desc="Automatically chat with customers and show products on WhatsApp."
-              action={{ label: 'Connect', onClick: handleWhatsAppConnect }} />
+            {packages.includes('automation') ? (
+              <TaskCard icon="📘" title="Connect Facebook Page" done={!!connectedPage}
+                desc={connectedPage ? `${connectedPage} is connected.` : 'Connect your Facebook Page to auto-reply to comments and Messenger.'}
+                action={connectedPage ? undefined : { label: 'Connect', onClick: handleFacebookConnect }} />
+            ) : (
+              <TaskCard icon="📘" title="Connect Facebook Page"
+                desc="Buy the Automation package to unlock Facebook, WhatsApp, and Pixel/Analytics."
+                action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=automation'; } }} />
+            )}
+            {packages.includes('automation') ? (
+              <TaskCard icon="💬" title="Connect WhatsApp Business"
+                desc="Automatically chat with customers and show products on WhatsApp."
+                action={{ label: 'Connect', onClick: handleWhatsAppConnect }} />
+            ) : (
+              <TaskCard icon="💬" title="Connect WhatsApp Business"
+                desc="Buy the Automation package to unlock Facebook, WhatsApp, and Pixel/Analytics."
+                action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=automation'; } }} />
+            )}
             {packages.includes('tender') ? (
               <TaskCard icon="📋" title="Connect Tender Automation"
                 desc="Enable automatic tender-related notifications."
@@ -917,9 +936,15 @@ const Dashboard = () => {
                 desc="Separate package — ৳20,000 installation (covers 1st month), then ৳5,000/month."
                 action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=tender'; } }} />
             )}
-            <TaskCard icon="📊" title="Pixel and Analytics Setup"
-              desc="Track visitor behavior with Facebook Pixel and Google Analytics."
-              action={{ label: 'Setup', onClick: handlePixelGAConnect }} />
+            {packages.includes('automation') ? (
+              <TaskCard icon="📊" title="Pixel and Analytics Setup"
+                desc="Track visitor behavior with Facebook Pixel and Google Analytics."
+                action={{ label: 'Setup', onClick: handlePixelGAConnect }} />
+            ) : (
+              <TaskCard icon="📊" title="Pixel and Analytics Setup"
+                desc="Buy the Automation package to unlock Facebook, WhatsApp, and Pixel/Analytics."
+                action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=automation'; } }} />
+            )}
           </div>
 
           {waPageId && (

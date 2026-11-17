@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const WHATSAPP_WEBHOOK_URL = 'https://n8n2.kingpurefood.com/webhook/automorai/whatsapp-setup-request';
+
+const getAuthHeader = async (): Promise<Record<string, string>> => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const ConnectWhatsApp = () => {
   const { user } = useAuth();
@@ -32,7 +39,7 @@ const ConnectWhatsApp = () => {
     try {
       const res = await fetch(WHATSAPP_WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           user_id: user.email,
           email: user.email,
@@ -43,7 +50,12 @@ const ConnectWhatsApp = () => {
           timestamp: new Date().toISOString(),
         }),
       });
+      const data = await res.json().catch(() => ({}));
 
+      if (data.error_code === 'no_package') {
+        navigate('/buy-package?package=automation');
+        return;
+      }
       if (!res.ok) throw new Error('Request failed');
       setSubmitted(true);
     } catch (err) {
