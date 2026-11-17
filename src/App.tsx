@@ -1,5 +1,6 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Index from './pages/Index';
 import Login from './pages/Login';
@@ -79,6 +80,7 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
+        <Toaster />
       </AuthProvider>
     </BrowserRouter>
   );
