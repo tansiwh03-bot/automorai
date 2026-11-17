@@ -15,13 +15,16 @@ import {
   Button,
 } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [resetting, setResetting] = useState(false);
+  const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,14 +33,35 @@ export default function Login() {
     try {
       const result = await login(email, password);
       if (result.success) {
+        toast.success('Logged in successfully!');
         navigate('/dashboard');
       } else {
-        toast.error(result.error || 'Login failed');
+        toast.error(result.error || 'Login failed. Please check your email and password.');
       }
     } catch (err) {
-      toast.error('Login failed');
+      toast.error('Login failed. Please check your email and password.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email above first, then click "Forgot password?"');
+      return;
+    }
+    setResetting(true);
+    try {
+      const result = await resetPassword(email);
+      if (result.success) {
+        toast.success(`Password reset link sent to ${email}. Please check your inbox.`);
+      } else {
+        toast.error(result.error || 'Could not send reset link. Please try again.');
+      }
+    } catch (err) {
+      toast.error('Could not send reset link. Please try again.');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -62,16 +86,38 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetting}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {resetting ? 'Sending...' : 'Forgot password?'}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
