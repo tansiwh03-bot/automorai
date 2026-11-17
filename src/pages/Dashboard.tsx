@@ -857,26 +857,39 @@ const Dashboard = () => {
               padding: '12px', marginBottom: '20px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
           )}
 
-          <div onClick={() => setActiveTab('website')} style={{
-            background: 'linear-gradient(135deg,#7c5cff,#5b3ff0)', borderRadius: '16px', padding: '28px',
-            marginBottom: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
-          }}>
-            <div>
-              <div style={{ fontSize: '1.7rem', marginBottom: '8px' }}>🚀</div>
-              <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>
-                {websiteResult ? 'View & Edit Your Website' : 'Build Your Website'}
+          {(() => {
+            const needsPackage = !websiteResult && !packages.includes('automation');
+            const goToWebsite = () => {
+              if (needsPackage) { window.location.href = '/buy-package?package=automation'; return; }
+              setActiveTab('website');
+            };
+            return (
+              <div onClick={goToWebsite} style={{
+                background: 'linear-gradient(135deg,#7c5cff,#5b3ff0)', borderRadius: '16px', padding: '28px',
+                marginBottom: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
+              }}>
+                <div>
+                  <div style={{ fontSize: '1.7rem', marginBottom: '8px' }}>🚀</div>
+                  <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'white', marginBottom: '6px' }}>
+                    {websiteResult ? 'View & Edit Your Website' : 'Build Your Website'}
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
+                    {websiteResult
+                      ? 'Manage slider, products, menu — all from here.'
+                      : needsPackage
+                        ? 'Buy the Automation package to build your website with AI.'
+                        : 'Create a beautiful website with AI in minutes.'}
+                  </div>
+                </div>
+                <button onClick={e => { e.stopPropagation(); goToWebsite(); }} style={{
+                  padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
+                  fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}>
+                  {websiteResult ? 'View →' : needsPackage ? 'Buy Package →' : 'Get Started →'}
+                </button>
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
-                {websiteResult ? 'Manage slider, products, menu — all from here.' : 'Create a beautiful website with AI in minutes, for free.'}
-              </div>
-            </div>
-            <button onClick={e => { e.stopPropagation(); setActiveTab('website'); }} style={{
-              padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
-              fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              {websiteResult ? 'View →' : 'Get Started →'}
-            </button>
-          </div>
+            );
+          })()}
 
           {mySites.length > 1 && (
             <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
