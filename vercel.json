@@ -3,9 +3,56 @@
   "installCommand": "pnpm install --no-frozen-lockfile",
   "rewrites": [
     {
+      "source": "/facebook-auto-reply",
+      "destination": "/facebook-auto-reply.html"
+    },
+    {
+      "source": "/whatsapp-auto-reply",
+      "destination": "/whatsapp-auto-reply.html"
+    },
+    {
+      "source": "/online-shop-website",
+      "destination": "/online-shop-website.html"
+    },
+    {
+      "source": "/f-commerce",
+      "destination": "/f-commerce.html"
+    },
+    {
+      "source": "/fashion-online-shop",
+      "destination": "/fashion-online-shop.html"
+    },
+    {
+      "source": "/kids-wear-online-shop",
+      "destination": "/kids-wear-online-shop.html"
+    },
+    {
+      "source": "/cosmetics-online-shop",
+      "destination": "/cosmetics-online-shop.html"
+    },
+    {
+      "source": "/food-online-shop",
+      "destination": "/food-online-shop.html"
+    },
+    {
+      "source": "/electronics-online-shop",
+      "destination": "/electronics-online-shop.html"
+    },
+    {
+      "source": "/jewelry-online-shop",
+      "destination": "/jewelry-online-shop.html"
+    },
+    {
+      "source": "/home-decor-online-shop",
+      "destination": "/home-decor-online-shop.html"
+    },
+    {
+      "source": "/general-store-online-shop",
+      "destination": "/general-store-online-shop.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "cleanUrls": true
+  ]
 }

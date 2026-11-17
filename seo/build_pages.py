@@ -136,6 +136,9 @@ def main():
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
         for u, pr in urls: f.write(f'  <url><loc>{SITE}/{u}</loc><lastmod>{today}</lastmod><priority>{pr}</priority></url>\n')
         f.write('</urlset>\n')
+    vp = os.path.join(ROOT, 'vercel.json'); v = json.load(open(vp)); v.pop('cleanUrls', None)   # cleanUrls breaks the SPA rewrite (2026-11-17 outage)
+    v['rewrites'] = [{'source': f'/{p["slug"]}', 'destination': f'/{p["slug"]}.html'} for p in PAGES] + [{'source': '/(.*)', 'destination': '/index.html'}]
+    json.dump(v, open(vp, 'w'), indent=2)
     print(len(PAGES), 'pages')
 
 if __name__ == '__main__': main()
