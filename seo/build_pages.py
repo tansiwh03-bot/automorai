@@ -106,7 +106,7 @@ def page(p, others):
 <html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(p['title'])}</title><meta name="description" content="{e(p['desc'])}"><link rel="canonical" href="{url}"><meta name="robots" content="index, follow">
 <meta property="og:title" content="{e(p['title'])}"><meta property="og:description" content="{e(p['desc'])}"><meta property="og:url" content="{url}"><meta property="og:type" content="website"><meta property="og:locale" content="bn_BD"><meta property="og:image" content="{SITE}/showcase/{p['img']}">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><meta name="theme-color" content="#0f766e">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#0f766e">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>{STYLE}</style><script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script></head><body>
 <header class="nav"><div class="w"><a class="logo" href="/">Automorai<span>.</span></a><a class="btn bt bs" href="/signup">বিনামূল্যে শুরু</a></div></header>
