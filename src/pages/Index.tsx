@@ -201,7 +201,7 @@ const BuilderDemo = ({ step, b }: { step: number; b: typeof content.bn.builder }
     return () => clearInterval(id);
   }, [step]);
   return (
-    <div className="relative rounded-3xl bg-white border border-slate-200 shadow-xl p-6 min-h-[330px] overflow-hidden">
+    <div className="relative rounded-3xl bg-white border border-slate-300 shadow-2xl shadow-slate-900/10 p-5 sm:p-6 min-h-[290px] sm:min-h-[330px] overflow-hidden">
       <div className="flex gap-1.5 mb-5"><span className="w-3 h-3 rounded-full bg-red-300" /><span className="w-3 h-3 rounded-full bg-amber-300" /><span className="w-3 h-3 rounded-full bg-green-300" /></div>
       {step === 0 && (
         <div className="am-pop space-y-4">
@@ -318,6 +318,8 @@ const Index = () => {
   return (
     <div id="top" className="min-h-screen bg-white text-slate-800 antialiased overflow-x-hidden" style={font}>
       <style>{`
+        #top h1,#top h2,#top h3{font-family:'Anek Bangla','Hind Siliguri',system-ui,sans-serif;font-weight:800;letter-spacing:-.015em}
+        .am-glow{background:radial-gradient(60% 50% at 85% 10%,rgba(16,185,129,.28),transparent 70%),radial-gradient(50% 40% at 0% 90%,rgba(45,212,191,.16),transparent 70%),#07110e}
         [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
         [data-reveal].am-in{opacity:1;transform:none}
         [data-reveal][data-d="1"]{transition-delay:.1s}[data-reveal][data-d="2"]{transition-delay:.2s}[data-reveal][data-d="3"]{transition-delay:.3s}
@@ -338,40 +340,49 @@ const Index = () => {
       `}</style>
 
       {/* Nav */}
-      <header className="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-slate-100">
+      <header className="sticky top-0 z-30 bg-[#07110e]/90 backdrop-blur border-b border-white/10">
         <nav className="max-w-6xl mx-auto flex items-center justify-between gap-2 px-4 sm:px-6 py-3">
-          <Link to="/" className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 whitespace-nowrap">Automorai<span className="text-teal-600">.</span></Link>
+          <Link to="/" className="text-[1.4rem] sm:text-2xl font-extrabold tracking-tight text-white whitespace-nowrap">Automorai<span className="text-emerald-400">.</span></Link>
           <div className="flex items-center gap-1.5 sm:gap-3">
-            <div className="flex rounded-full border border-slate-200 p-0.5 text-xs sm:text-sm">
-              <button onClick={() => setLang("bn")} className={`px-2.5 py-1 rounded-full transition ${lang === "bn" ? "bg-slate-900 text-white" : "text-slate-500"}`}>বাং</button>
-              <button onClick={() => setLang("en")} className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-slate-900 text-white" : "text-slate-500"}`}>EN</button>
+            <div className="flex rounded-full border border-white/20 p-0.5 text-xs sm:text-sm">
+              <button onClick={() => setLang("bn")} className={`px-2.5 py-1 rounded-full transition ${lang === "bn" ? "bg-white text-slate-900 font-semibold" : "text-slate-300"}`}>বাং</button>
+              <button onClick={() => setLang("en")} className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-white text-slate-900 font-semibold" : "text-slate-300"}`}>EN</button>
             </div>
-            <Link to="/login" className="px-1.5 sm:px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 whitespace-nowrap">{t.nav.login}</Link>
-            <Link to="/signup" className="px-3 sm:px-4 py-2 rounded-full text-sm font-semibold bg-teal-700 text-white hover:bg-teal-800 transition whitespace-nowrap">{t.nav.signup}</Link>
+            <Link to="/login" className="px-1.5 sm:px-3 py-2 text-[15px] font-medium text-slate-200 hover:text-white whitespace-nowrap">{t.nav.login}</Link>
+            <Link to="/signup" className="px-3.5 sm:px-5 py-2 rounded-full text-[15px] font-bold bg-emerald-400 text-[#07110e] hover:bg-emerald-300 transition whitespace-nowrap">{t.nav.signup}</Link>
           </div>
         </nav>
       </header>
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-b from-teal-50 via-white to-white">
-        <div className="absolute -top-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-teal-200/40 blur-3xl pointer-events-none" />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-16 grid lg:grid-cols-2 gap-12 items-center">
+      {/* Hero — dark, high-contrast (user 2026-11-18: "too light, make it feel heavy/premium like Shopify") */}
+      <section className="relative am-glow text-white overflow-hidden">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-20 pb-14 sm:pb-20 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           <div data-reveal>
-            <span className="inline-block text-sm font-medium text-teal-800 bg-teal-100 rounded-full px-3 py-1 mb-5">{t.badge}</span>
-            <h1 className="text-[2.2rem] leading-tight sm:text-[3.3rem] sm:leading-[1.1] font-bold text-slate-900 mb-3">
-              {t.hero1}<br /><span className="bg-gradient-to-r from-teal-700 to-emerald-500 bg-clip-text text-transparent">{t.hero2}</span>
+            <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-emerald-300 bg-emerald-400/10 border border-emerald-400/30 rounded-full px-3.5 py-1.5 mb-6"><span className="w-2 h-2 rounded-full bg-emerald-400 am-pulse" />{t.badge}</span>
+            <h1 className="text-[2.6rem] leading-[1.12] sm:text-[3.8rem] sm:leading-[1.05] text-white mb-4">
+              {t.hero1}<br /><span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">{t.hero2}</span>
             </h1>
-            <p className="text-xl font-semibold text-slate-700 mb-4">{t.hero3}</p>
-            <p className="text-lg text-slate-600 mb-8 max-w-xl">{t.heroDesc}</p>
+            <p className="text-[1.3rem] sm:text-2xl font-semibold text-white mb-4">{t.hero3}</p>
+            <p className="text-[1.15rem] sm:text-xl text-slate-300 mb-8 max-w-xl leading-relaxed">{t.heroDesc}</p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/signup" className="text-center px-7 py-3.5 rounded-full bg-teal-700 text-white font-semibold text-lg hover:bg-teal-800 transition shadow-lg shadow-teal-700/20">{t.ctaMain}</Link>
-              <a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="text-center px-7 py-3.5 rounded-full border-2 border-slate-300 text-slate-800 font-semibold text-lg hover:border-slate-900 transition">{t.ctaDemo} ↗</a>
+              <Link to="/signup" className="text-center px-8 py-4 rounded-full bg-emerald-400 text-[#07110e] font-bold text-[1.2rem] hover:bg-emerald-300 transition shadow-xl shadow-emerald-500/25">{t.ctaMain} →</Link>
+              <a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="text-center px-8 py-4 rounded-full border-2 border-white/25 text-white font-bold text-[1.2rem] hover:border-white hover:bg-white/5 transition">{t.ctaDemo} ↗</a>
             </div>
-            <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-green-700 font-semibold hover:underline"><WaIcon />{t.ctaWa}</a>
+            <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[1.05rem] text-green-400 font-semibold hover:underline"><WaIcon />{t.ctaWa}</a>
           </div>
 
-          {/* devices */}
-          <div className="relative h-[400px] sm:h-[470px]" data-reveal data-d="1">
+          {/* devices — phone: one big phone (a tiny desktop screenshot was unreadable on mobile) */}
+          <div className="sm:hidden relative flex justify-center pt-2 pb-6" data-reveal data-d="1">
+            <span className="absolute left-0 top-0 z-10 text-sm font-semibold bg-white text-slate-700 rounded-full px-3 py-1 shadow">{t.sample}</span>
+            <div className="w-[72%] max-w-[270px] am-float2"><Phone className="ring-1 ring-white/15 shadow-emerald-900/50"><img src="/showcase/shop-product-page.jpg" alt={t.sample} className="w-full h-full object-cover object-top" /></Phone></div>
+            <div className="absolute right-0 bottom-16 am-toast">
+              <div className="flex items-center gap-3 bg-white text-slate-900 rounded-2xl shadow-2xl px-4 py-3"><span className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-lg">🛍️</span><div><div className="font-bold text-[15px]">{t.toastOrder}</div><div className="text-[13px] text-slate-600">{t.toastOrderSub}</div></div></div>
+            </div>
+            <div className="absolute left-0 bottom-28 am-toast2">
+              <div className="flex items-center gap-3 bg-white text-slate-900 rounded-2xl shadow-2xl px-4 py-3"><span className="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-lg">💬</span><div><div className="font-bold text-[15px]">{t.toastAi}</div><div className="text-[13px] text-slate-600">{t.toastAiSub}</div></div></div>
+            </div>
+          </div>
+          <div className="hidden sm:block relative h-[470px]" data-reveal data-d="1">
             <div className="absolute right-0 top-4 w-[92%] am-float">
               <div className="rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
                 <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 border-b border-slate-200"><span className="w-2.5 h-2.5 rounded-full bg-red-300" /><span className="w-2.5 h-2.5 rounded-full bg-amber-300" /><span className="w-2.5 h-2.5 rounded-full bg-green-300" /><span className="ml-3 flex-1 text-[11px] text-slate-400 bg-white rounded px-2 py-0.5 truncate">arisha-fashion-world.workers.dev</span></div>
@@ -391,26 +402,26 @@ const Index = () => {
       </section>
 
       {/* Niches marquee */}
-      <section className="border-y border-slate-100 bg-slate-50 py-5 overflow-hidden">
-        <div className="text-center text-sm text-slate-500 mb-3">{t.nicheTitle}</div>
+      <section className="border-b border-slate-200 bg-[#f3f7f5] py-6 overflow-hidden">
+        <div className="text-center text-[15px] font-semibold text-slate-700 mb-4">{t.nicheTitle}</div>
         <div className="flex w-max am-marquee gap-3">
-          {[...t.niches, ...t.niches].map((n, i) => <span key={i} className="whitespace-nowrap rounded-full bg-white border border-slate-200 px-4 py-2 text-slate-700">{n}</span>)}
+          {[...t.niches, ...t.niches].map((n, i) => <span key={i} className="whitespace-nowrap rounded-full bg-white border border-slate-300 px-5 py-2.5 text-[1.05rem] font-semibold text-slate-800 shadow-sm">{n}</span>)}
         </div>
       </section>
 
       {/* Builder */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-        <div className="text-center mb-12" data-reveal>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">{t.buildTitle}</h2>
-          <p className="text-lg text-slate-600">{t.buildDesc}</p>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-10 sm:mb-14" data-reveal>
+          <h2 className="text-[2.2rem] leading-tight sm:text-5xl text-slate-950 mb-3">{t.buildTitle}</h2>
+          <p className="text-[1.15rem] sm:text-xl text-slate-700">{t.buildDesc}</p>
         </div>
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           <ol className="space-y-3" data-reveal>
             {t.buildSteps.map((s, i) => (
               <li key={s.t}>
-                <button onClick={() => setBStep(i)} className={`w-full text-left flex gap-4 rounded-2xl p-4 transition border ${bStep === i ? "bg-teal-50 border-teal-200" : "border-transparent hover:bg-slate-50"}`}>
-                  <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold transition ${bStep === i ? "bg-teal-700 text-white" : "bg-slate-100 text-slate-500"}`}>{lang === "bn" ? "১২৩৪"[i] : i + 1}</span>
-                  <span><span className="block font-semibold text-lg text-slate-900">{s.t}</span><span className="block text-slate-600">{s.d}</span>
+                <button onClick={() => setBStep(i)} className={`w-full text-left flex gap-4 rounded-2xl p-4 sm:p-5 transition border-2 ${bStep === i ? "bg-emerald-50 border-emerald-500 shadow-md" : "border-transparent hover:bg-slate-50"}`}>
+                  <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-lg font-bold transition ${bStep === i ? "bg-[#07110e] text-emerald-300" : "bg-slate-200 text-slate-700"}`}>{lang === "bn" ? "১২৩৪"[i] : i + 1}</span>
+                  <span><span className="block font-bold text-[1.25rem] text-slate-950">{s.t}</span><span className="block text-[1.05rem] text-slate-700">{s.d}</span>
                     {bStep === i && <span className="block mt-2 h-1 rounded-full bg-teal-200 overflow-hidden"><span key={`${i}-${bStep}`} className="block h-full bg-teal-600" style={{ animation: "amBar 3.6s linear both" }} /></span>}
                   </span>
                 </button>
@@ -423,39 +434,39 @@ const Index = () => {
       </section>
 
       {/* Showcase tabs */}
-      <section className="bg-slate-900 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-10" data-reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3">{t.showTitle}</h2>
-            <p className="text-lg text-slate-300">{t.showDesc}</p>
+      <section className="am-glow text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+          <div className="text-center mb-8 sm:mb-10" data-reveal>
+            <h2 className="text-[2.2rem] leading-tight sm:text-5xl mb-3">{t.showTitle}</h2>
+            <p className="text-[1.15rem] sm:text-xl text-slate-300">{t.showDesc}</p>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-10 justify-start md:justify-center" data-reveal>
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-8 sm:mb-10 -mx-4 px-4 justify-start md:justify-center" data-reveal>
             {t.tabs.map((x, i) => (
               <button key={x.k} onClick={() => { tabAuto.current = false; setTab(i); }}
-                className={`whitespace-nowrap rounded-full px-4 py-2 font-medium transition ${tab === i ? "bg-white text-slate-900" : "bg-white/10 text-slate-300 hover:bg-white/20"}`}>{x.t}</button>
+                className={`whitespace-nowrap rounded-full px-5 py-2.5 text-[1.05rem] font-semibold transition ${tab === i ? "bg-emerald-400 text-[#07110e]" : "bg-white/10 text-slate-200 hover:bg-white/20"}`}>{x.t}</button>
             ))}
           </div>
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div key={`txt-${tab}-${lang}`} className="am-fade order-2 md:order-1">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-3">{cur.t}</h3>
-              <p className="text-lg text-slate-300 mb-6">{cur.d}</p>
-              <ul className="space-y-3">{cur.pts.map((p) => <li key={p} className="flex gap-3 text-slate-100"><Check c="text-teal-400" />{p}</li>)}</ul>
-              {(cur.k === "products" || cur.k === "page") && <a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="inline-block mt-7 rounded-full bg-white text-slate-900 px-6 py-3 font-semibold hover:bg-teal-50 transition">{t.ctaDemo} ↗</a>}
-              {(cur.k === "checkout" || cur.k === "chat" || cur.k === "orders") && <p className="mt-6 text-xs text-slate-500">{t.example}</p>}
+              <h3 className="text-[1.9rem] sm:text-4xl mb-3">{cur.t}</h3>
+              <p className="text-[1.15rem] sm:text-xl text-slate-300 mb-6 leading-relaxed">{cur.d}</p>
+              <ul className="space-y-3">{cur.pts.map((p) => <li key={p} className="flex gap-3 text-[1.1rem] text-white"><Check c="text-emerald-400" />{p}</li>)}</ul>
+              {(cur.k === "products" || cur.k === "page") && <a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="inline-block mt-7 rounded-full bg-white text-slate-950 px-7 py-3.5 text-[1.05rem] font-bold hover:bg-emerald-50 transition">{t.ctaDemo} ↗</a>}
+              {(cur.k === "checkout" || cur.k === "chat" || cur.k === "orders") && <p className="mt-6 text-sm text-slate-400">{t.example}</p>}
             </div>
             <div className="order-1 md:order-2 flex justify-center">
-              <div className="w-[260px] sm:w-[290px]"><Phone><div key={`scr-${tab}-${lang}`} className="am-fade h-full">{screen(cur.k)}</div></Phone></div>
+              <div className="w-[280px] sm:w-[300px]"><Phone className="ring-1 ring-white/15"><div key={`scr-${tab}-${lang}`} className="am-fade h-full">{screen(cur.k)}</div></Phone></div>
             </div>
           </div>
         </div>
       </section>
 
       {/* AI reply */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 items-center">
         <div data-reveal>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">{t.replyTitle}</h2>
-          <p className="text-lg text-slate-600 mb-6">{t.replyDesc}</p>
-          <div className="grid sm:grid-cols-2 gap-3">{t.replyPts.map((p) => <div key={p} className="flex gap-2 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-slate-700"><Check />{p}</div>)}</div>
+          <h2 className="text-[2.2rem] leading-tight sm:text-5xl text-slate-950 mb-4">{t.replyTitle}</h2>
+          <p className="text-[1.15rem] sm:text-xl text-slate-700 mb-6 leading-relaxed">{t.replyDesc}</p>
+          <div className="grid sm:grid-cols-2 gap-3">{t.replyPts.map((p) => <div key={p} className="flex gap-2.5 rounded-xl bg-white border border-slate-300 shadow-sm px-4 py-3.5 text-[1.05rem] font-semibold text-slate-900"><Check c="text-emerald-600" />{p}</div>)}</div>
         </div>
         <div className="flex justify-center" data-reveal data-d="1">
           <div className="w-full max-w-[330px] rounded-[2.2rem] bg-slate-900 p-3 shadow-2xl">
@@ -472,24 +483,24 @@ const Index = () => {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="bg-slate-50 border-y border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+      <section id="pricing" className="bg-[#f3f7f5] border-y border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <div className="text-center mb-12" data-reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">{t.priceTitle}</h2>
-            <p className="text-slate-600">{t.priceDesc}</p>
+            <h2 className="text-[2.2rem] leading-tight sm:text-5xl text-slate-950 mb-3">{t.priceTitle}</h2>
+            <p className="text-[1.15rem] text-slate-700">{t.priceDesc}</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5 items-stretch">
+          <div className="grid md:grid-cols-3 gap-6 items-stretch">
             {t.plans.map((p, i) => (
-              <div key={p.key} data-reveal data-d={String(i)} className={`am-lift relative flex flex-col rounded-2xl bg-white p-6 ${p.popular ? "border-2 border-teal-600 shadow-lg" : "border border-slate-200"}`}>
-                {p.popular && <span className="absolute -top-3 left-6 text-xs font-semibold bg-teal-700 text-white rounded-full px-3 py-1">{t.popular}</span>}
-                {p.soon && <span className="absolute -top-3 left-6 text-xs font-semibold bg-amber-100 text-amber-800 rounded-full px-3 py-1">{t.soon}</span>}
-                <h3 className="font-bold text-xl text-slate-900">{p.name}</h3>
-                <p className="text-slate-500 text-sm mb-4">{p.desc}</p>
-                <div className="mb-5"><span className="text-4xl font-bold text-slate-900">{p.price}</span><span className="text-slate-500">{t.perMonth}</span></div>
-                <ul className="space-y-2.5 mb-6 flex-1">{p.features.map((f) => <li key={f} className="flex gap-2 text-slate-700"><Check />{f}</li>)}</ul>
-                {p.soon ? <span className="block text-center py-3 rounded-full bg-slate-100 text-slate-400 font-semibold cursor-not-allowed">{p.cta}</span>
-                  : p.external ? <a href={p.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 rounded-full border-2 border-green-600 text-green-700 font-semibold hover:bg-green-50 transition"><WaIcon />{p.cta}</a>
-                  : <Link to={p.href} className={`block text-center py-3 rounded-full font-semibold transition ${p.popular ? "bg-teal-700 text-white hover:bg-teal-800" : "border-2 border-slate-300 hover:border-slate-900"}`}>{p.cta}</Link>}
+              <div key={p.key} data-reveal data-d={String(i)} className={`am-lift relative flex flex-col rounded-3xl p-6 sm:p-7 ${p.popular ? "bg-[#07110e] text-white shadow-2xl shadow-emerald-900/30 ring-2 ring-emerald-400" : "bg-white border border-slate-300 shadow-sm"}`}>
+                {p.popular && <span className="absolute -top-3.5 left-6 text-sm font-bold bg-emerald-400 text-[#07110e] rounded-full px-3.5 py-1">{t.popular}</span>}
+                {p.soon && <span className="absolute -top-3.5 left-6 text-sm font-bold bg-amber-200 text-amber-900 rounded-full px-3.5 py-1">{t.soon}</span>}
+                <h3 className={`text-[1.6rem] ${p.popular ? "text-white" : "text-slate-950"}`}>{p.name}</h3>
+                <p className={`text-[1.02rem] mb-4 ${p.popular ? "text-slate-300" : "text-slate-600"}`}>{p.desc}</p>
+                <div className="mb-6"><span className={`text-5xl font-extrabold ${p.popular ? "text-white" : "text-slate-950"}`}>{p.price}</span><span className={`text-lg ${p.popular ? "text-slate-300" : "text-slate-600"}`}>{t.perMonth}</span></div>
+                <ul className="space-y-3 mb-7 flex-1">{p.features.map((f) => <li key={f} className={`flex gap-2.5 text-[1.05rem] ${p.popular ? "text-white" : "text-slate-800"}`}><Check c={p.popular ? "text-emerald-400" : "text-emerald-600"} />{f}</li>)}</ul>
+                {p.soon ? <span className="block text-center py-3.5 rounded-full bg-slate-100 text-slate-500 text-[1.05rem] font-bold cursor-not-allowed">{p.cta}</span>
+                  : p.external ? <a href={p.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3.5 rounded-full border-2 border-green-600 text-green-700 text-[1.05rem] font-bold hover:bg-green-50 transition"><WaIcon />{p.cta}</a>
+                  : <Link to={p.href} className={`block text-center py-3.5 rounded-full text-[1.05rem] font-bold transition ${p.popular ? "bg-emerald-400 text-[#07110e] hover:bg-emerald-300" : "bg-[#07110e] text-white hover:bg-slate-800"}`}>{p.cta} →</Link>}
               </div>
             ))}
           </div>
@@ -507,14 +518,14 @@ const Index = () => {
 
       {/* FAQ */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
-        <h2 className="text-3xl font-bold text-slate-900 text-center mb-8" data-reveal>{t.faqTitle}</h2>
-        <div className="divide-y divide-slate-200 border-y border-slate-200" data-reveal>
+        <h2 className="text-[2.2rem] leading-tight sm:text-5xl text-slate-950 text-center mb-8" data-reveal>{t.faqTitle}</h2>
+        <div className="divide-y divide-slate-300 border-y border-slate-300" data-reveal>
           {t.faqs.map((f, i) => (
             <div key={f.q}>
-              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex justify-between items-center gap-4 py-4 text-left font-semibold text-slate-900 text-lg">
-                {f.q}<span className={`text-teal-700 text-2xl leading-none transition-transform ${open === i ? "rotate-45" : ""}`}>+</span>
+              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex justify-between items-center gap-4 py-5 text-left font-bold text-slate-950 text-[1.2rem]">
+                {f.q}<span className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xl leading-none transition ${open === i ? "rotate-45 bg-[#07110e] text-emerald-300" : "bg-slate-200 text-slate-800"}`}>+</span>
               </button>
-              {open === i && <p className="pb-5 text-slate-600 am-pop">{f.a}</p>}
+              {open === i && <p className="pb-5 text-[1.08rem] leading-relaxed text-slate-700 am-pop">{f.a}</p>}
             </div>
           ))}
         </div>
@@ -522,31 +533,30 @@ const Index = () => {
 
       {/* Final CTA */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-        <div data-reveal className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-700 to-emerald-600 text-white text-center px-6 py-14">
-          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-white/10 blur-2xl" />
-          <h2 className="relative text-3xl sm:text-4xl font-bold mb-3">{t.finalTitle}</h2>
-          <p className="relative text-teal-50 mb-8">{t.finalDesc}</p>
+        <div data-reveal className="relative overflow-hidden rounded-3xl am-glow text-white text-center px-6 py-14 sm:py-20 ring-1 ring-emerald-400/30">
+          <h2 className="relative text-[2.2rem] leading-tight sm:text-5xl mb-4">{t.finalTitle}</h2>
+          <p className="relative text-[1.15rem] text-slate-300 mb-8">{t.finalDesc}</p>
           <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/signup" className="px-7 py-3.5 rounded-full bg-white text-teal-800 font-semibold text-lg hover:bg-teal-50 transition">{t.ctaMain}</Link>
-            <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-green-600 text-white font-semibold text-lg hover:bg-green-500 transition"><WaIcon />{t.ctaWa}</a>
+            <Link to="/signup" className="px-8 py-4 rounded-full bg-emerald-400 text-[#07110e] font-bold text-[1.2rem] hover:bg-emerald-300 transition shadow-xl shadow-emerald-500/25">{t.ctaMain} →</Link>
+            <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-green-600 text-white font-bold text-[1.2rem] hover:bg-green-500 transition"><WaIcon />{t.ctaWa}</a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-950 text-slate-300">
+      <footer className="bg-[#07110e] text-slate-300 border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-8">
           <div className="grid gap-10 grid-cols-2 lg:grid-cols-12">
             <div className="col-span-2 lg:col-span-4">
               <div className="text-2xl font-bold text-white">Automorai<span className="text-teal-400">.</span></div>
               <p className="mt-1 text-teal-300 font-medium">{t.footer.tag}</p>
-              <p className="mt-3 text-sm text-slate-400 max-w-sm">{t.footer.desc}</p>
+              <p className="mt-3 text-base text-slate-300 max-w-sm">{t.footer.desc}</p>
               <a href={waLink(lang === "bn" ? "Automorai সম্পর্কে জানতে চাই" : "I want to know about Automorai")} target="_blank" rel="noopener noreferrer"
                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-green-600 px-5 py-2.5 font-semibold text-white hover:bg-green-500 transition"><WaIcon />{t.footer.waCta}</a>
             </div>
             <div className="lg:col-span-2">
               <div className="font-semibold text-white mb-3">{t.footer.product}</div>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2.5 text-base">
                 <li><a href="#top" className="hover:text-white">{t.footer.shop}</a></li>
                 <li><a href="#pricing" className="hover:text-white">{t.footer.pricing}</a></li>
                 <li><a href={DEMO_SHOP} target="_blank" rel="noopener noreferrer" className="hover:text-white">{t.footer.demo} ↗</a></li>
@@ -554,7 +564,7 @@ const Index = () => {
             </div>
             <div className="lg:col-span-2">
               <div className="font-semibold text-white mb-3">{t.footer.company}</div>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2.5 text-base">
                 <li><Link to="/signup" className="hover:text-white">{t.footer.signup}</Link></li>
                 <li><Link to="/login" className="hover:text-white">{t.footer.login}</Link></li>
                 <li><Link to="/privacy" className="hover:text-white">{t.footer.privacy}</Link></li>
@@ -562,7 +572,7 @@ const Index = () => {
             </div>
             <div className="col-span-2 lg:col-span-4">
               <div className="font-semibold text-white mb-3">{t.footer.contact}</div>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2.5 text-base">
                 <li><a href={waLink("Hi Automorai")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><WaIcon className="w-4 h-4" /> 01615-763484</a></li>
                 <li><a href="mailto:info@automorai.com" className="hover:text-white">info@automorai.com</a></li>
               </ul>
