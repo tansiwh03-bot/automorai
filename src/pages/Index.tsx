@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 // Automorai homepage — v2 2026-11-17 (user: website builder is the main benefit; show how fast a shop is made, how it looks,
 // products, chat reply, orders; Shopify-like animation). Every claim must stay true to what the system really does:
 //  - shop screenshots in /public/showcase are a real Automorai-built demo shop (Arisha Fashion World)
-//  - there is NO sales-chart dashboard: "orders" = Dashboard Orders tab (status) + Pixel/Google Analytics
+//  - Sales Report tab (2026-11-18, src/components/SalesReport.tsx) is real: daily sales graph, vs-previous %, best sellers,
+//    status/payment/area split, from the shop's real website orders. The numbers in the "growth" section here are an EXAMPLE.
 //  - Starter (990) is NOT built yet → "coming soon". Prices match BuyPackage.tsx + the WhatsApp AI prompt (n8n).
 
 const WA_NUMBER = "8801615763484";
@@ -51,6 +52,14 @@ const content = {
     checkoutMock: { title: "অর্ডার নিশ্চিত করুন", name: "নাম", phone: "মোবাইল", addr: "ঠিকানা", loc: ["ঢাকা", "ঢাকার বাইরে"], pay: ["ক্যাশ অন ডেলিভারি", "bKash", "Nagad"], total: "মোট", btn: "অর্ডার করুন" },
     ordersMock: { title: "Orders", rows: [["Party Frock", "৳৪৫০", "Delivered"], ["Cotton Dress", "৳৬৫০", "Shipped"], ["T-Shirt Set", "৳৮৫০", "Confirmed"], ["Shorts Set", "৳১,২০০", "Pending"]], notify: "নতুন অর্ডার এসেছে — WhatsApp" },
     example: "উদাহরণ",
+    growth: {
+      tag: "নতুন · Sales Report",
+      title: "বিক্রি বাড়ছে কিনা, এক নজরে দেখুন",
+      desc: "আপনার দোকানের আসল অর্ডার থেকে Dashboard নিজেই হিসাব করে দেখায় — কত বিক্রি হলো, কোন পণ্য চলছে, আগের চেয়ে বাড়ল না কমল। খাতা-কলম লাগে না।",
+      pts: ["প্রতিদিনের বিক্রির গ্রাফ — ৭, ৩০ বা ৯০ দিনের", "আগের সময়ের চেয়ে বিক্রি কত % বাড়ল বা কমল", "কোন পণ্য সবচেয়ে বেশি বিক্রি হয়", "কত অর্ডার ডেলিভারি হলো, কত বাতিল", "Facebook Pixel ও Google Analytics — কত মানুষ দোকানে এল"],
+      kpi: [["বিক্রি", "৳৫৪,২০০", "▲ ১৮%"], ["অর্ডার", "৬০", "▲ ১২%"], ["গড় অর্ডার", "৳৯০৩", "▲ ৫%"]],
+      chart: "প্রতিদিনের বিক্রি · শেষ ৩০ দিন", top: "সবচেয়ে বেশি বিক্রি", topRows: [["Party Frock", "৳১৫,৩০০"], ["Shorts Set", "৳১২,০০০"], ["Cotton Dress", "৳৯,১০০"]],
+    },
     replyTitle: "ক্রেতার প্রশ্নের উত্তর দেয় AI",
     replyDesc: "Messenger আর WhatsApp-এ \"দাম কত?\", \"আছে?\", \"ডেলিভারি কত?\" — AI উত্তর দেয় বাংলায়, ৩ সেকেন্ডে। রাত ২টায়ও। ছবি আর ভয়েস মেসেজও বোঝে।",
     replyPts: ["Messenger ও WhatsApp", "Facebook কমেন্টের উত্তর", "সব মেসেজ এক Inbox-এ", "দরদাম করলে আপনাকে জানায়"],
@@ -60,7 +69,7 @@ const content = {
     perMonth: "/মাস", popular: "সবচেয়ে জনপ্রিয়", soon: "শিগগিরই আসছে",
     plans: [
       { key: "starter", name: "শুরু", price: "৳৯৯০", desc: "ছোট দোকানের জন্য", features: ["ছোট website — পণ্য ও দাম", "Messenger-এ AI উত্তর", "\"WhatsApp-এ অর্ডার\" বাটন", "Pixel নিজে বসানোর সুবিধা"], cta: "শিগগিরই আসছে", href: "", soon: true },
-      { key: "business", name: "ব্যবসা", price: "৳২,৪৯০", desc: "যারা নিয়মিত অনলাইনে বিক্রি করেন", features: ["পুরো অনলাইন দোকান (কার্ট, COD, bKash/Nagad)", "WhatsApp ও Messenger-এ AI উত্তর", "মাসে ৫,০০০ AI উত্তর পর্যন্ত", "সব মেসেজ এক জায়গায়", "Pixel ও Google Analytics আমরা বসিয়ে দিই"], cta: "শুরু করুন", href: "/signup", popular: true },
+      { key: "business", name: "ব্যবসা", price: "৳২,৪৯০", desc: "যারা নিয়মিত অনলাইনে বিক্রি করেন", features: ["পুরো অনলাইন দোকান (কার্ট, COD, bKash/Nagad)", "WhatsApp ও Messenger-এ AI উত্তর", "মাসে ৫,০০০ AI উত্তর পর্যন্ত", "বিক্রির গ্রাফ ও Sales Report", "সব মেসেজ এক জায়গায়", "Pixel ও Google Analytics আমরা বসিয়ে দিই"], cta: "শুরু করুন", href: "/signup", popular: true },
       { key: "big", name: "বড়", price: "৳৪,৯৯০", desc: "একাধিক পেজ বা বড় দোকান", features: ["ব্যবসা প্যাকেজের সব কিছু", "একাধিক Facebook পেজ", "WooCommerce দোকান যুক্ত করা", "দ্রুত, অগ্রাধিকার সাপোর্ট"], cta: "WhatsApp-এ যোগাযোগ", href: waLink("আমি Automorai-র বড় প্যাকেজ (৪,৯৯০) সম্পর্কে জানতে চাই"), external: true },
     ] as Plan[],
     tender: {
@@ -119,6 +128,14 @@ const content = {
     checkoutMock: { title: "Confirm order", name: "Name", phone: "Mobile", addr: "Address", loc: ["Dhaka", "Outside Dhaka"], pay: ["Cash on delivery", "bKash", "Nagad"], total: "Total", btn: "Place order" },
     ordersMock: { title: "Orders", rows: [["Party Frock", "৳450", "Delivered"], ["Cotton Dress", "৳650", "Shipped"], ["T-Shirt Set", "৳850", "Confirmed"], ["Shorts Set", "৳1,200", "Pending"]], notify: "New order — WhatsApp" },
     example: "Example",
+    growth: {
+      tag: "New · Sales Report",
+      title: "See at a glance if your sales are growing",
+      desc: "The Dashboard works it out from your shop's real orders — how much you sold, which products sell, and whether you're up or down. No notebook needed.",
+      pts: ["Daily sales graph — 7, 30 or 90 days", "How many % sales went up or down vs before", "Which products sell the most", "How many orders were delivered or cancelled", "Facebook Pixel & Google Analytics — how many people visited"],
+      kpi: [["Sales", "৳54,200", "▲ 18%"], ["Orders", "60", "▲ 12%"], ["Avg. order", "৳903", "▲ 5%"]],
+      chart: "Daily sales · last 30 days", top: "Best sellers", topRows: [["Party Frock", "৳15,300"], ["Shorts Set", "৳12,000"], ["Cotton Dress", "৳9,100"]],
+    },
     replyTitle: "AI answers your buyers",
     replyDesc: "On Messenger and WhatsApp — \"price?\", \"in stock?\", \"delivery?\" — the AI answers in Bangla within 3 seconds, even at 2 AM. It understands photos and voice messages too.",
     replyPts: ["Messenger & WhatsApp", "Replies to Facebook comments", "All messages in one inbox", "Tells you when a buyer bargains"],
@@ -128,7 +145,7 @@ const content = {
     perMonth: "/month", popular: "Most popular", soon: "Coming soon",
     plans: [
       { key: "starter", name: "Starter", price: "৳990", desc: "For small shops", features: ["Small website — products & prices", "AI replies on Messenger", "\"Order on WhatsApp\" button", "Add your own Pixel"], cta: "Coming soon", href: "", soon: true },
-      { key: "business", name: "Business", price: "৳2,490", desc: "For shops selling online every day", features: ["Full online shop (cart, COD, bKash/Nagad)", "AI replies on WhatsApp & Messenger", "Up to 5,000 AI replies a month", "All messages in one place", "We set up Pixel & Google Analytics"], cta: "Get started", href: "/signup", popular: true },
+      { key: "business", name: "Business", price: "৳2,490", desc: "For shops selling online every day", features: ["Full online shop (cart, COD, bKash/Nagad)", "AI replies on WhatsApp & Messenger", "Up to 5,000 AI replies a month", "Sales graph & Sales Report", "All messages in one place", "We set up Pixel & Google Analytics"], cta: "Get started", href: "/signup", popular: true },
       { key: "big", name: "Big", price: "৳4,990", desc: "Several pages or a bigger shop", features: ["Everything in Business", "Several Facebook pages", "WooCommerce store connection", "Fast priority support"], cta: "Contact on WhatsApp", href: waLink("I want to know about Automorai's Big package (4,990)"), external: true },
     ] as Plan[],
     tender: {
@@ -335,8 +352,10 @@ const Index = () => {
         @keyframes amPulse{0%{box-shadow:0 0 0 0 rgba(13,148,136,.45)}100%{box-shadow:0 0 0 22px rgba(13,148,136,0)}}.am-pulse{animation:amPulse 1.6s ease-out infinite}
         @keyframes amSlide{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}.am-slide{animation:amSlide .6s .5s ease both}
         .am-fade{animation:amPop .5s ease both}
+        .am-draw{stroke-dasharray:1;stroke-dashoffset:1}.am-in .am-draw{animation:amDraw 2.2s ease-out .3s forwards}@keyframes amDraw{to{stroke-dashoffset:0}}
+        .am-area{opacity:0;transition:opacity 1s ease 1.4s}.am-in .am-area{opacity:1}
         .am-lift{transition:transform .25s ease,box-shadow .25s ease}.am-lift:hover{transform:translateY(-4px);box-shadow:0 14px 30px -12px rgba(15,23,42,.25)}
-        @media (prefers-reduced-motion: reduce){[data-reveal]{opacity:1;transform:none;transition:none}.am-float,.am-float2,.am-marquee,.am-toast,.am-toast2,.am-pulse,.am-caret{animation:none}.am-toast2{opacity:1}}
+        @media (prefers-reduced-motion: reduce){[data-reveal]{opacity:1;transform:none;transition:none}.am-float,.am-float2,.am-marquee,.am-toast,.am-toast2,.am-pulse,.am-caret{animation:none}.am-draw{stroke-dashoffset:0;animation:none}.am-area{opacity:1}.am-toast2{opacity:1}}
       `}</style>
 
       {/* Nav */}
@@ -457,6 +476,51 @@ const Index = () => {
             <div className="order-1 md:order-2 flex justify-center">
               <div className="w-[280px] sm:w-[300px]"><Phone className="ring-1 ring-white/15"><div key={`scr-${tab}-${lang}`} className="am-fade h-full">{screen(cur.k)}</div></Phone></div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Growth / Sales Report — the feature is real (Dashboard → Sales Report); numbers below are a labelled example */}
+      <section className="bg-[#f3f7f5] border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div data-reveal>
+            <span className="inline-block text-[15px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 rounded-full px-3.5 py-1 mb-5">{t.growth.tag}</span>
+            <h2 className="text-[2.2rem] leading-tight sm:text-5xl text-slate-950 mb-4">{t.growth.title}</h2>
+            <p className="text-[1.15rem] sm:text-xl text-slate-700 mb-6 leading-relaxed">{t.growth.desc}</p>
+            <ul className="space-y-3">{t.growth.pts.map((p) => <li key={p} className="flex gap-3 text-[1.1rem] font-semibold text-slate-900"><Check c="text-emerald-600" />{p}</li>)}</ul>
+          </div>
+          <div data-reveal data-d="1">
+            <div className="rounded-3xl bg-[#07110e] text-white p-4 sm:p-6 shadow-2xl shadow-slate-900/30 ring-1 ring-emerald-400/20">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+                {t.growth.kpi.map(([k, v, c]) => (
+                  <div key={k} className="rounded-2xl bg-white/5 border border-white/10 p-3">
+                    <div className="text-[13px] text-slate-400">{k}</div>
+                    <div className="text-[1.25rem] sm:text-2xl font-extrabold leading-tight">{v}</div>
+                    <div className="text-[13px] font-bold text-emerald-400">{c}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-3 sm:p-4 mb-4">
+                <div className="text-[14px] text-slate-300 mb-2">{t.growth.chart}</div>
+                <svg viewBox="0 0 300 110" className="w-full h-auto" aria-hidden="true">
+                  <defs><linearGradient id="amG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#34d399" stopOpacity=".45" /><stop offset="100%" stopColor="#34d399" stopOpacity="0" /></linearGradient></defs>
+                  {[25, 55, 85].map((y) => <line key={y} x1="0" x2="300" y1={y} y2={y} stroke="rgba(255,255,255,.08)" />)}
+                  <path className="am-area" d="M0,92 C20,88 30,80 45,82 S70,70 85,72 S110,78 125,64 S150,50 165,56 S190,44 205,40 S230,46 245,30 S272,18 292,12 L292,110 L0,110 Z" fill="url(#amG)" />
+                  <path className="am-draw" d="M0,92 C20,88 30,80 45,82 S70,70 85,72 S110,78 125,64 S150,50 165,56 S190,44 205,40 S230,46 245,30 S272,18 292,12" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" pathLength={1} />
+                  <circle cx="292" cy="12" r="4" fill="#34d399" className="am-pulse" />
+                </svg>
+              </div>
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-3 sm:p-4">
+                <div className="text-[14px] text-slate-300 mb-2">{t.growth.top}</div>
+                {t.growth.topRows.map(([n, v], i) => (
+                  <div key={n} className="mb-2 last:mb-0">
+                    <div className="flex justify-between text-[15px] mb-1"><span>{n}</span><span className="font-bold">{v}</span></div>
+                    <div className="h-1.5 rounded bg-white/10"><div className="h-full rounded bg-emerald-400" style={{ width: `${[100, 78, 60][i]}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-center text-sm text-slate-500 mt-3">{t.example}</p>
           </div>
         </div>
       </section>

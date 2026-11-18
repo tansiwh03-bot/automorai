@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import SalesReport from '../components/SalesReport';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -158,7 +159,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders' | 'reports'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
 
@@ -371,7 +372,7 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
-    if (activeTab !== 'orders' || !currentSiteId) return;
+    if ((activeTab !== 'orders' && activeTab !== 'reports') || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
 
@@ -825,6 +826,7 @@ const Dashboard = () => {
     { key: 'website' as const, label: 'Website', icon: '🌐' },
     { key: 'products' as const, label: 'Products', icon: '📦' },
     { key: 'orders' as const, label: 'Orders', icon: '🛍️' },
+    { key: 'reports' as const, label: 'Sales Report', icon: '📈' },
   ];
 
   return (
@@ -1656,6 +1658,12 @@ const Dashboard = () => {
       )}
 
       {/* ════════ ORDERS TAB ════════ */}
+      {activeTab === 'reports' && (
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          {currentSiteId ? <SalesReport orders={orders} loading={ordersLoading} /> : <div style={{ color: '#8b90a3' }}>Build your website first — your sales report will show here.</div>}
+        </div>
+      )}
+
       {activeTab === 'orders' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ color: '#7c5cff', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
