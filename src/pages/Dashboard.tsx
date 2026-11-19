@@ -162,7 +162,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'orders' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'reports'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
 
@@ -251,6 +251,10 @@ const Dashboard = () => {
   // Products state
   const [products,        setProducts]        = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  // Stock tab: inline stock edits (product_id -> typed value) and which row is saving
+  const [stockEdit,    setStockEdit]    = useState<Record<string, string>>({});
+  const [stockSavingId, setStockSavingId] = useState<string>('');
+  const LOW_STOCK = 5;
   const [showAddProduct,  setShowAddProduct]  = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productForm,     setProductForm]     = useState<Omit<Product, 'product_id' | 'is_active'>>({
@@ -367,7 +371,7 @@ const Dashboard = () => {
   }, [activeTab, user]);
 
   useEffect(() => {
-    if (activeTab !== 'products' || !currentSiteId) return;
+    if ((activeTab !== 'products' && activeTab !== 'stock') || !currentSiteId) return;
     loadProducts();
   }, [activeTab, currentSiteId]);
 
@@ -469,6 +473,27 @@ const Dashboard = () => {
       } else { setProductError('Could not save. Please try again.'); }
     } catch { setProductError('Connection error।'); }
     setProductSaving(false);
+  };
+
+  // Stock: save a new stock number for one product (reuses the product /update endpoint)
+  const handleSaveStock = async (p: Product) => {
+    const id = p.product_id || '';
+    const raw = stockEdit[id];
+    const val = Math.max(0, Math.round(Number(raw)));
+    if (!id || raw === undefined || isNaN(val)) return;
+    setStockSavingId(id);
+    try {
+      const res = await fetch(`${PRODUCTS_API}/update`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ ...p, stock: val, product_id: id, business_slug: currentSiteId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts(prev => prev.map(x => (x.product_id === id ? { ...x, stock: val } : x)));
+        setStockEdit(prev => { const n = { ...prev }; delete n[id]; return n; });
+      }
+    } catch { /* keep the typed value so the user can retry */ }
+    setStockSavingId('');
   };
 
   const handleEditProduct = (p: Product) => {
@@ -897,6 +922,7 @@ const Dashboard = () => {
     { key: 'inbox' as const, label: 'Inbox', icon: '💬' },
     { key: 'website' as const, label: 'Website', icon: '🌐' },
     { key: 'products' as const, label: 'Products', icon: '📦' },
+    { key: 'stock' as const, label: 'Stock', icon: '📊' },
     { key: 'orders' as const, label: 'Orders', icon: '🛍️' },
     { key: 'reports' as const, label: 'Sales Report', icon: '📈' },
   ];
@@ -1734,6 +1760,103 @@ const Dashboard = () => {
       {activeTab === 'reports' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           {currentSiteId ? <SalesReport orders={orders} loading={ordersLoading} /> : <div style={{ color: '#8b90a3' }}>Build your website first — your sales report will show here.</div>}
+        </div>
+      )}
+
+      {activeTab === 'stock' && (
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          <h2 style={{ color: '#7c5cff', margin: '0 0 4px' }}>📊 Stock</h2>
+          <p style={{ color: '#8b90a3', margin: '0 0 20px', fontSize: '0.9rem' }}>Keep an eye on what's in stock and what's running low. Update any product's stock right here.</p>
+          {!currentSiteId ? (
+            <div style={{ color: '#8b90a3' }}>Build your website and add products first — your stock will show here.</div>
+          ) : productsLoading ? (
+            <div style={{ color: '#8b90a3' }}>Loading stock...</div>
+          ) : products.length === 0 ? (
+            <div style={{ color: '#8b90a3' }}>No products yet. Add products in the Products tab to track stock.</div>
+          ) : (() => {
+            const inStock = products.filter(p => (p.stock || 0) > LOW_STOCK).length;
+            const low = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= LOW_STOCK);
+            const out = products.filter(p => (p.stock || 0) <= 0);
+            const totalUnits = products.reduce((s, p) => s + (p.stock || 0), 0);
+            const sum = [
+              { label: 'Total products', value: products.length, color: '#c3c7d4' },
+              { label: 'Healthy stock', value: inStock, color: '#4ade80' },
+              { label: `Low stock (≤${LOW_STOCK})`, value: low.length, color: '#fbbf24' },
+              { label: 'Out of stock', value: out.length, color: '#f87171' },
+            ];
+            const stockCell = (p: Product) => {
+              const id = p.product_id || '';
+              const cur = p.stock || 0;
+              const edited = stockEdit[id];
+              const changed = edited !== undefined && String(cur) !== edited;
+              const badge = cur <= 0 ? { t: 'Out', c: '#f87171' } : cur <= LOW_STOCK ? { t: 'Low', c: '#fbbf24' } : { t: 'OK', c: '#4ade80' };
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: badge.c, border: `1px solid ${badge.c}55`, borderRadius: 999, padding: '1px 8px' }}>{badge.t}</span>
+                  <input type="number" min={0} value={edited !== undefined ? edited : String(cur)}
+                    onChange={e => setStockEdit(prev => ({ ...prev, [id]: e.target.value }))}
+                    style={{ width: 70, background: '#1e2130', color: 'white', border: '1px solid #262a38', borderRadius: 8, padding: '6px 8px', fontSize: '0.85rem', textAlign: 'center' }} />
+                  <button onClick={() => handleSaveStock(p)} disabled={!changed || stockSavingId === id}
+                    style={{ background: changed ? '#7c5cff' : '#1e2130', color: changed ? 'white' : '#8b90a3', border: '1px solid #262a38', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: changed ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
+                    {stockSavingId === id ? '…' : 'Save'}
+                  </button>
+                </div>
+              );
+            };
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 22 }}>
+                  {sum.map(s => (
+                    <div key={s.label} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: 14, padding: 18 }}>
+                      <div style={{ fontSize: '0.8rem', color: '#8b90a3' }}>{s.label}</div>
+                      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: s.color, marginTop: 4 }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#8b90a3', marginBottom: 22 }}>Total units in stock: <b style={{ color: '#c3c7d4' }}>{totalUnits.toLocaleString('en-IN')}</b></div>
+
+                {(low.length > 0 || out.length > 0) && (
+                  <div style={{ background: '#1c1710', border: '1px solid #4a3a12', borderRadius: 14, padding: 18, marginBottom: 24 }}>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '1rem', color: '#fbbf24' }}>⚠️ Needs restock ({low.length + out.length})</h3>
+                    {[...out, ...low].map(p => (
+                      <div key={p.product_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2415', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 140 }}>
+                          <div style={{ fontWeight: 600 }}>{p.title}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{(p.stock || 0) <= 0 ? 'Out of stock' : `Only ${p.stock} left`}</div>
+                        </div>
+                        {stockCell(p)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <h3 style={{ margin: '0 0 12px', fontSize: '1rem', color: '#c3c7d4' }}>All products</h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: '#12141c', borderBottom: '1px solid #262a38', color: '#8b90a3' }}>
+                        <th style={{ padding: '12px' }}>Product</th>
+                        <th style={{ padding: '12px' }}>Price</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.slice().sort((a, b) => (a.stock || 0) - (b.stock || 0)).map(p => (
+                        <tr key={p.product_id} style={{ borderBottom: '1px solid #1a1d27' }}>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ fontWeight: 600 }}>{p.title}</div>
+                            {p.category && <div style={{ fontSize: '0.72rem', color: '#8b90a3' }}>{p.category}</div>}
+                          </td>
+                          <td style={{ padding: '12px', color: '#c3c7d4' }}>৳{p.price}</td>
+                          <td style={{ padding: '12px' }}>{stockCell(p)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
