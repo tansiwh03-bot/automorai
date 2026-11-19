@@ -26,6 +26,7 @@ const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-pr
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const MY_PACKAGE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-package';
 const COURIER_SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier-settings';
+const COURIER_PHONE_CHECK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/phone-check';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -265,6 +266,8 @@ const Dashboard = () => {
   // Orders state
   const [orders,        setOrders]        = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  // Courier delivery-history check per phone (fraud/return risk), keyed by phone
+  const [phoneRisk, setPhoneRisk] = useState<Record<string, { found: boolean; delivered: number; returned: number; total: number; return_rate: number; risk: string }>>({});
 
   // ── Facebook OAuth ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -417,9 +420,26 @@ const Dashboard = () => {
         headers: await getAuthHeader(),
       });
       const data = await res.json();
-      setOrders(data.success && Array.isArray(data.orders) ? data.orders : []);
+      const list = data.success && Array.isArray(data.orders) ? data.orders : [];
+      setOrders(list);
+      loadPhoneRisks(list);
     } catch { setOrders([]); }
     setOrdersLoading(false);
+  };
+
+  // check each customer's delivery history (delivered vs returned) from the courier data we collect
+  const loadPhoneRisks = async (list: Order[]) => {
+    const phones = Array.from(new Set(list.map(o => (o.customer_phone || '').trim()).filter(p => /^01\d{9}$/.test(p))));
+    const todo = phones.filter(p => !(p in phoneRisk));
+    if (!todo.length) return;
+    const auth = await getAuthHeader();
+    for (const p of todo) {
+      try {
+        const res = await fetch(`${COURIER_PHONE_CHECK_API}?phone=${encodeURIComponent(p)}`, { headers: auth });
+        const d = await res.json();
+        if (d && d.success) setPhoneRisk(prev => ({ ...prev, [p]: d }));
+      } catch { /* ignore; badge just won't show */ }
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -1704,7 +1724,21 @@ const Dashboard = () => {
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div>{o.customer_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.customer_phone}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>
+                          {o.customer_phone}
+                          {(() => {
+                            const r = phoneRisk[(o.customer_phone || '').trim()];
+                            if (!r || !r.found) return null;
+                            const m = {
+                              high:   { bg: '#3a1416', fg: '#ff6b6b', t: `⚠️ ${r.returned}/${r.total} returned` },
+                              medium: { bg: '#3a2e14', fg: '#ffcf5c', t: `${r.returned}/${r.total} returned` },
+                              good:   { bg: '#16301c', fg: '#8fe388', t: `✓ ${r.delivered}/${r.total} delivered` },
+                              low_data: { bg: '#1e2130', fg: '#8b90a3', t: `${r.delivered}✓ ${r.returned}✗ (new)` },
+                            }[r.risk] || { bg: '#1e2130', fg: '#8b90a3', t: `${r.delivered}✓ ${r.returned}✗` };
+                            return <span title={`Courier history: ${r.delivered} delivered, ${r.returned} returned (${r.return_rate}% return rate)`}
+                              style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '999px', background: m.bg, color: m.fg, fontSize: '0.68rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{m.t}</span>;
+                          })()}
+                        </div>
                         {o.customer_email && <div style={{ fontSize: '0.72rem', color: '#8b90a3' }}>{o.customer_email}</div>}
                         <div style={{ fontSize: '0.7rem', color: '#666' }}>{o.customer_address}</div>
                         <div style={{ fontSize: '0.7rem', color: '#8b90a3' }}>{o.delivery_location === 'outside' ? '🚴 Outside Dhaka' : '🚴 Dhaka'}</div>

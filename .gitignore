@@ -29,3 +29,6 @@ dist-ssr
 /playwright/.cache/
 .last-run.json
 .dyad/
+
+# local backups (never push to the public repo)
+*.bak_*
