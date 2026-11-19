@@ -27,6 +27,8 @@ const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-se
 const MY_PACKAGE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-package';
 const COURIER_SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier-settings';
 const COURIER_PHONE_CHECK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/phone-check';
+const COURIER_BOOK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/book';
+const COURIER_BOOKINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/bookings';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -423,6 +425,7 @@ const Dashboard = () => {
       const list = data.success && Array.isArray(data.orders) ? data.orders : [];
       setOrders(list);
       loadPhoneRisks(list);
+      loadBookings();
     } catch { setOrders([]); }
     setOrdersLoading(false);
   };
@@ -722,6 +725,40 @@ const Dashboard = () => {
       });
       loadOrders();
     } catch {}
+  };
+
+  // ── Courier booking (Steadfast) ──
+  const [bookings, setBookings] = useState<Record<string, { tracking_code: string; consignment_id: string; courier_status: string; created_at: string }>>({});
+  const [bookingOrderId, setBookingOrderId] = useState('');
+
+  const loadBookings = async () => {
+    try {
+      const res = await fetch(`${COURIER_BOOKINGS_API}?business_slug=${encodeURIComponent(currentSiteId)}`, { headers: await getAuthHeader() });
+      const d = await res.json();
+      if (d && d.success && d.bookings) setBookings(d.bookings);
+    } catch {}
+  };
+
+  const handleSendToCourier = async (o: Order) => {
+    if (!courierConfigured.steadfast) { alert('First save your Steadfast API keys in Settings → Courier Integration.'); return; }
+    if (!window.confirm(`Book this parcel with Steadfast?\n${o.customer_name}, ${o.customer_phone}\nCOD ৳${o.product_price * o.quantity + (o.delivery_charge || 0)}`)) return;
+    setBookingOrderId(o.id);
+    try {
+      const res = await fetch(COURIER_BOOK_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({
+          business_slug: currentSiteId, order_id: o.id,
+          recipient_name: o.customer_name, recipient_phone: o.customer_phone, recipient_address: o.customer_address,
+          cod_amount: o.product_price * o.quantity + (o.delivery_charge || 0),
+          item_description: `${o.product_title} (x${o.quantity})`,
+        }),
+      });
+      const d = await res.json();
+      if (d.success) { await loadBookings(); await handleUpdateOrderStatus(o.id, 'shipped'); }
+      else alert('Could not book: ' + (d.error || 'unknown error'));
+    } catch { alert('Could not reach the courier service. Try again.'); }
+    setBookingOrderId('');
   };
 
   const handleFacebookConnect = () => {
@@ -1713,6 +1750,7 @@ const Dashboard = () => {
                     <th style={{ padding: '12px' }}>Payment</th>
                     <th style={{ padding: '12px' }}>Total</th>
                     <th style={{ padding: '12px' }}>Status</th>
+                    <th style={{ padding: '12px' }}>Courier</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1760,6 +1798,20 @@ const Dashboard = () => {
                           <option value="delivered">Delivered</option>
                           <option value="cancelled">Cancelled</option>
                         </select>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        {bookings[o.id] ? (
+                          <div style={{ fontSize: '0.75rem' }}>
+                            <div style={{ color: '#8fe388', fontWeight: 600 }}>🚚 Steadfast</div>
+                            <div style={{ color: '#c8ff5c' }}>{bookings[o.id].tracking_code}</div>
+                            <div style={{ color: '#8b90a3', fontSize: '0.68rem' }}>{bookings[o.id].courier_status}</div>
+                          </div>
+                        ) : (
+                          <button onClick={() => handleSendToCourier(o)} disabled={bookingOrderId === o.id}
+                            style={{ background: '#1e2130', color: '#c8ff5c', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {bookingOrderId === o.id ? '⏳ Booking…' : '🚚 Send to Steadfast'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
