@@ -234,6 +234,7 @@ const Dashboard = () => {
   });
   const [courierSaving, setCourierSaving] = useState(false);
   const [courierSaved, setCourierSaved] = useState(false);
+  const [courierError, setCourierError] = useState('');
 
   // Current site_id (from websiteResult or localStorage)
   const [currentSiteId, setCurrentSiteId] = useState<string>(() => {
@@ -573,16 +574,20 @@ const Dashboard = () => {
       const data = await res.json();
       if (data.success) {
         setCourierProvider((data.provider as 'none' | 'steadfast' | 'pathao') || 'none');
-        setCourierConfigured({ steadfast: !!data.steadfast_configured, pathao: !!data.pathao_configured });
+        const configured = { steadfast: !!data.steadfast_configured, pathao: !!data.pathao_configured };
+        setCourierConfigured(configured);
+        return configured;
       }
     } catch {}
+    return null;
   };
 
   const handleCourierFormChange = (field: keyof typeof courierForm, value: string) =>
     setCourierForm(prev => ({ ...prev, [field]: value }));
 
   const handleSaveCourierSettings = async () => {
-    setCourierSaving(true); setCourierSaved(false);
+    setCourierSaving(true); setCourierSaved(false); setCourierError('');
+    const failMsg = 'Could not save. Please try again. If it keeps failing, contact support.';
     try {
       const res = await fetch(`${COURIER_SETTINGS_API}/save`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
@@ -590,11 +595,21 @@ const Dashboard = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setCourierSaved(true); setTimeout(() => setCourierSaved(false), 2500);
-        setCourierForm({ steadfast_api_key: '', steadfast_secret_key: '', pathao_client_id: '', pathao_client_secret: '', pathao_username: '', pathao_password: '' });
-        loadCourierSettings();
+        // Read it back: only say "Saved" when the server really has the keys.
+        const configured = await loadCourierSettings();
+        const ok = courierProvider === 'none' || (configured && configured[courierProvider]);
+        if (ok) {
+          setCourierSaved(true); setTimeout(() => setCourierSaved(false), 2500);
+          setCourierForm({ steadfast_api_key: '', steadfast_secret_key: '', pathao_client_id: '', pathao_client_secret: '', pathao_username: '', pathao_password: '' });
+        } else {
+          setCourierError(failMsg);
+        }
+      } else {
+        setCourierError(data.error || failMsg);
       }
-    } catch {}
+    } catch {
+      setCourierError(failMsg);
+    }
     setCourierSaving(false);
   };
 
@@ -1376,6 +1391,7 @@ const Dashboard = () => {
                               {courierSaving ? '⏳ Saving...' : courierSaved ? '✅ Saved!' : '💾 Save Courier Settings'}
                             </button>
                           )}
+                          {courierError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{courierError}</p>}
                         </div>
 
                         {/* ── Shop Info (used by the chat assistant) ── */}
