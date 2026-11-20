@@ -264,6 +264,8 @@ const Dashboard = () => {
   // Products state
   const [products,        setProducts]        = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productSearch,   setProductSearch]   = useState('');
+  const [productCatFilter, setProductCatFilter] = useState('');
   // Stock tab: inline stock edits (product_id -> typed value) and which row is saving
   const [stockEdit,    setStockEdit]    = useState<Record<string, string>>({});
   const [stockSavingId, setStockSavingId] = useState<string>('');
@@ -285,6 +287,8 @@ const Dashboard = () => {
   // Orders state
   const [orders,        setOrders]        = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderSearch,   setOrderSearch]   = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
   // Courier delivery-history check per phone (fraud/return risk), keyed by phone
   const [phoneRisk, setPhoneRisk] = useState<Record<string, { found: boolean; delivered: number; returned: number; total: number; return_rate: number; risk: string }>>({});
 
@@ -2159,10 +2163,24 @@ const Dashboard = () => {
             </div>
           )}
 
+          {!productsLoading && products.length > 0 && (
+            <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Search products…" className="amr-input" style={{ maxWidth: '260px' }} />
+              <select value={productCatFilter} onChange={e => setProductCatFilter(e.target.value)} className="amr-input" style={{ maxWidth: '200px' }}>
+                <option value="">All categories</option>
+                {[...new Set(products.map(p => (p.category || '').trim()).filter(Boolean))].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
           {/* Product Grid */}
           {productsLoading ? <div style={{ color: '#718096' }}>Products loading...</div> : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-              {products.map(p => (
+              {products.filter(p => {
+                const q = productSearch.trim().toLowerCase();
+                const matchQ = !q || (p.title || '').toLowerCase().includes(q);
+                const matchC = !productCatFilter || (p.category || '').trim() === productCatFilter;
+                return matchQ && matchC;
+              }).map(p => (
                 <div key={p.product_id} style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: '12px', overflow: 'hidden' }}>
                   <div style={{ height: '160px', background: '#f0f4fb', position: 'relative' }}>
                     {isSampleProduct(p) && (
@@ -2599,6 +2617,30 @@ const Dashboard = () => {
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div className="amr-eyebrow">Sales operations</div>
           <h2 style={{ color: '#12284c', margin: '2px 0 16px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Orders</h2>
+          {(() => {
+            const st = (s: string) => (s || '').toLowerCase();
+            const pending = orders.filter(o => st(o.status) === 'pending').length;
+            const processing = orders.filter(o => ['confirmed', 'processing', 'shipped'].includes(st(o.status))).length;
+            const delivered = orders.filter(o => st(o.status) === 'delivered').length;
+            const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (<div className="amr-card"><div style={{ color: '#718096', fontSize: '0.78rem', fontWeight: 600 }}>{l}</div><div className="amr-stat-num" style={{ fontSize: '1.4rem', color: c || '#10264b' }}>{v}</div></div>);
+            return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: '14px', marginBottom: '16px' }}>
+              <Stat l="All Orders" v={String(orders.length)} />
+              <Stat l="Pending" v={String(pending)} c="#b87914" />
+              <Stat l="Processing" v={String(processing)} c="#2563eb" />
+              <Stat l="Delivered" v={String(delivered)} c="#159768" />
+            </div>;
+          })()}
+          <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <input value={orderSearch} onChange={e => setOrderSearch(e.target.value)} placeholder="Search order or customer…" className="amr-input" style={{ maxWidth: '260px' }} />
+            <select value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)} className="amr-input" style={{ maxWidth: '180px' }}>
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
           {ordersLoading ? <div style={{ color: '#718096' }}>Loading orders...</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
@@ -2613,7 +2655,12 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(o => (
+                  {orders.filter(o => {
+                    const q = orderSearch.trim().toLowerCase();
+                    const matchQ = !q || (o.product_title || '').toLowerCase().includes(q) || (o.customer_name || '').toLowerCase().includes(q) || (o.customer_phone || '').includes(q);
+                    const matchS = !orderStatusFilter || (o.status || '').toLowerCase() === orderStatusFilter;
+                    return matchQ && matchS;
+                  }).map(o => (
                     <tr key={o.id} style={{ borderBottom: '1px solid #edf1f6' }}>
                       <td style={{ padding: '12px' }}>
                         <div style={{ fontWeight: 600 }}>{o.product_title}</div>
