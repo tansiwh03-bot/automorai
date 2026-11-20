@@ -1262,9 +1262,17 @@ const Dashboard = () => {
       {/* ════════ HOME TAB ════════ */}
       {activeTab === 'home' && (
         <div style={{ padding: '40px 32px', maxWidth: '1000px', margin: '0 auto' }}>
-          <div className="amr-eyebrow">Business command center</div>
-          <h1 className="amr-pagehead" style={{ fontSize: '1.55rem', margin: '4px 0 2px', color: '#12284c', letterSpacing: '-0.4px' }}>Welcome back 👋</h1>
-          <p className="amr-sub" style={{ margin: '0 0 26px' }}>{user.email}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '22px' }}>
+            <div>
+              <div className="amr-eyebrow">Business command center</div>
+              <h1 style={{ fontSize: '1.55rem', margin: '4px 0 2px', color: '#12284c', letterSpacing: '-0.4px' }}>{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, {wsName} 👋</h1>
+              <p className="amr-sub" style={{ margin: 0 }}>Here's what's happening in your business today.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap' }}>
+              <span className="amr-btn" style={{ cursor: 'default' }}>📅 Today</span>
+              <button className="amr-btn amr-btn-primary" style={{ color: '#fff' }} onClick={() => setActiveTab('products')}>＋ Add Product</button>
+            </div>
+          </div>
 
           {status && (
             <div style={{ background: '#eaf2ff', border: '1px solid #cfe0ff', borderRadius: '10px',
@@ -1280,6 +1288,13 @@ const Dashboard = () => {
             const lowStock = products.filter(p => Number(p.stock) <= 5 && Number(p.stock) > 0).length;
             const outStock = products.filter(p => Number(p.stock) === 0).length;
             const unread = conversations.length;
+            const yKey = new Date(Date.now() - 86400000).toDateString();
+            const yOrders = orders.filter(o => { try { return new Date(o.created_at).toDateString() === yKey; } catch { return false; } });
+            const yRev = yOrders.reduce((s, o) => s + amt(o), 0);
+            const custCount = new Set(orders.map(o => (o.customer_phone || o.customer_name || '').trim()).filter(Boolean)).size;
+            const trend = (now: number, before: number) => { if (!before) return null; const p = Math.round(((now - before) / before) * 100); return { p, up: p >= 0 }; };
+            const revTrend = trend(todayRev, yRev); const ordTrend = trend(todayOrders.length, yOrders.length);
+            const alertCount = (outStock + lowStock > 0 ? 1 : 0) + (pending > 0 ? 1 : 0) + (unread > 0 ? 1 : 0);
             const recent = [...orders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
             const pillClass = (s: string) => {
               const v = (s || '').toLowerCase();
@@ -1289,32 +1304,39 @@ const Dashboard = () => {
               return 'processing';
             };
             const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
-            const Stat = ({ label, value, ico, foot }: { label: string; value: string; ico: string; foot?: React.ReactNode }) => (
+            const Stat = ({ label, value, ico, foot, tr }: { label: string; value: string; ico: string; foot?: React.ReactNode; tr?: { p: number; up: boolean } | null }) => (
               <div className="amr-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#718096', fontSize: '0.75rem', fontWeight: 600 }}>{label}<span className="amr-stat-ico">{ico}</span></div>
                 <div className="amr-stat-num">{value}</div>
-                {foot && <div style={{ fontSize: '0.7rem', color: '#718096' }}>{foot}</div>}
+                {tr ? <div style={{ fontSize: '0.7rem', color: tr.up ? '#16a879' : '#c44d4d', fontWeight: 700 }}>{tr.up ? '↗' : '↘'} {Math.abs(tr.p)}% <span style={{ color: '#8794a8', fontWeight: 400 }}>vs yesterday</span></div> : (foot && <div style={{ fontSize: '0.7rem', color: '#718096' }}>{foot}</div>)}
               </div>
             );
             return (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '18px' }}>
-                  <Stat label="Today's Revenue" ico="৳" value={`৳${todayRev.toLocaleString()}`} foot={`${todayOrders.length} orders today`} />
-                  <Stat label="Total Orders" ico="🛍️" value={String(orders.length)} foot={ordersLoading ? 'Loading…' : 'All time'} />
-                  <Stat label="Pending Orders" ico="⏳" value={String(pending)} foot={pending ? <span style={{ color: '#b87914' }}>Needs action</span> : 'All clear'} />
-                  <Stat label="Products" ico="📦" value={String(products.length)} foot={lowStock + outStock > 0 ? <span style={{ color: '#d98a20' }}>⚠ {lowStock + outStock} need restock</span> : 'In stock'} />
+                  <Stat label="Today's Revenue" ico="৳" value={`৳${todayRev.toLocaleString()}`} tr={revTrend} foot={`${todayOrders.length} orders today`} />
+                  <Stat label="Total Orders" ico="🛍️" value={String(orders.length)} tr={ordTrend} foot={ordersLoading ? 'Loading…' : 'All time'} />
+                  <Stat label="Customers" ico="👥" value={String(custCount)} foot="Unique buyers" />
+                  <Stat label="Products" ico="📦" value={String(products.length)} foot={lowStock + outStock > 0 ? <span style={{ color: '#d98a20' }}>⚠ {lowStock + outStock} low in stock</span> : 'In stock'} />
                 </div>
 
                 {(() => {
                   const DAY = 86400000; const n = Date.now();
-                  const days: { key: string; sales: number }[] = [];
-                  for (let i = 13; i >= 0; i--) { const d = new Date(n - i * DAY); days.push({ key: d.toDateString(), sales: 0 }); }
+                  const days: { key: string; label: string; sales: number; ordersN: number }[] = [];
+                  for (let i = 13; i >= 0; i--) { const d = new Date(n - i * DAY); days.push({ key: d.toDateString(), label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), sales: 0, ordersN: 0 }); }
                   const idx: Record<string, number> = {}; days.forEach((d, i) => { idx[d.key] = i; });
-                  orders.forEach(o => { if ((o.status || '').toLowerCase() === 'cancelled') return; const k = (() => { try { return new Date(o.created_at).toDateString(); } catch { return ''; } })(); if (idx[k] !== undefined) days[idx[k]].sales += amt(o); });
-                  const max = Math.max(1, ...days.map(d => d.sales));
-                  const W = 640, H = 120;
-                  const pts = days.map((d, i) => [days.length === 1 ? 0 : (i / (days.length - 1)) * W, H - (d.sales / max) * (H - 12)]);
-                  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+                  orders.forEach(o => { const k = (() => { try { return new Date(o.created_at).toDateString(); } catch { return ''; } })(); if (idx[k] === undefined) return; days[idx[k]].ordersN += 1; if ((o.status || '').toLowerCase() !== 'cancelled') days[idx[k]].sales += amt(o); });
+                  const maxS = Math.max(1, ...days.map(d => d.sales)); const maxO = Math.max(1, ...days.map(d => d.ordersN));
+                  const W = 660, H = 170, LX = 40, RX = W - 8, topPad = 10, botPad = 24; const plotW = RX - LX, plotH = H - topPad - botPad;
+                  const px = (i: number) => days.length === 1 ? LX : LX + (i / (days.length - 1)) * plotW;
+                  const salesPts = days.map((d, i) => [px(i), topPad + plotH - (d.sales / maxS) * plotH]);
+                  const ordersPts = days.map((d, i) => [px(i), topPad + plotH - (d.ordersN / maxO) * plotH]);
+                  const toPath = (p: number[][]) => p.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
+                  const salesLine = toPath(salesPts); const ordersLine = toPath(ordersPts);
+                  const areaPath = `${salesLine} L${RX} ${topPad + plotH} L${LX} ${topPad + plotH} Z`;
+                  const grid = [0, 0.33, 0.66, 1].map(f => ({ y: topPad + plotH * f, v: Math.round(maxS * (1 - f)) }));
+                  const xTicks = [0, 3, 6, 9, 13].filter(i => i < days.length);
+                  const kfmt = (v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v);
                   const total14 = days.reduce((s, d) => s + d.sales, 0);
                   // Sales by payment method (real) — mirrors the demo's "Sales by Channel" donut
                   const payNames: Record<string, string> = { cod: 'Cash on Delivery', bkash: 'bKash', nagad: 'Nagad', bank: 'Bank Transfer' };
@@ -1329,23 +1351,30 @@ const Dashboard = () => {
                   return (
                     <div className="amr-overview-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(240px,1fr)', gap: '16px', marginBottom: '18px' }}>
                       <div className="amr-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                          <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Sales Performance</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Last 14 days</span></div>
-                          <div style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.05rem' }}>৳{Math.round(total14).toLocaleString()}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Sales Performance</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Revenue &amp; orders overview · ৳{Math.round(total14).toLocaleString()}</span></div>
+                          <span className="amr-btn" style={{ cursor: 'default', fontSize: '0.72rem', padding: '6px 11px', flex: 'none' }}>Last 14 days</span>
                         </div>
-                        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '150px' }}>
-                          <defs><linearGradient id="ovFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2563eb" stopOpacity="0.22" /><stop offset="1" stopColor="#2563eb" stopOpacity="0" /></linearGradient></defs>
-                          <path d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#ovFill)" />
-                          <path d={line} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '185px' }}>
+                          <defs><linearGradient id="ovFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2563eb" stopOpacity="0.2" /><stop offset="1" stopColor="#2563eb" stopOpacity="0" /></linearGradient></defs>
+                          {grid.map((g, i) => <g key={i}><line x1={LX} x2={RX} y1={g.y} y2={g.y} stroke="#eef1f7" strokeWidth="1" /><text x="0" y={g.y + 3} fontSize="9" fill="#91a0b5">৳{kfmt(g.v)}</text></g>)}
+                          {xTicks.map(i => <text key={i} x={px(i)} y={H - 8} fontSize="9" fill="#91a0b5" textAnchor="middle">{days[i].label}</text>)}
+                          <path d={areaPath} fill="url(#ovFill)" />
+                          <path d={salesLine} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d={ordersLine} fill="none" stroke="#26c9ef" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '0.72rem', color: '#718096', marginTop: '4px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }} />Revenue</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#26c9ef' }} />Orders</span>
+                        </div>
                       </div>
                       <div className="amr-card">
                         <h3 style={{ margin: '0 0 2px', fontSize: '0.95rem', color: '#183052' }}>Sales by Payment</h3>
                         <span style={{ fontSize: '0.72rem', color: '#718096' }}>How customers pay</span>
                         {payTotal === 0 ? <div style={{ color: '#8794a8', fontSize: '0.82rem', padding: '24px 0', textAlign: 'center' }}>No sales yet.</div> : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
-                            <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: conic, flex: 'none', position: 'relative' }}>
-                              <div style={{ position: 'absolute', inset: '15px', background: '#fff', borderRadius: '50%' }} />
+                            <div style={{ width: '104px', height: '104px', borderRadius: '50%', background: conic, flex: 'none', position: 'relative' }}>
+                              <div style={{ position: 'absolute', inset: '16px', background: '#fff', borderRadius: '50%', display: 'grid', placeItems: 'center', fontWeight: 800, color: '#16315b', fontSize: '0.82rem', textAlign: 'center' }}>৳{payTotal >= 100000 ? (payTotal / 100000).toFixed(2) + 'L' : Math.round(payTotal).toLocaleString()}</div>
                             </div>
                             <div style={{ display: 'grid', gap: '8px', flex: 1 }}>
                               {payEntries.map(([k, v]) => (
@@ -1367,7 +1396,7 @@ const Dashboard = () => {
                     { ico: '📦', t: 'Add Product', s: 'Publish a new item', go: () => setActiveTab('products') },
                     { ico: '🛍️', t: 'View Orders', s: 'Manage your orders', go: () => setActiveTab('orders') },
                     { ico: '🌐', t: 'Edit Website', s: 'Update your storefront', go: () => setActiveTab('website') },
-                    { ico: '📈', t: 'Sales Report', s: 'See your analytics', go: () => setActiveTab('reports') },
+                    { ico: '◎', t: 'Marketing Setup', s: 'Pixel & tracking tools', go: () => setActiveTab('marketing') },
                   ].map(q => (
                     <button key={q.t} onClick={q.go} style={{ textAlign: 'left', background: '#fff', border: '1px solid #e4eaf3', borderRadius: '12px', padding: '15px', cursor: 'pointer', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
                       <div style={{ fontSize: '19px' }}>{q.ico}</div>
@@ -1386,18 +1415,20 @@ const Dashboard = () => {
                     {recent.length === 0 ? (
                       <div style={{ padding: '24px', textAlign: 'center', color: '#8794a8', fontSize: '0.85rem' }}>No orders yet.</div>
                     ) : (
-                      <table className="amr-table" style={{ minWidth: '460px' }}>
-                        <thead><tr><th>Customer</th><th>Product</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+                      <table className="amr-table" style={{ minWidth: '500px' }}>
+                        <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
                         <tbody>
-                          {recent.map((o, i) => (
+                          {recent.map((o, i) => {
+                            const init = (o.customer_name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+                            return (
                             <tr key={o.id || i}>
-                              <td style={{ fontWeight: 650, color: '#213b5e' }}>{o.customer_name || '—'}</td>
-                              <td>{o.product_title || '—'}</td>
+                              <td style={{ fontWeight: 700, color: '#2563eb' }}>#{String(o.id || '').slice(-5).toUpperCase() || (1001 + i)}</td>
+                              <td><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 650, color: '#213b5e' }}><span style={{ width: '26px', height: '26px', borderRadius: '8px', background: '#e7f1ff', color: '#2563eb', display: 'grid', placeItems: 'center', fontSize: '0.62rem', fontWeight: 800, flex: 'none' }}>{init}</span>{o.customer_name || '—'}</span></td>
                               <td>{fmtDate(o.created_at)}</td>
                               <td><b>৳{amt(o).toLocaleString()}</b></td>
                               <td><span className={`amr-pill ${pillClass(o.status)}`}>{o.status || 'pending'}</span></td>
                             </tr>
-                          ))}
+                          );})}
                         </tbody>
                       </table>
                     )}
@@ -1406,6 +1437,7 @@ const Dashboard = () => {
                   <div className="amr-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                       <h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Needs Your Attention</h3>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#2563eb', background: '#edf4ff', borderRadius: '20px', padding: '3px 9px' }}>{alertCount} alert{alertCount === 1 ? '' : 's'}</span>
                     </div>
                     <div style={{ display: 'grid', gap: '13px' }}>
                       {outStock + lowStock > 0 && (
