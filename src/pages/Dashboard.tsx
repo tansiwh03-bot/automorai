@@ -1551,7 +1551,8 @@ const Dashboard = () => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
           <div style={{ width: '100%', maxWidth: '580px' }}>
             <div style={{ marginBottom: '28px' }}>
-              <h2 style={{ color: '#2563eb', margin: '0 0 6px', fontSize: '1.4rem' }}>🌐 Website Builder</h2>
+              <div className="amr-eyebrow">Online storefront</div>
+              <h2 style={{ color: '#12284c', margin: '2px 0 6px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Website &amp; Store</h2>
               <p style={{ color: '#718096', margin: 0, fontSize: '0.9rem' }}>AI will build a beautiful website for you.</p>
             </div>
 
@@ -1988,7 +1989,8 @@ const Dashboard = () => {
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
-              <h2 style={{ color: '#2563eb', margin: 0 }}>📦 Product Management</h2>
+              <div className="amr-eyebrow">Catalog management</div>
+              <h2 style={{ color: '#12284c', margin: '2px 0', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Products</h2>
               <p style={{ color: '#718096', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -2135,7 +2137,8 @@ const Dashboard = () => {
 
       {activeTab === 'stock' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-          <h2 style={{ color: '#2563eb', margin: '0 0 4px' }}>📊 Stock</h2>
+          <div className="amr-eyebrow">Inventory control</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Inventory</h2>
           <p style={{ color: '#718096', margin: '0 0 20px', fontSize: '0.9rem' }}>Keep an eye on what's in stock and what's running low. Update any product's stock right here.</p>
           {!currentSiteId ? (
             <div style={{ color: '#718096' }}>Build your website and add products first — your stock will show here.</div>
@@ -2232,7 +2235,8 @@ const Dashboard = () => {
 
       {activeTab === 'orders' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-          <h2 style={{ color: '#2563eb', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
+          <div className="amr-eyebrow">Sales operations</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 16px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Orders</h2>
           {ordersLoading ? <div style={{ color: '#718096' }}>Loading orders...</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
