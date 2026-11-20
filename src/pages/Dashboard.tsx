@@ -315,7 +315,7 @@ const Dashboard = () => {
       .then(data => {
         const sites: typeof mySites = data.sites || [];
         setMySites(sites);
-        const s = sites.find(x => x.business_slug === currentSiteId) || (sites.length === 1 ? sites[0] : undefined);
+        const s = sites.find(x => x.business_slug === currentSiteId) || sites[0];
         if (!s) return;
         if (s.business_slug !== currentSiteId) {
           setCurrentSiteId(s.business_slug);
