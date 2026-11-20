@@ -84,8 +84,8 @@ interface Order {
 
 // ─── UI Helpers & Styles ──────────────────────────────────────────────────────
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', background: '#1e2130',
-  border: '1px solid #262a38', borderRadius: '8px', color: 'white',
+  width: '100%', padding: '11px 13px', background: '#fff',
+  border: '1px solid #dbe3f0', borderRadius: '9px', color: '#17243b',
   fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box'
 };
 
@@ -128,7 +128,7 @@ const FormField = ({ label, children }: { label: string; children: React.ReactNo
   const labelText = isRequired ? label.slice(0, -2) : label;
   return (
     <div style={{ marginBottom: '16px' }}>
-      <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.82rem', color: '#aab0c0', fontWeight: 600 }}>
+      <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', color: '#52647d', fontWeight: 650 }}>
         {labelText}{isRequired && <span style={{ color: '#e5484d' }}> *</span>}
       </label>
       {children}
@@ -153,7 +153,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
     facebook:  { label: 'Facebook',  color: '#1877F2' },
     website:   { label: 'Website',   color: '#2563eb' },
   };
-  const c = config[platform] ?? { label: platform, color: '#8b90a3' };
+  const c = config[platform] ?? { label: platform, color: '#718096' };
   return (
     <span style={{ fontSize: '0.7rem', background: c.color + '22', color: c.color,
       border: `1px solid ${c.color}44`, borderRadius: '4px', padding: '2px 6px', fontWeight: 600 }}>
@@ -1040,7 +1040,7 @@ const Dashboard = () => {
   };
 
   const statusColors: Record<string, string> = {
-    pending: '#ffb84c', confirmed: '#2563eb', shipped: '#0099FF', delivered: '#25D366', cancelled: '#ff5c5c'
+    pending: '#ffb84c', confirmed: '#2563eb', shipped: '#0099FF', delivered: '#25D366', cancelled: '#c44d4d'
   };
   const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad', bank: '🏦 Bank Transfer' };
 
@@ -1395,42 +1395,42 @@ const Dashboard = () => {
       {/* ════════ INBOX TAB ════════ */}
       {activeTab === 'inbox' && (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-          <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #262a38', overflowY: 'auto', background: '#0e1018' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid #262a38', fontWeight: 700, fontSize: '1rem', color: '#2563eb' }}>💬 Unified Inbox</div>
-            {inboxLoading && <div style={{ padding: '24px', color: '#8b90a3', textAlign: 'center' }}>Loading conversations...</div>}
-            {inboxError && <div style={{ padding: '16px', color: '#ff5c5c', fontSize: '0.9rem' }}>{inboxError}</div>}
+          <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #e4eaf3', overflowY: 'auto', background: '#ffffff' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid #e4eaf3', fontWeight: 700, fontSize: '1rem', color: '#2563eb' }}>💬 Unified Inbox</div>
+            {inboxLoading && <div style={{ padding: '24px', color: '#718096', textAlign: 'center' }}>Loading conversations...</div>}
+            {inboxError && <div style={{ padding: '16px', color: '#c44d4d', fontSize: '0.9rem' }}>{inboxError}</div>}
             {!inboxLoading && !inboxError && conversations.length === 0 && (
-              <div style={{ padding: '24px', color: '#8b90a3', textAlign: 'center', fontSize: '0.9rem' }}>No conversations yet.<br />Connect Facebook or WhatsApp to start.</div>
+              <div style={{ padding: '24px', color: '#718096', textAlign: 'center', fontSize: '0.9rem' }}>No conversations yet.<br />Connect Facebook or WhatsApp to start.</div>
             )}
             {conversations.map(conv => (
               <div key={conv.id} onClick={() => { setSelectedConversation(conv); setReplyText(''); setReplyError(''); }} style={{ padding: '14px 16px',
-                borderBottom: '1px solid #1a1d27', cursor: 'pointer',
-                background: selectedConversation?.id === conv.id ? '#181b26' : 'transparent', transition: 'background 0.15s' }}>
+                borderBottom: '1px solid #edf1f6', cursor: 'pointer',
+                background: selectedConversation?.id === conv.id ? '#f0f4fb' : 'transparent', transition: 'background 0.15s' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{conv.name}</span>
-                  <span style={{ color: '#8b90a3', fontSize: '0.75rem' }}>{formatTime(conv.last_time)}</span>
+                  <span style={{ color: '#718096', fontSize: '0.75rem' }}>{formatTime(conv.last_time)}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <PlatformBadge platform={conv.platform} />
-                  <span style={{ color: '#8b90a3', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{conv.last_message}</span>
+                  <span style={{ color: '#718096', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{conv.last_message}</span>
                 </div>
               </div>
             ))}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {!selectedConversation ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b90a3', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096', flexDirection: 'column', gap: '12px' }}>
                 <span style={{ fontSize: '2rem' }}>💬</span>
                 <span>Select a conversation to view messages</span>
               </div>
             ) : (
               <>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid #262a38', background: '#12141c', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid #e4eaf3', background: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div>
                     <div style={{ fontWeight: 700 }}>{selectedConversation.name}</div>
                     <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
                       <PlatformBadge platform={selectedConversation.platform} />
-                      <span style={{ color: '#8b90a3', fontSize: '0.78rem' }}>{selectedConversation.sender_id}</span>
+                      <span style={{ color: '#718096', fontSize: '0.78rem' }}>{selectedConversation.sender_id}</span>
                     </div>
                   </div>
                 </div>
@@ -1441,23 +1441,23 @@ const Dashboard = () => {
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-start' : 'flex-end' }}>
                           <div style={{ maxWidth: '65%', padding: '10px 14px', borderRadius: isUser ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-                            background: isUser ? '#1e2130' : '#2563eb', color: 'white', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                            background: isUser ? '#eef4fb' : '#2563eb', color: isUser ? '#17243b' : 'white', fontSize: '0.9rem', lineHeight: '1.5' }}>
                             <div>{msg.message}</div>
-                            <div style={{ fontSize: '0.72rem', color: isUser ? '#8b90a3' : 'rgba(255,255,255,0.6)', marginTop: '4px', textAlign: 'right' }}>{formatTime(msg.timestamp)}</div>
+                            <div style={{ fontSize: '0.72rem', color: isUser ? '#718096' : 'rgba(255,255,255,0.6)', marginTop: '4px', textAlign: 'right' }}>{formatTime(msg.timestamp)}</div>
                           </div>
                         </div>
                       );
                     })}
                 </div>
                 {replyError && (
-                  <div style={{ padding: '8px 20px', background: '#1f0e0e', color: '#ff5c5c', fontSize: '0.8rem' }}>❌ {replyError}</div>
+                  <div style={{ padding: '8px 20px', background: '#ffeded', color: '#c44d4d', fontSize: '0.8rem' }}>❌ {replyError}</div>
                 )}
-                <div style={{ padding: '14px 20px', borderTop: '1px solid #262a38', background: '#12141c', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ padding: '14px 20px', borderTop: '1px solid #e4eaf3', background: '#ffffff', display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input placeholder="Type your reply..." value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !replySending) handleSendReply(); }}
                     disabled={replySending}
-                    style={{ flex: 1, padding: '10px 14px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '10px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
+                    style={{ flex: 1, padding: '10px 14px', background: '#fff', border: '1px solid #dbe3f0', borderRadius: '10px', color: '#17243b', fontSize: '0.9rem', outline: 'none' }} />
                   <button onClick={handleSendReply} disabled={replySending || !replyText.trim()}
                     style={{ padding: '10px 18px', background: replySending || !replyText.trim() ? '#2563eb44' : '#2563eb',
                       color: replySending || !replyText.trim() ? '#2563eb' : 'white', border: 'none', borderRadius: '10px',
@@ -1474,8 +1474,8 @@ const Dashboard = () => {
       {previewFullscreen && isDraftSite && previewDoc && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#06070a', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '10px 16px',
-            background: '#12141c', borderBottom: '1px solid #262a38', flexWrap: 'wrap' }}>
-            <span style={{ color: '#b9a8ff', fontWeight: 700, fontSize: '0.9rem' }}>👀 Preview — not live yet</span>
+            background: '#ffffff', borderBottom: '1px solid #e4eaf3', flexWrap: 'wrap' }}>
+            <span style={{ color: '#1b4dd1', fontWeight: 700, fontSize: '0.9rem' }}>👀 Preview — not live yet</span>
             <div style={{ display: 'flex', gap: '8px' }}>
               {packages.includes('automation') ? (
                 <button onClick={handleGoLive} disabled={goingLive}
@@ -1489,7 +1489,7 @@ const Dashboard = () => {
                 </button>
               )}
               <button onClick={() => setPreviewFullscreen(false)}
-                style={{ padding: '8px 14px', background: 'transparent', color: 'white', border: '1px solid #262a38', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
+                style={{ padding: '8px 14px', background: '#eef4fb', color: '#29405f', border: '1px solid #dbe3f0', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
                 ✕ Close
               </button>
             </div>
@@ -1505,15 +1505,15 @@ const Dashboard = () => {
           <div style={{ width: '100%', maxWidth: '580px' }}>
             <div style={{ marginBottom: '28px' }}>
               <h2 style={{ color: '#2563eb', margin: '0 0 6px', fontSize: '1.4rem' }}>🌐 Website Builder</h2>
-              <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.9rem' }}>AI will build a beautiful website for you.</p>
+              <p style={{ color: '#718096', margin: 0, fontSize: '0.9rem' }}>AI will build a beautiful website for you.</p>
             </div>
 
             {websiteResult && (
-              <div style={{ background: isDraftSite ? '#141024' : '#0d1f12', border: `1px solid ${isDraftSite ? '#2563eb' : '#c8ff5c'}`, borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
+              <div style={{ background: isDraftSite ? '#eef4fb' : '#e4f8ef', border: `1px solid ${isDraftSite ? '#2563eb' : '#16a879'}`, borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
                 {isDraftSite ? (
                   <>
-                    <p style={{ color: '#b9a8ff', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>👀 Website preview (not live yet)</p>
-                    <p style={{ color: '#8b90a3', margin: '0 0 14px', fontSize: '0.85rem' }}>
+                    <p style={{ color: '#2563eb', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>👀 Website preview (not live yet)</p>
+                    <p style={{ color: '#718096', margin: '0 0 14px', fontSize: '0.85rem' }}>
                       Only you can see this. Add your products and settings now — when you make it live, this exact website goes online for your customers.
                     </p>
                     {packages.includes('automation') ? (
@@ -1525,44 +1525,44 @@ const Dashboard = () => {
                         💳 Buy Package to Go Live
                       </button>
                     )}
-                    {goLiveError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{goLiveError}</p>}
+                    {goLiveError && <p style={{ fontSize: '0.8rem', color: '#c44d4d', marginTop: '6px', textAlign: 'center' }}>{goLiveError}</p>}
                     {previewDoc && (
                       <button onClick={() => setPreviewFullscreen(true)}
-                        style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#2563eb22', color: '#b9a8ff', border: '1px solid #2563eb', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                        style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                         🖥️ Open full page preview
                       </button>
                     )}
-                    <div style={{ marginTop: '14px', border: '1px solid #262a38', borderRadius: '10px', overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ marginTop: '14px', border: '1px solid #e4eaf3', borderRadius: '10px', overflow: 'hidden', background: '#fff' }}>
                       {previewDoc ? (
                         <iframe key={previewReloadKey} title="Website preview" srcDoc={previewDoc}
                           sandbox="allow-scripts allow-modals" style={{ width: '100%', height: '560px', border: 'none', display: 'block' }} />
                       ) : (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#8b90a3', fontSize: '0.85rem', background: '#0e0f16' }}>
+                        <div style={{ padding: '40px', textAlign: 'center', color: '#718096', fontSize: '0.85rem', background: '#0e0f16' }}>
                           {previewLoading ? '⏳ Loading preview...' : 'Preview not available.'}
                         </div>
                       )}
                     </div>
                     <button onClick={() => (previewDoc ? setPreviewReloadKey(k => k + 1) : currentSiteId && loadDraftPreview(currentSiteId))}
-                      style={{ width: '100%', padding: '8px', marginTop: '8px', marginBottom: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
+                      style={{ width: '100%', padding: '8px', marginTop: '8px', marginBottom: '10px', background: 'transparent', color: '#718096', border: '1px solid #e4eaf3', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
                       🔄 Reload preview (after editing products or settings)
                     </button>
                   </>
                 ) : (
                   <>
-                    <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
-                    <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
+                    <p style={{ color: '#12284c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
+                    <p style={{ color: '#718096', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
                     <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'block', color: '#2563eb', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
                       {websiteResult.url}
                     </a>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                       <button onClick={() => { navigator.clipboard.writeText(websiteResult.url); setWebsiteUrlCopied(true); setTimeout(() => setWebsiteUrlCopied(false), 2000); }}
-                        style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#2563eb',
-                          color: websiteUrlCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
+                        style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#16a879' : '#2563eb',
+                          color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
                         {websiteUrlCopied ? '✅ Copied!' : '📋 Copy URL'}
                       </button>
                       <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
-                        style={{ flex: 1, padding: '10px', background: '#1e2130', color: 'white', border: '1px solid #262a38',
+                        style={{ flex: 1, padding: '10px', background: '#eef4fb', color: '#29405f', border: '1px solid #dbe3f0',
                           borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         🔗 View Website
                       </a>
@@ -1574,7 +1574,7 @@ const Dashboard = () => {
                   📦 Add Products
                 </button>
                 <button onClick={() => setShowSettings(s => !s)}
-                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                  style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#718096', border: '1px solid #e4eaf3', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   ⚙️ Slider and Footer Settings {showSettings ? '▲' : '▼'}
                 </button>
                 {!isDraftSite && (
@@ -1584,24 +1584,24 @@ const Dashboard = () => {
                   </button>
                 )}
                 {websiteUpdateMsg && (
-                  <p style={{ fontSize: '0.8rem', color: websiteUpdateMsg.startsWith('Updated') ? '#22c55e' : '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{websiteUpdateMsg}</p>
+                  <p style={{ fontSize: '0.8rem', color: websiteUpdateMsg.startsWith('Updated') ? '#22c55e' : '#c44d4d', marginTop: '6px', textAlign: 'center' }}>{websiteUpdateMsg}</p>
                 )}
 
                 {!isDraftSite && (
                   <button onClick={() => { const n = !showDomain; setShowDomain(n); if (n && !domainInfo) loadDomainStatus(); }}
-                    style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                    style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#718096', border: '1px solid #e4eaf3', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                     🌐 Connect your own domain {showDomain ? '▲' : '▼'}
                   </button>
                 )}
                 {!isDraftSite && showDomain && (
-                  <div style={{ marginTop: '12px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '18px' }}>
-                    {domainLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>Loading…</p>}
+                  <div style={{ marginTop: '12px', background: '#0e0f16', border: '1px solid #e4eaf3', borderRadius: '12px', padding: '18px' }}>
+                    {domainLoading && <p style={{ color: '#718096', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>Loading…</p>}
                     {!domainLoading && domainInfo?.has_domain ? (
                       <>
-                        <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.9rem', margin: '0 0 4px' }}>Your domain</p>
+                        <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.9rem', margin: '0 0 4px' }}>Your domain</p>
                         <p style={{ color: '#fff', fontWeight: 700, fontSize: '1rem', margin: '0 0 10px', wordBreak: 'break-all' }}>{domainInfo.domain}</p>
                         {domainInfo.connected ? (
-                          <div style={{ background: '#0d1f12', border: '1px solid #22c55e', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px' }}>
+                          <div style={{ background: '#e4f8ef', border: '1px solid #22c55e', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px' }}>
                             <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.85rem' }}>✅ Live &amp; secured (SSL active)</span>
                           </div>
                         ) : (
@@ -1623,22 +1623,22 @@ const Dashboard = () => {
                             🔄 Check again
                           </button>
                           <button onClick={handleDisconnectDomain} disabled={domainBusy}
-                            style={{ flex: 1, padding: '10px', background: 'transparent', color: '#ff6b6b', border: '1px solid #ff6b6b44', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
+                            style={{ flex: 1, padding: '10px', background: 'transparent', color: '#c44d4d', border: '1px solid #c44d4d44', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
                             Disconnect
                           </button>
                         </div>
                       </>
                     ) : (!domainLoading && (
                       <>
-                        <p style={{ color: '#8b90a3', fontSize: '0.82rem', margin: '0 0 12px' }}>Use your own web address (like <b style={{ color: '#d7dbe8' }}>shop.yourbrand.com</b>) instead of the default link. Enter the domain you own — we recommend a subdomain such as <b>shop.</b> or <b>www.</b></p>
+                        <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 12px' }}>Use your own web address (like <b style={{ color: '#d7dbe8' }}>shop.yourbrand.com</b>) instead of the default link. Enter the domain you own — we recommend a subdomain such as <b>shop.</b> or <b>www.</b></p>
                         <input value={domainInput} onChange={e => setDomainInput(e.target.value)} placeholder="shop.yourbrand.com"
-                          style={{ width: '100%', boxSizing: 'border-box', padding: '11px', background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', marginBottom: '10px' }} />
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '11px', background: '#06070a', border: '1px solid #e4eaf3', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', marginBottom: '10px' }} />
                         <button onClick={handleConnectDomain} disabled={domainBusy}
                           style={{ width: '100%', padding: '11px', background: '#22c55e', color: '#06070a', border: 'none', borderRadius: '8px', cursor: domainBusy ? 'default' : 'pointer', fontSize: '0.9rem', fontWeight: 800 }}>
                           {domainBusy ? 'Connecting…' : 'Connect domain'}
                         </button>
                         {domainMsg && domainMsg !== 'ok' && (
-                          <p style={{ color: '#ff6b6b', fontSize: '0.78rem', margin: '8px 0 0', textAlign: 'center' }}>{domainMsg}</p>
+                          <p style={{ color: '#c44d4d', fontSize: '0.78rem', margin: '8px 0 0', textAlign: 'center' }}>{domainMsg}</p>
                         )}
                       </>
                     ))}
@@ -1646,23 +1646,23 @@ const Dashboard = () => {
                 )}
 
                 {showSettings && (
-                  <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '20px' }}>
-                    {settingsLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center' }}>Loading...</p>}
+                  <div style={{ marginTop: '14px', background: '#0e0f16', border: '1px solid #e4eaf3', borderRadius: '12px', padding: '20px' }}>
+                    {settingsLoading && <p style={{ color: '#718096', fontSize: '0.85rem', textAlign: 'center' }}>Loading...</p>}
                     {!settingsLoading && (
                       <>
-                        <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 16px' }}>Change the homepage slider (3 slides) and footer text here — changes appear on the website immediately after saving, no rebuild needed.</p>
+                        <p style={{ color: '#718096', fontSize: '0.8rem', margin: '0 0 16px' }}>Change the homepage slider (3 slides) and footer text here — changes appear on the website immediately after saving, no rebuild needed.</p>
 
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Logo</p>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Logo</p>
                           <FormField label="Logo Image">
                             {websiteSettings.logo_img && (
-                              <img src={websiteSettings.logo_img} alt="" style={{ height: '48px', objectFit: 'contain', marginBottom: '8px', background: '#181b26', borderRadius: '6px', padding: '6px' }} />
+                              <img src={websiteSettings.logo_img} alt="" style={{ height: '48px', objectFit: 'contain', marginBottom: '8px', background: '#f0f4fb', borderRadius: '6px', padding: '6px' }} />
                             )}
                             <input type="file" accept="image/*"
                               onChange={e => handleSettingsImageUpload('logo_img', e.target.files?.[0] || null)}
                               style={{ ...inputStyle, padding: '8px' }} />
-                            {settingsUploading === 'logo_img' && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
-                            <p style={{ color: '#8b90a3', fontSize: '0.75rem', margin: '6px 0 0' }}>If no logo is set, the business name (text) will be shown instead.</p>
+                            {settingsUploading === 'logo_img' && <p style={{ color: '#718096', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
+                            <p style={{ color: '#718096', fontSize: '0.75rem', margin: '6px 0 0' }}>If no logo is set, the business name (text) will be shown instead.</p>
                           </FormField>
                         </div>
 
@@ -1672,8 +1672,8 @@ const Dashboard = () => {
                           const titleField = `slide${n}_title` as keyof WebsiteSettings;
                           const descField = `slide${n}_desc` as keyof WebsiteSettings;
                           return (
-                            <div key={n} style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                              <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Slide {n}</p>
+                            <div key={n} style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                              <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Slide {n}</p>
                               <FormField label="Image">
                                 {String(websiteSettings[imgField] || '') && (
                                   <img src={String(websiteSettings[imgField] || '')} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
@@ -1681,7 +1681,7 @@ const Dashboard = () => {
                                 <input type="file" accept="image/*"
                                   onChange={e => handleSettingsImageUpload(imgField, e.target.files?.[0] || null)}
                                   style={{ ...inputStyle, padding: '8px' }} />
-                                {settingsUploading === imgField && <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
+                                {settingsUploading === imgField && <p style={{ color: '#718096', fontSize: '0.78rem', margin: '4px 0 0' }}>Uploading...</p>}
                               </FormField>
                               <FormField label="Tag (short label)">
                                 <input type="text" placeholder="e.g. New Collection" value={String(websiteSettings[tagField] || '')}
@@ -1705,9 +1705,9 @@ const Dashboard = () => {
                         </FormField>
 
                         {/* ── Payment Methods ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Payment Methods</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Payment Methods</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Customers can pay by Cash on Delivery, bKash, Nagad, or Bank Transfer. Fill in the numbers/details below for the ones you accept — leave blank to hide that option's details (customers can still select it, but will not see where to send money).
                           </p>
                           <FormField label="bKash Number">
@@ -1726,9 +1726,9 @@ const Dashboard = () => {
                         </div>
 
                         {/* ── Delivery Charge ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Delivery Charge</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Delivery Charge</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Customers pick Dhaka or Outside Dhaka at checkout and this charge is added to their total automatically. Defaults to ৳60 / ৳120 if left blank.
                           </p>
                           <div style={{ display: 'flex', gap: '12px' }}>
@@ -1744,9 +1744,9 @@ const Dashboard = () => {
                         </div>
 
                         {/* ── Courier Integration ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Courier Integration</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Courier Integration</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Connect your own Steadfast or Pathao courier account. Each business needs its own courier account (parcels are picked up from your own shop) — this just saves your credentials securely for now; automatic booking is coming soon.
                           </p>
                           <FormField label="Courier Provider">
@@ -1793,17 +1793,17 @@ const Dashboard = () => {
 
                           {courierProvider !== 'none' && (
                             <button onClick={handleSaveCourierSettings} disabled={courierSaving}
-                              style={{ ...btnStyle(courierSaved ? '#c8ff5c' : '#2563eb', courierSaved ? '#06070a' : 'white'), marginTop: '6px' }}>
+                              style={{ ...btnStyle(courierSaved ? '#16a879' : '#2563eb', courierSaved ? '#06070a' : 'white'), marginTop: '6px' }}>
                               {courierSaving ? '⏳ Saving...' : courierSaved ? '✅ Saved!' : '💾 Save Courier Settings'}
                             </button>
                           )}
-                          {courierError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{courierError}</p>}
+                          {courierError && <p style={{ fontSize: '0.8rem', color: '#c44d4d', marginTop: '6px', textAlign: 'center' }}>{courierError}</p>}
                         </div>
 
                         {/* ── Shop Info (used by the chat assistant) ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Shop Info</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Shop Info</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Your chat assistant uses this to answer customer questions about your shop. Leave any field blank if it doesn't apply — the assistant will then honestly say it doesn't have that info instead of guessing.
                           </p>
                           <FormField label="Shop Address">
@@ -1822,21 +1822,21 @@ const Dashboard = () => {
                         </div>
 
                         {/* ── Navigation Menu ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
-                          <p style={{ color: '#8b90a3', fontSize: '0.78rem', margin: '0 0 12px' }}>Top menu items — you can also add sub-items (e.g. Men → Shirt, Pant).</p>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>Top menu items — you can also add sub-items (e.g. Men → Shirt, Pant).</p>
                           {websiteSettings.nav_menu.map((item, idx) => (
-                            <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
+                            <div key={idx} style={{ background: '#f0f4fb', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
                               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                                 <input type="text" placeholder="Menu label" value={item.label} onChange={e => updateNavItem(idx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                                 <input type="text" placeholder="Link (optional)" value={item.link} onChange={e => updateNavItem(idx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                                <button onClick={() => removeNavItem(idx)} style={{ padding: '0 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>Remove</button>
+                                <button onClick={() => removeNavItem(idx)} style={{ padding: '0 10px', background: '#ffeded', color: '#c44d4d', border: '1px solid #c44d4d44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>Remove</button>
                               </div>
                               {(item.children || []).map((sub, subIdx) => (
                                 <div key={subIdx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', paddingLeft: '16px' }}>
                                   <input type="text" placeholder="Sub-item label" value={sub.label} onChange={e => updateSubItem(idx, subIdx, 'label', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
                                   <input type="text" placeholder="Link (optional)" value={sub.link} onChange={e => updateSubItem(idx, subIdx, 'link', e.target.value)} style={{ ...inputStyle, flex: 1, padding: '7px 10px' }} />
-                                  <button onClick={() => removeSubItem(idx, subIdx)} style={{ padding: '0 8px', background: 'transparent', color: '#ff5c5c', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                                  <button onClick={() => removeSubItem(idx, subIdx)} style={{ padding: '0 8px', background: 'transparent', color: '#c44d4d', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                                 </div>
                               ))}
                               <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#2563eb', border: '1px dashed #2563eb44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ Sub-item</button>
@@ -1846,29 +1846,29 @@ const Dashboard = () => {
                         </div>
 
                         {/* ── Testimonials ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Testimonials</p>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>Testimonials</p>
                           <Toggle label="Show this section" desc="Turn the testimonials section on the site on/off" value={getTestimonialBlock().enabled} onChange={v => setBlock({ ...getTestimonialBlock(), enabled: v })} />
                           <div style={{ height: '12px' }} />
                           <FormField label="Section Title">
                             <input type="text" placeholder="What Our Customers Say" value={getTestimonialBlock().title} onChange={e => setBlock({ ...getTestimonialBlock(), title: e.target.value })} style={inputStyle} />
                           </FormField>
                           {getTestimonialBlock().items.map((it, idx) => (
-                            <div key={idx} style={{ background: '#181b26', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
+                            <div key={idx} style={{ background: '#f0f4fb', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
                               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                                 <input type="text" placeholder="Customer's name" value={it.name} onChange={e => updateTestimonialItem(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
                                 <input type="number" placeholder="Rating" min={1} max={5} value={it.rating} onChange={e => updateTestimonialItem(idx, 'rating', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                               </div>
                               <textarea placeholder="Write the testimonial" value={it.text} onChange={e => updateTestimonialItem(idx, 'text', e.target.value)} style={{ ...inputStyle, height: '50px', marginBottom: '8px' }} />
-                              <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Remove</button>
+                              <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#ffeded', color: '#c44d4d', border: '1px solid #c44d4d44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Remove</button>
                             </div>
                           ))}
                           <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add testimonial</button>
                         </div>
 
                         {/* ── About / Our Story ── */}
-                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #1e2130' }}>
-                          <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>About</p>
+                        <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 10px' }}>About</p>
                           <Toggle label="Show this section" desc="Turn the 'About' section on the site on/off" value={getAboutBlock().enabled} onChange={v => setBlock({ ...getAboutBlock(), enabled: v })} />
                           <div style={{ height: '12px' }} />
                           <FormField label="Title">
@@ -1883,7 +1883,7 @@ const Dashboard = () => {
                         </div>
 
                         <button onClick={handleSaveSettings} disabled={settingsSaving}
-                          style={btnStyle(settingsSaved ? '#c8ff5c' : '#2563eb', settingsSaved ? '#06070a' : 'white')}>
+                          style={btnStyle(settingsSaved ? '#16a879' : '#2563eb', settingsSaved ? '#06070a' : 'white')}>
                           {settingsSaving ? '⏳ Saving...' : settingsSaved ? '✅ Saved!' : '💾 Save'}
                         </button>
                       </>
@@ -1894,9 +1894,9 @@ const Dashboard = () => {
             )}
 
             {!websiteResult && (
-              <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px', padding: '28px' }}>
+              <div style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: '16px', padding: '28px' }}>
                 {websiteError && (
-                  <div style={{ background: '#1f0e0e', border: '1px solid #ff5c5c', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#ff5c5c', fontSize: '0.88rem' }}>❌ {websiteError}</div>
+                  <div style={{ background: '#ffeded', border: '1px solid #c44d4d', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#c44d4d', fontSize: '0.88rem' }}>❌ {websiteError}</div>
                 )}
 
                 <FormField label="Business Name *">
@@ -1919,11 +1919,11 @@ const Dashboard = () => {
                 <FormField label="Theme Color (Accent Color)">
                   <input type="color" value={websiteForm.accent_color}
                     onChange={e => handleWebsiteFormChange('accent_color', e.target.value)}
-                    style={{ width: '100%', height: '42px', padding: '4px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer' }} />
+                    style={{ width: '100%', height: '42px', padding: '4px', background: '#eef2f8', border: '1px solid #e4eaf3', borderRadius: '8px', cursor: 'pointer' }} />
                 </FormField>
 
                 {!packages.includes('automation') && (
-                  <p style={{ color: '#8b90a3', fontSize: '0.8rem', margin: '0 0 12px' }}>
+                  <p style={{ color: '#718096', fontSize: '0.8rem', margin: '0 0 12px' }}>
                     Free: you'll get a private preview of your website. Buy the Automation package anytime to make this same website live. One website per account.
                   </p>
                 )}
@@ -1942,12 +1942,12 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
               <h2 style={{ color: '#2563eb', margin: 0 }}>📦 Product Management</h2>
-              <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
+              <p style={{ color: '#718096', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {products.some(isSampleProduct) && (
-                <button onClick={handleDeleteAllSamples} style={{ padding: '10px 18px', background: '#1f0e0e', color: '#ff5c5c',
-                  border: '1px solid #ff5c5c44', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem' }}>
+                <button onClick={handleDeleteAllSamples} style={{ padding: '10px 18px', background: '#ffeded', color: '#c44d4d',
+                  border: '1px solid #c44d4d44', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem' }}>
                   🗑️ Remove all sample products
                 </button>
               )}
@@ -1960,9 +1960,9 @@ const Dashboard = () => {
           {/* Add/Edit Product Modal */}
           {showAddProduct && (
             <div style={{ fixed: 'inset-0', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99, padding: '20px' }}>
-              <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
                 <h3 style={{ margin: '0 0 16px', color: '#2563eb' }}>{editingProductId ? 'Edit Product' : 'Add New Product'}</h3>
-                {productError && <div style={{ color: '#ff5c5c', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
+                {productError && <div style={{ color: '#c44d4d', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
                 
                 <FormField label="Title *">
                   <input type="text" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} style={inputStyle} placeholder="e.g. Premium Cotton Shirt" />
@@ -1990,20 +1990,20 @@ const Dashboard = () => {
                   <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={e => handleImageUpload(e.target.files)} style={{ display: 'none' }} />
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                     {productForm.images.map((img, i) => (
-                      <div key={i} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #262a38' }}>
+                      <div key={i} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #e4eaf3' }}>
                         <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <button onClick={() => setProductForm(p => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
                           style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '16px', height: '16px', cursor: 'pointer', fontSize: '10px' }}>✕</button>
                       </div>
                     ))}
                     <button onClick={() => fileInputRef.current?.click()} disabled={imageUploading}
-                      style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px dashed #2563eb', background: '#181b26', color: '#2563eb', cursor: 'pointer', fontSize: '1.2rem' }}>
+                      style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px dashed #2563eb', background: '#f0f4fb', color: '#2563eb', cursor: 'pointer', fontSize: '1.2rem' }}>
                       {imageUploading ? '⏳' : '+'}
                     </button>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <input type="text" value={imageInput} onChange={e => setImageInput(e.target.value)} placeholder="Or enter image URL" style={inputStyle} />
-                    <button onClick={() => { if(imageInput){ setProductForm(p => ({ ...p, images: [...p.images, imageInput] })); setImageInput(''); } }} style={{ padding: '0 12px', background: '#262a38', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Add</button>
+                    <button onClick={() => { if(imageInput){ setProductForm(p => ({ ...p, images: [...p.images, imageInput] })); setImageInput(''); } }} style={{ padding: '0 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Add</button>
                   </div>
                 </FormField>
 
@@ -2012,7 +2012,7 @@ const Dashboard = () => {
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
                     {commonSizes.map(s => (
                       <button key={s} onClick={() => setProductForm(p => ({ ...p, sizes: p.sizes.includes(s) ? p.sizes.filter(x => x !== s) : [...p.sizes, s] }))}
-                        style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #262a38', background: productForm.sizes.includes(s) ? '#2563eb' : '#1e2130', color: 'white', cursor: 'pointer' }}>{s}</button>
+                        style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #e4eaf3', background: productForm.sizes.includes(s) ? '#2563eb' : '#eef2f8', color: productForm.sizes.includes(s) ? 'white' : '#29405f', cursor: 'pointer' }}>{s}</button>
                     ))}
                   </div>
                 </FormField>
@@ -2031,7 +2031,7 @@ const Dashboard = () => {
                       onKeyDown={e => { if (e.key === 'Enter' && colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
                       placeholder="e.g. Red, Blue, Black" style={inputStyle} />
                     <button onClick={() => { if (colorInput.trim()) { setProductForm(p => ({ ...p, colors: [...p.colors, colorInput.trim()] })); setColorInput(''); } }}
-                      style={{ padding: '0 12px', background: '#262a38', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Add</button>
+                      style={{ padding: '0 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Add</button>
                   </div>
                 </FormField>
 
@@ -2043,18 +2043,18 @@ const Dashboard = () => {
                   <button onClick={handleSaveProduct} disabled={productSaving} style={{ ...btnStyle('#2563eb', 'white'), flex: 1, margin: 0 }}>
                     {productSaving ? 'Saving...' : (editingProductId ? 'Update Product' : 'Save Product')}
                   </button>
-                  <button onClick={() => { setShowAddProduct(false); setEditingProductId(null); }} style={{ ...btnStyle('#262a38', '#8b90a3'), flex: 1, margin: 0 }}>Cancel</button>
+                  <button onClick={() => { setShowAddProduct(false); setEditingProductId(null); }} style={{ ...btnStyle('#e4eaf3', '#718096'), flex: 1, margin: 0 }}>Cancel</button>
                 </div>
               </div>
             </div>
           )}
 
           {/* Product Grid */}
-          {productsLoading ? <div style={{ color: '#8b90a3' }}>Products loading...</div> : (
+          {productsLoading ? <div style={{ color: '#718096' }}>Products loading...</div> : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
               {products.map(p => (
-                <div key={p.product_id} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '12px', overflow: 'hidden' }}>
-                  <div style={{ height: '160px', background: '#181b26', position: 'relative' }}>
+                <div key={p.product_id} style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ height: '160px', background: '#f0f4fb', position: 'relative' }}>
                     {isSampleProduct(p) && (
                       <span style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 2, background: '#ffb84c', color: '#1a1200',
                         fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '20px' }}>Sample</span>
@@ -2065,11 +2065,11 @@ const Dashboard = () => {
                   </div>
                   <div style={{ padding: '14px' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
-                    <div style={{ color: '#2563eb', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
+                    <div style={{ color: '#2563eb', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#718096', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button onClick={() => handleEditProduct(p)} style={{ flex: 1, padding: '6px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
-                      <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ flex: 1, padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                      <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ flex: 1, padding: '6px', background: '#ffeded', color: '#c44d4d', border: '1px solid #c44d4d44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -2082,20 +2082,20 @@ const Dashboard = () => {
       {/* ════════ ORDERS TAB ════════ */}
       {activeTab === 'reports' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-          {currentSiteId ? <SalesReport orders={orders} loading={ordersLoading} /> : <div style={{ color: '#8b90a3' }}>Build your website first — your sales report will show here.</div>}
+          {currentSiteId ? <SalesReport orders={orders} loading={ordersLoading} /> : <div style={{ color: '#718096' }}>Build your website first — your sales report will show here.</div>}
         </div>
       )}
 
       {activeTab === 'stock' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ color: '#2563eb', margin: '0 0 4px' }}>📊 Stock</h2>
-          <p style={{ color: '#8b90a3', margin: '0 0 20px', fontSize: '0.9rem' }}>Keep an eye on what's in stock and what's running low. Update any product's stock right here.</p>
+          <p style={{ color: '#718096', margin: '0 0 20px', fontSize: '0.9rem' }}>Keep an eye on what's in stock and what's running low. Update any product's stock right here.</p>
           {!currentSiteId ? (
-            <div style={{ color: '#8b90a3' }}>Build your website and add products first — your stock will show here.</div>
+            <div style={{ color: '#718096' }}>Build your website and add products first — your stock will show here.</div>
           ) : productsLoading ? (
-            <div style={{ color: '#8b90a3' }}>Loading stock...</div>
+            <div style={{ color: '#718096' }}>Loading stock...</div>
           ) : products.length === 0 ? (
-            <div style={{ color: '#8b90a3' }}>No products yet. Add products in the Products tab to track stock.</div>
+            <div style={{ color: '#718096' }}>No products yet. Add products in the Products tab to track stock.</div>
           ) : (() => {
             const inStock = products.filter(p => (p.stock || 0) > LOW_STOCK).length;
             const low = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= LOW_STOCK);
@@ -2118,9 +2118,9 @@ const Dashboard = () => {
                   <span style={{ fontSize: '0.68rem', fontWeight: 700, color: badge.c, border: `1px solid ${badge.c}55`, borderRadius: 999, padding: '1px 8px' }}>{badge.t}</span>
                   <input type="number" min={0} value={edited !== undefined ? edited : String(cur)}
                     onChange={e => setStockEdit(prev => ({ ...prev, [id]: e.target.value }))}
-                    style={{ width: 70, background: '#1e2130', color: 'white', border: '1px solid #262a38', borderRadius: 8, padding: '6px 8px', fontSize: '0.85rem', textAlign: 'center' }} />
+                    style={{ width: 70, background: '#fff', color: '#17243b', border: '1px solid #dbe3f0', borderRadius: 8, padding: '6px 8px', fontSize: '0.85rem', textAlign: 'center' }} />
                   <button onClick={() => handleSaveStock(p)} disabled={!changed || stockSavingId === id}
-                    style={{ background: changed ? '#2563eb' : '#1e2130', color: changed ? 'white' : '#8b90a3', border: '1px solid #262a38', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: changed ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
+                    style={{ background: changed ? '#2563eb' : '#eef2f8', color: changed ? 'white' : '#718096', border: '1px solid #e4eaf3', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: changed ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
                     {stockSavingId === id ? '…' : 'Save'}
                   </button>
                 </div>
@@ -2130,13 +2130,13 @@ const Dashboard = () => {
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 22 }}>
                   {sum.map(s => (
-                    <div key={s.label} style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: 14, padding: 18 }}>
-                      <div style={{ fontSize: '0.8rem', color: '#8b90a3' }}>{s.label}</div>
+                    <div key={s.label} style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: 14, padding: 18 }}>
+                      <div style={{ fontSize: '0.8rem', color: '#718096' }}>{s.label}</div>
                       <div style={{ fontSize: '1.8rem', fontWeight: 800, color: s.color, marginTop: 4 }}>{s.value}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: '0.82rem', color: '#8b90a3', marginBottom: 22 }}>Total units in stock: <b style={{ color: '#c3c7d4' }}>{totalUnits.toLocaleString('en-IN')}</b></div>
+                <div style={{ fontSize: '0.82rem', color: '#718096', marginBottom: 22 }}>Total units in stock: <b style={{ color: '#c3c7d4' }}>{totalUnits.toLocaleString('en-IN')}</b></div>
 
                 {(low.length > 0 || out.length > 0) && (
                   <div style={{ background: '#1c1710', border: '1px solid #4a3a12', borderRadius: 14, padding: 18, marginBottom: 24 }}>
@@ -2145,7 +2145,7 @@ const Dashboard = () => {
                       <div key={p.product_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2415', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: 140 }}>
                           <div style={{ fontWeight: 600 }}>{p.title}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{(p.stock || 0) <= 0 ? 'Out of stock' : `Only ${p.stock} left`}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#718096' }}>{(p.stock || 0) <= 0 ? 'Out of stock' : `Only ${p.stock} left`}</div>
                         </div>
                         {stockCell(p)}
                       </div>
@@ -2157,7 +2157,7 @@ const Dashboard = () => {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
-                      <tr style={{ background: '#12141c', borderBottom: '1px solid #262a38', color: '#8b90a3' }}>
+                      <tr style={{ background: '#ffffff', borderBottom: '1px solid #e4eaf3', color: '#718096' }}>
                         <th style={{ padding: '12px' }}>Product</th>
                         <th style={{ padding: '12px' }}>Price</th>
                         <th style={{ padding: '12px', textAlign: 'right' }}>Stock</th>
@@ -2165,10 +2165,10 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                       {products.slice().sort((a, b) => (a.stock || 0) - (b.stock || 0)).map(p => (
-                        <tr key={p.product_id} style={{ borderBottom: '1px solid #1a1d27' }}>
+                        <tr key={p.product_id} style={{ borderBottom: '1px solid #edf1f6' }}>
                           <td style={{ padding: '12px' }}>
                             <div style={{ fontWeight: 600 }}>{p.title}</div>
-                            {p.category && <div style={{ fontSize: '0.72rem', color: '#8b90a3' }}>{p.category}</div>}
+                            {p.category && <div style={{ fontSize: '0.72rem', color: '#718096' }}>{p.category}</div>}
                           </td>
                           <td style={{ padding: '12px', color: '#c3c7d4' }}>৳{p.price}</td>
                           <td style={{ padding: '12px' }}>{stockCell(p)}</td>
@@ -2186,11 +2186,11 @@ const Dashboard = () => {
       {activeTab === 'orders' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ color: '#2563eb', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
-          {ordersLoading ? <div style={{ color: '#8b90a3' }}>Loading orders...</div> : (
+          {ordersLoading ? <div style={{ color: '#718096' }}>Loading orders...</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                 <thead>
-                  <tr style={{ background: '#12141c', borderBottom: '1px solid #262a38', color: '#8b90a3' }}>
+                  <tr style={{ background: '#ffffff', borderBottom: '1px solid #e4eaf3', color: '#718096' }}>
                     <th style={{ padding: '12px' }}>Product</th>
                     <th style={{ padding: '12px' }}>Customer</th>
                     <th style={{ padding: '12px' }}>Payment</th>
@@ -2201,43 +2201,43 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {orders.map(o => (
-                    <tr key={o.id} style={{ borderBottom: '1px solid #1a1d27' }}>
+                    <tr key={o.id} style={{ borderBottom: '1px solid #edf1f6' }}>
                       <td style={{ padding: '12px' }}>
                         <div style={{ fontWeight: 600 }}>{o.product_title}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>{o.selected_size} {o.selected_color} (x{o.quantity})</div>
+                        <div style={{ fontSize: '0.75rem', color: '#718096' }}>{o.selected_size} {o.selected_color} (x{o.quantity})</div>
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div>{o.customer_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#8b90a3' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#718096' }}>
                           {o.customer_phone}
                           {(() => {
                             const r = phoneRisk[(o.customer_phone || '').trim()];
                             if (!r || !r.found) return null;
                             const m = {
-                              high:   { bg: '#3a1416', fg: '#ff6b6b', t: `⚠️ ${r.returned}/${r.total} returned` },
+                              high:   { bg: '#3a1416', fg: '#c44d4d', t: `⚠️ ${r.returned}/${r.total} returned` },
                               medium: { bg: '#3a2e14', fg: '#ffcf5c', t: `${r.returned}/${r.total} returned` },
                               good:   { bg: '#16301c', fg: '#8fe388', t: `✓ ${r.delivered}/${r.total} delivered` },
-                              low_data: { bg: '#1e2130', fg: '#8b90a3', t: `${r.delivered}✓ ${r.returned}✗ (new)` },
-                            }[r.risk] || { bg: '#1e2130', fg: '#8b90a3', t: `${r.delivered}✓ ${r.returned}✗` };
+                              low_data: { bg: '#eef2f8', fg: '#718096', t: `${r.delivered}✓ ${r.returned}✗ (new)` },
+                            }[r.risk] || { bg: '#eef2f8', fg: '#718096', t: `${r.delivered}✓ ${r.returned}✗` };
                             return <span title={`Courier history: ${r.delivered} delivered, ${r.returned} returned (${r.return_rate}% return rate)`}
                               style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '999px', background: m.bg, color: m.fg, fontSize: '0.68rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{m.t}</span>;
                           })()}
                         </div>
-                        {o.customer_email && <div style={{ fontSize: '0.72rem', color: '#8b90a3' }}>{o.customer_email}</div>}
+                        {o.customer_email && <div style={{ fontSize: '0.72rem', color: '#718096' }}>{o.customer_email}</div>}
                         <div style={{ fontSize: '0.7rem', color: '#666' }}>{o.customer_address}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#8b90a3' }}>{o.delivery_location === 'outside' ? '🚴 Outside Dhaka' : '🚴 Dhaka'}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#718096' }}>{o.delivery_location === 'outside' ? '🚴 Outside Dhaka' : '🚴 Dhaka'}</div>
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div>{paymentLabels[o.payment_method] || o.payment_method}</div>
-                        {o.transaction_id && <div style={{ fontSize: '0.72rem', color: '#c8ff5c' }}>TrxID: {o.transaction_id}</div>}
+                        {o.transaction_id && <div style={{ fontSize: '0.72rem', color: '#12284c' }}>TrxID: {o.transaction_id}</div>}
                       </td>
                       <td style={{ padding: '12px', fontWeight: 700, color: '#2563eb' }}>
                         ৳{o.product_price * o.quantity + (o.delivery_charge || 0)}
-                        <div style={{ fontSize: '0.68rem', color: '#8b90a3', fontWeight: 400 }}>incl. ৳{o.delivery_charge || 0} delivery</div>
+                        <div style={{ fontSize: '0.68rem', color: '#718096', fontWeight: 400 }}>incl. ৳{o.delivery_charge || 0} delivery</div>
                       </td>
                       <td style={{ padding: '12px' }}>
                         <select value={o.status} onChange={e => handleUpdateOrderStatus(o.id, e.target.value)}
-                          style={{ background: '#1e2130', color: statusColors[o.status] || 'white', border: '1px solid #262a38', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          style={{ background: '#eef2f8', color: statusColors[o.status] || 'white', border: '1px solid #e4eaf3', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', cursor: 'pointer' }}>
                           <option value="pending">Pending</option>
                           <option value="confirmed">Confirmed</option>
                           <option value="shipped">Shipped</option>
@@ -2249,25 +2249,25 @@ const Dashboard = () => {
                         {bookings[o.id] ? (
                           <div style={{ fontSize: '0.75rem' }}>
                             <div style={{ color: '#8fe388', fontWeight: 600 }}>🚚 Booked</div>
-                            <div style={{ color: '#c8ff5c' }}>{bookings[o.id].tracking_code}</div>
-                            <div style={{ color: '#8b90a3', fontSize: '0.68rem' }}>{bookings[o.id].courier_status}</div>
+                            <div style={{ color: '#12284c' }}>{bookings[o.id].tracking_code}</div>
+                            <div style={{ color: '#718096', fontSize: '0.68rem' }}>{bookings[o.id].courier_status}</div>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             {courierConfigured.steadfast && (
                               <button onClick={() => handleSendToCourier(o)} disabled={bookingOrderId === o.id}
-                                style={{ background: '#1e2130', color: '#c8ff5c', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                style={{ background: '#eef2f8', color: '#12284c', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                                 {bookingOrderId === o.id ? '⏳ Booking…' : '🚚 Steadfast'}
                               </button>
                             )}
                             {courierConfigured.pathao && (
                               <button onClick={() => openPathaoBooking(o)}
-                                style={{ background: '#1e2130', color: '#ff9e6d', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                style={{ background: '#eef2f8', color: '#ff9e6d', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                                 🚚 Pathao
                               </button>
                             )}
                             {!courierConfigured.steadfast && !courierConfigured.pathao && (
-                              <span style={{ color: '#8b90a3', fontSize: '0.7rem' }}>Set courier keys in Settings</span>
+                              <span style={{ color: '#718096', fontSize: '0.7rem' }}>Set courier keys in Settings</span>
                             )}
                           </div>
                         )}
@@ -2288,11 +2288,11 @@ const Dashboard = () => {
           <div onClick={e => e.stopPropagation()}
             style={{ background: '#13161f', border: '1px solid #2a2f45', borderRadius: '14px', padding: '22px', width: '100%', maxWidth: '440px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '4px', color: '#fff' }}>🚚 Book with Pathao</div>
-            <div style={{ color: '#8b90a3', fontSize: '0.8rem', marginBottom: '16px' }}>
+            <div style={{ color: '#718096', fontSize: '0.8rem', marginBottom: '16px' }}>
               {pathaoOrder.customer_name} · {pathaoOrder.customer_phone} · COD ৳{pathaoOrder.product_price * pathaoOrder.quantity + (pathaoOrder.delivery_charge || 0)}
             </div>
             {geoLoading === 'loading' ? (
-              <div style={{ color: '#8b90a3', padding: '20px 0' }}>Loading Pathao locations…</div>
+              <div style={{ color: '#718096', padding: '20px 0' }}>Loading Pathao locations…</div>
             ) : (
               <>
                 {[
@@ -2302,10 +2302,10 @@ const Dashboard = () => {
                   { label: `Area (optional)${geoLoading === 'area' ? ' (loading…)' : ''}`, val: geoSel.area, items: geoAreas, on: (v: string) => setGeoSel(s => ({ ...s, area: v })), ph: 'Select area', dis: !geoSel.zone || geoLoading === 'area' },
                 ].map(row => (
                   <div key={row.label} style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#8b90a3', marginBottom: '4px' }}>{row.label}</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#718096', marginBottom: '4px' }}>{row.label}</label>
                     <select value={row.val} disabled={(row as { dis?: boolean }).dis}
                       onChange={e => row.on(e.target.value)}
-                      style={{ width: '100%', background: '#1e2130', color: '#fff', border: '1px solid #39405c', borderRadius: '8px', padding: '9px 10px', fontSize: '0.85rem' }}>
+                      style={{ width: '100%', background: '#eef2f8', color: '#fff', border: '1px solid #39405c', borderRadius: '8px', padding: '9px 10px', fontSize: '0.85rem' }}>
                       <option value="">{row.ph}</option>
                       {row.items.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
                     </select>
@@ -2313,7 +2313,7 @@ const Dashboard = () => {
                 ))}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
                   <button onClick={() => setPathaoOrder(null)} disabled={pathaoBooking}
-                    style={{ flex: 1, background: '#1e2130', color: '#8b90a3', border: '1px solid #39405c', borderRadius: '8px', padding: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                    style={{ flex: 1, background: '#eef2f8', color: '#718096', border: '1px solid #39405c', borderRadius: '8px', padding: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                   <button onClick={confirmPathaoBooking} disabled={pathaoBooking || !geoSel.store || !geoSel.city || !geoSel.zone}
                     style={{ flex: 2, background: '#ff7a3c', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 700, cursor: 'pointer', opacity: (pathaoBooking || !geoSel.store || !geoSel.city || !geoSel.zone) ? 0.6 : 1 }}>
                     {pathaoBooking ? '⏳ Booking…' : 'Book Parcel'}
