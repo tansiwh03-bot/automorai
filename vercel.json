@@ -51,6 +51,10 @@
       "destination": "/general-store-online-shop.html"
     },
     {
+      "source": "/",
+      "destination": "/home.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
