@@ -1159,6 +1159,9 @@ const Dashboard = () => {
         .amr-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px #2563eb1f; }
         @media (max-width: 860px){ .amr-overview-grid{ grid-template-columns:1fr !important; } }
         @media (max-width: 760px){ .amr-inbox{ grid-template-columns:1fr !important; } }
+        .amr-stats4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+        .amr-quick4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+        @media (max-width: 920px){ .amr-stats4, .amr-quick4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         .amr-desktop-topbar { display:flex; }
         @media (max-width: 768px){ .amr-desktop-topbar{ display:none !important; } }
         .amr-mobile-topbar { display: none; }
@@ -1252,11 +1255,13 @@ const Dashboard = () => {
               <Bell size={17} color="#52647d" />
               {conversations.length > 0 && <span style={{ position: 'absolute', right: '7px', top: '6px', width: '7px', height: '7px', background: '#ef5d5d', borderRadius: '50%', border: '1px solid #fff' }} />}
             </button>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#dcecff', color: '#0a1f5c', fontWeight: 800, fontSize: '0.8rem' }}>{wsInitials}</div>
-            <div style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 700, color: '#17243b' }}>{wsName}</div>
-              <div style={{ color: '#8290a4' }}>Store Admin</div>
-            </div>
+            <button onClick={() => setActiveTab('settings')} title="Account & settings" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#dcecff', color: '#0a1f5c', fontWeight: 800, fontSize: '0.8rem' }}>{wsInitials}</div>
+              <div style={{ fontSize: '0.78rem', lineHeight: 1.2, textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, color: '#17243b' }}>{wsName}</div>
+                <div style={{ color: '#8290a4' }}>Store Admin</div>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -1314,7 +1319,7 @@ const Dashboard = () => {
             );
             return (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+                <div className="amr-stats4" style={{ marginBottom: '18px' }}>
                   <Stat label="Today's Revenue" ico="৳" value={`৳${todayRev.toLocaleString()}`} tr={revTrend} foot={`${todayOrders.length} orders today`} />
                   <Stat label="Total Orders" ico="🛍️" value={String(orders.length)} tr={ordTrend} foot={ordersLoading ? 'Loading…' : 'All time'} />
                   <Stat label="Customers" ico="👥" value={String(custCount)} foot="Unique buyers" />
@@ -1392,7 +1397,7 @@ const Dashboard = () => {
                   );
                 })()}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(168px,1fr))', gap: '14px', marginBottom: '18px' }}>
+                <div className="amr-quick4" style={{ marginBottom: '18px' }}>
                   {[
                     { ico: '📦', t: 'Add Product', s: 'Publish a new item', go: () => setActiveTab('products') },
                     { ico: '🛍️', t: 'View Orders', s: 'Manage your orders', go: () => setActiveTab('orders') },
