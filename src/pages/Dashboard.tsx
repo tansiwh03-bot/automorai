@@ -1304,6 +1304,32 @@ const Dashboard = () => {
                   <Stat label="Products" ico="📦" value={String(products.length)} foot={lowStock + outStock > 0 ? <span style={{ color: '#d98a20' }}>⚠ {lowStock + outStock} need restock</span> : 'In stock'} />
                 </div>
 
+                {(() => {
+                  const DAY = 86400000; const n = Date.now();
+                  const days: { key: string; sales: number }[] = [];
+                  for (let i = 13; i >= 0; i--) { const d = new Date(n - i * DAY); days.push({ key: d.toDateString(), sales: 0 }); }
+                  const idx: Record<string, number> = {}; days.forEach((d, i) => { idx[d.key] = i; });
+                  orders.forEach(o => { if ((o.status || '').toLowerCase() === 'cancelled') return; const k = (() => { try { return new Date(o.created_at).toDateString(); } catch { return ''; } })(); if (idx[k] !== undefined) days[idx[k]].sales += amt(o); });
+                  const max = Math.max(1, ...days.map(d => d.sales));
+                  const W = 640, H = 120;
+                  const pts = days.map((d, i) => [days.length === 1 ? 0 : (i / (days.length - 1)) * W, H - (d.sales / max) * (H - 12)]);
+                  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+                  const total14 = days.reduce((s, d) => s + d.sales, 0);
+                  return (
+                    <div className="amr-card" style={{ marginBottom: '18px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                        <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Sales Performance</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Last 14 days</span></div>
+                        <div style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.05rem' }}>৳{Math.round(total14).toLocaleString()}</div>
+                      </div>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '130px' }}>
+                        <defs><linearGradient id="ovFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2563eb" stopOpacity="0.22" /><stop offset="1" stopColor="#2563eb" stopOpacity="0" /></linearGradient></defs>
+                        <path d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#ovFill)" />
+                        <path d={line} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  );
+                })()}
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(168px,1fr))', gap: '14px', marginBottom: '18px' }}>
                   {[
                     { ico: '📦', t: 'Add Product', s: 'Publish a new item', go: () => setActiveTab('products') },
