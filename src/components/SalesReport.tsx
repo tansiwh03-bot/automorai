@@ -12,12 +12,12 @@ export interface ReportOrder {
   payment_method: string; status: string; delivery_location: string; created_at: string;
 }
 
-const C = { surface: '#12141c', border: '#262a38', ink: '#ffffff', ink2: '#c3c7d4', muted: '#8b90a3', series: '#8b6cff', up: '#4ade80', down: '#f87171' };
+const C = { surface: '#ffffff', border: '#e4eaf3', ink: '#17243b', ink2: '#40536f', muted: '#718096', series: '#2563eb', up: '#16a879', down: '#dc5555' };
 const DAY = 86400000;
 const dhakaDay = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }); // YYYY-MM-DD
 const taka = (n: number) => '৳' + Math.round(n).toLocaleString('en-IN');
 const STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: '#fbbf24' }, confirmed: { label: 'Confirmed', color: '#a78bfa' },
+  pending: { label: 'Pending', color: '#fbbf24' }, confirmed: { label: 'Confirmed', color: '#6366f1' },
   shipped: { label: 'Shipped', color: '#38bdf8' }, delivered: { label: 'Delivered', color: '#4ade80' },
   cancelled: { label: 'Cancelled', color: '#f87171' },
 };
@@ -37,7 +37,7 @@ const Change = ({ now, before }: { now: number; before: number }) => {
   return <span style={{ color: up ? C.up : C.down, fontSize: '0.8rem', fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(pct)}% <span style={{ color: C.muted, fontWeight: 400 }}>vs previous</span></span>;
 };
 
-const card: React.CSSProperties = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 };
+const card: React.CSSProperties = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, boxShadow: '0 8px 26px rgba(15,39,83,.06)' };
 
 export default function SalesReport({ orders, loading }: { orders: ReportOrder[]; loading: boolean }) {
   const [range, setRange] = useState<7 | 30 | 90>(30);
@@ -89,7 +89,7 @@ export default function SalesReport({ orders, loading }: { orders: ReportOrder[]
                 </span>
                 <span style={{ color: C.ink, fontWeight: 600 }}>{v} <span style={{ color: C.muted, fontWeight: 400 }}>({Math.round((v / total) * 100)}%)</span></span>
               </div>
-              <div style={{ height: 6, borderRadius: 4, background: '#1e2130' }}><div style={{ height: '100%', width: `${(v / total) * 100}%`, borderRadius: 4, background: colors?.[k] || C.series }} /></div>
+              <div style={{ height: 6, borderRadius: 4, background: '#edf1f7' }}><div style={{ height: '100%', width: `${(v / total) * 100}%`, borderRadius: 4, background: colors?.[k] || C.series }} /></div>
             </div>
           ))}
       </div>
@@ -128,10 +128,10 @@ export default function SalesReport({ orders, loading }: { orders: ReportOrder[]
           <ResponsiveContainer>
             <AreaChart data={r.series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs><linearGradient id="srFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.series} stopOpacity={0.35} /><stop offset="100%" stopColor={C.series} stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid stroke="#1e2130" vertical={false} />
+              <CartesianGrid stroke="#e9eef6" vertical={false} />
               <XAxis dataKey="label" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={24} />
               <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={52} tickFormatter={v => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} />
-              <Tooltip cursor={{ stroke: C.muted, strokeDasharray: '3 3' }} contentStyle={{ background: '#0b0d12', border: `1px solid ${C.border}`, borderRadius: 10, color: 'white' }}
+              <Tooltip cursor={{ stroke: C.muted, strokeDasharray: '3 3' }} contentStyle={{ background: '#ffffff', border: `1px solid ${C.border}`, borderRadius: 10, color: '#17243b' }}
                 labelStyle={{ color: C.ink2 }} formatter={(v: number, _n, p: any) => [`${taka(v)} · ${p.payload.orders} order${p.payload.orders === 1 ? '' : 's'}`, 'Sales']} />
               <Area type="monotone" dataKey="sales" stroke={C.series} strokeWidth={2} fill="url(#srFill)" activeDot={{ r: 5, stroke: C.surface, strokeWidth: 2 }} />
             </AreaChart>
@@ -148,7 +148,7 @@ export default function SalesReport({ orders, loading }: { orders: ReportOrder[]
                 <span style={{ color: C.ink2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name} <span style={{ color: C.muted }}>· {p.units} sold</span></span>
                 <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{taka(p.sales)}</span>
               </div>
-              <div style={{ height: 6, borderRadius: 4, background: '#1e2130' }}><div style={{ height: '100%', width: `${(p.sales / maxTop) * 100}%`, borderRadius: 4, background: C.series }} /></div>
+              <div style={{ height: 6, borderRadius: 4, background: '#edf1f7' }}><div style={{ height: '100%', width: `${(p.sales / maxTop) * 100}%`, borderRadius: 4, background: C.series }} /></div>
             </div>
           ))}
         </div>
