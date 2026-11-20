@@ -2155,7 +2155,7 @@ const Dashboard = () => {
             <div>
               <div className="amr-eyebrow">Catalog management</div>
               <h2 style={{ color: '#12284c', margin: '2px 0', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Products</h2>
-              <p style={{ color: '#718096', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
+              <p style={{ color: '#718096', margin: '4px 0 0', fontSize: '0.85rem' }}>Manage your catalog, pricing and product visibility.</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {products.some(isSampleProduct) && (
@@ -2263,44 +2263,62 @@ const Dashboard = () => {
           )}
 
           {!productsLoading && products.length > 0 && (
-            <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap', marginBottom: '14px' }}>
               <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Search products…" className="amr-input" style={{ maxWidth: '260px' }} />
               <select value={productCatFilter} onChange={e => setProductCatFilter(e.target.value)} className="amr-input" style={{ maxWidth: '200px' }}>
                 <option value="">All categories</option>
                 {[...new Set(products.map(p => (p.category || '').trim()).filter(Boolean))].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+              <button className="amr-btn" onClick={() => {
+                const rows = products.map(p => [p.title, p.category || '', p.price, p.stock].map(x => `"${String(x).replace(/"/g, '""')}"`).join(','));
+                const csv = 'Product,Category,Price,Stock\n' + rows.join('\n');
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'products.csv'; a.click();
+              }}>↓ Export</button>
             </div>
           )}
-          {/* Product Grid */}
-          {productsLoading ? <div style={{ color: '#718096' }}>Products loading...</div> : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-              {products.filter(p => {
-                const q = productSearch.trim().toLowerCase();
-                const matchQ = !q || (p.title || '').toLowerCase().includes(q);
-                const matchC = !productCatFilter || (p.category || '').trim() === productCatFilter;
-                return matchQ && matchC;
-              }).map(p => (
-                <div key={p.product_id} style={{ background: '#ffffff', border: '1px solid #e4eaf3', borderRadius: '12px', overflow: 'hidden' }}>
-                  <div style={{ height: '160px', background: '#f0f4fb', position: 'relative' }}>
-                    {isSampleProduct(p) && (
-                      <span style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 2, background: '#ffb84c', color: '#1a1200',
-                        fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '20px' }}>Sample</span>
-                    )}
-                    {p.images && p.images[0] ? (
-                      <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '2rem' }}>🛍️</div>}
-                  </div>
-                  <div style={{ padding: '14px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
-                    <div style={{ color: '#2563eb', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#718096', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <button onClick={() => handleEditProduct(p)} style={{ flex: 1, padding: '6px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
-                      <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ flex: 1, padding: '6px', background: '#ffeded', color: '#c44d4d', border: '1px solid #c44d4d44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {productsLoading ? <div style={{ color: '#718096' }}>Products loading...</div> : products.length === 0 ? (
+            <div className="amr-card" style={{ color: '#718096', textAlign: 'center', padding: '28px' }}>No products yet. Click “＋ Add Product” to add your first item.</div>
+          ) : (
+            <div className="amr-card" style={{ overflowX: 'auto' }}>
+              <table className="amr-table" style={{ minWidth: '680px' }}>
+                <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  {products.filter(p => {
+                    const q = productSearch.trim().toLowerCase();
+                    const matchQ = !q || (p.title || '').toLowerCase().includes(q);
+                    const matchC = !productCatFilter || (p.category || '').trim() === productCatFilter;
+                    return matchQ && matchC;
+                  }).map(p => {
+                    const st = Number(p.stock);
+                    const status = st === 0 ? { t: 'Out of stock', c: 'cancelled' } : st <= 5 ? { t: 'Low stock', c: 'pending' } : { t: 'Active', c: 'delivered' };
+                    return (
+                      <tr key={p.product_id}>
+                        <td>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ width: '38px', height: '38px', borderRadius: '9px', background: 'linear-gradient(135deg,#eaf2ff,#d4f6ff)', overflow: 'hidden', display: 'grid', placeItems: 'center', fontSize: '18px', flex: 'none' }}>
+                              {p.images && p.images[0] ? <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}
+                            </span>
+                            <span>
+                              <b style={{ color: '#213b5e' }}>{p.title}</b>
+                              {isSampleProduct(p) && <span style={{ marginLeft: '7px', background: '#fff4df', color: '#b87914', fontSize: '0.6rem', fontWeight: 800, padding: '1px 6px', borderRadius: '20px' }}>Sample</span>}
+                            </span>
+                          </span>
+                        </td>
+                        <td>{p.category || '—'}</td>
+                        <td><b>৳{p.price}</b>{p.original_price ? <span style={{ color: '#8794a8', textDecoration: 'line-through', fontSize: '0.78rem', marginLeft: '5px' }}>৳{p.original_price}</span> : null}</td>
+                        <td>{p.stock}</td>
+                        <td><span className={`amr-pill ${status.c}`}>{status.t}</span></td>
+                        <td>
+                          <span style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => handleEditProduct(p)} className="amr-btn" style={{ padding: '6px 12px' }}>Edit</button>
+                            <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} className="amr-btn" style={{ padding: '6px 10px', color: '#c44d4d', borderColor: '#f3c4c4' }}>Delete</button>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -2715,20 +2733,23 @@ const Dashboard = () => {
       {activeTab === 'orders' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div className="amr-eyebrow">Sales operations</div>
-          <h2 style={{ color: '#12284c', margin: '2px 0 16px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Orders</h2>
+          <h2 style={{ color: '#12284c', margin: '2px 0 2px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Orders</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Manage orders from all your sales channels.</p>
           {(() => {
             const st = (s: string) => (s || '').toLowerCase();
             const pending = orders.filter(o => st(o.status) === 'pending').length;
             const processing = orders.filter(o => ['confirmed', 'processing', 'shipped'].includes(st(o.status))).length;
             const delivered = orders.filter(o => st(o.status) === 'delivered').length;
-            const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (<div className="amr-card"><div style={{ color: '#718096', fontSize: '0.78rem', fontWeight: 600 }}>{l}</div><div className="amr-stat-num" style={{ fontSize: '1.4rem', color: c || '#10264b' }}>{v}</div></div>);
+            const comp = orders.length ? Math.round((delivered / orders.length) * 100) : 0;
+            const Stat = ({ l, v, c, s }: { l: string; v: string; c?: string; s?: string }) => (<div className="amr-card"><div style={{ color: '#718096', fontSize: '0.78rem', fontWeight: 600 }}>{l}</div><div className="amr-stat-num" style={{ fontSize: '1.4rem', color: c || '#10264b' }}>{v}</div>{s && <div style={{ fontSize: '0.7rem', color: '#8794a8' }}>{s}</div>}</div>);
             return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: '14px', marginBottom: '16px' }}>
-              <Stat l="All Orders" v={String(orders.length)} />
-              <Stat l="Pending" v={String(pending)} c="#b87914" />
-              <Stat l="Processing" v={String(processing)} c="#2563eb" />
-              <Stat l="Delivered" v={String(delivered)} c="#159768" />
+              <Stat l="All Orders" v={String(orders.length)} s="All time" />
+              <Stat l="Pending" v={String(pending)} c="#b87914" s="Needs action" />
+              <Stat l="Processing" v={String(processing)} c="#2563eb" s="Being prepared" />
+              <Stat l="Delivered" v={String(delivered)} c="#159768" s={`${comp}% completion`} />
             </div>;
           })()}
+          <div className="amr-card" style={{ overflowX: 'auto' }}>
           <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <input value={orderSearch} onChange={e => setOrderSearch(e.target.value)} placeholder="Search order or customer…" className="amr-input" style={{ maxWidth: '260px' }} />
             <select value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)} className="amr-input" style={{ maxWidth: '180px' }}>
@@ -2739,12 +2760,18 @@ const Dashboard = () => {
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
+            <button className="amr-btn" onClick={() => {
+              const rows = orders.map(o => [String(o.id || '').slice(-5), o.customer_name || '', o.customer_phone || '', o.product_title || '', o.product_price * o.quantity + (o.delivery_charge || 0), o.status || ''].map(x => `"${String(x).replace(/"/g, '""')}"`).join(','));
+              const csv = 'Order,Customer,Phone,Product,Total,Status\n' + rows.join('\n');
+              const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'orders.csv'; a.click();
+            }}>↓ Export</button>
           </div>
           {ordersLoading ? <div style={{ color: '#718096' }}>Loading orders...</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                 <thead>
                   <tr style={{ background: '#ffffff', borderBottom: '1px solid #e4eaf3', color: '#718096' }}>
+                    <th style={{ padding: '12px' }}>Order</th>
                     <th style={{ padding: '12px' }}>Product</th>
                     <th style={{ padding: '12px' }}>Customer</th>
                     <th style={{ padding: '12px' }}>Payment</th>
@@ -2761,6 +2788,10 @@ const Dashboard = () => {
                     return matchQ && matchS;
                   }).map(o => (
                     <tr key={o.id} style={{ borderBottom: '1px solid #edf1f6' }}>
+                      <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 700, color: '#2563eb' }}>#{String(o.id || '').slice(-5).toUpperCase()}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#8794a8' }}>{(() => { try { return new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return ''; } })()}</div>
+                      </td>
                       <td style={{ padding: '12px' }}>
                         <div style={{ fontWeight: 600 }}>{o.product_title}</div>
                         <div style={{ fontSize: '0.75rem', color: '#718096' }}>{o.selected_size} {o.selected_color} (x{o.quantity})</div>
@@ -2837,6 +2868,7 @@ const Dashboard = () => {
               </table>
             </div>
           )}
+          </div>
         </div>
       )}
       </div>
