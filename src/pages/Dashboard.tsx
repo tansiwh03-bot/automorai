@@ -1158,6 +1158,7 @@ const Dashboard = () => {
         .amr-input { width:100%; box-sizing:border-box; border:1px solid #dbe3f0; border-radius:10px; padding:11px 13px; font:inherit; font-size:.9rem; color:#17243b; background:#fff; }
         .amr-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px #2563eb1f; }
         @media (max-width: 860px){ .amr-overview-grid{ grid-template-columns:1fr !important; } }
+        @media (max-width: 760px){ .amr-inbox{ grid-template-columns:1fr !important; } }
         .amr-desktop-topbar { display:flex; }
         @media (max-width: 768px){ .amr-desktop-topbar{ display:none !important; } }
         .amr-mobile-topbar { display: none; }
@@ -1315,17 +1316,48 @@ const Dashboard = () => {
                   const pts = days.map((d, i) => [days.length === 1 ? 0 : (i / (days.length - 1)) * W, H - (d.sales / max) * (H - 12)]);
                   const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
                   const total14 = days.reduce((s, d) => s + d.sales, 0);
+                  // Sales by payment method (real) — mirrors the demo's "Sales by Channel" donut
+                  const payNames: Record<string, string> = { cod: 'Cash on Delivery', bkash: 'bKash', nagad: 'Nagad', bank: 'Bank Transfer' };
+                  const payColors: Record<string, string> = { cod: '#2563eb', bkash: '#26c9ef', nagad: '#16a879', bank: '#f59e0b' };
+                  const payMap: Record<string, number> = {};
+                  orders.forEach(o => { if ((o.status || '').toLowerCase() === 'cancelled') return; const k = (o.payment_method || 'cod').toLowerCase(); payMap[k] = (payMap[k] || 0) + amt(o); });
+                  const payEntries = Object.entries(payMap).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+                  const payTotal = payEntries.reduce((s, [, v]) => s + v, 0);
+                  let acc = 0;
+                  const stops = payEntries.map(([k, v]) => { const from = (acc / (payTotal || 1)) * 100; acc += v; const to = (acc / (payTotal || 1)) * 100; return `${payColors[k] || '#9fb0cc'} ${from}% ${to}%`; });
+                  const conic = stops.length ? `conic-gradient(${stops.join(',')})` : 'conic-gradient(#e9eef6 0 100%)';
                   return (
-                    <div className="amr-card" style={{ marginBottom: '18px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                        <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Sales Performance</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Last 14 days</span></div>
-                        <div style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.05rem' }}>৳{Math.round(total14).toLocaleString()}</div>
+                    <div className="amr-overview-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(240px,1fr)', gap: '16px', marginBottom: '18px' }}>
+                      <div className="amr-card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                          <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Sales Performance</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Last 14 days</span></div>
+                          <div style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.05rem' }}>৳{Math.round(total14).toLocaleString()}</div>
+                        </div>
+                        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '150px' }}>
+                          <defs><linearGradient id="ovFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2563eb" stopOpacity="0.22" /><stop offset="1" stopColor="#2563eb" stopOpacity="0" /></linearGradient></defs>
+                          <path d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#ovFill)" />
+                          <path d={line} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </div>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '130px' }}>
-                        <defs><linearGradient id="ovFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2563eb" stopOpacity="0.22" /><stop offset="1" stopColor="#2563eb" stopOpacity="0" /></linearGradient></defs>
-                        <path d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#ovFill)" />
-                        <path d={line} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <div className="amr-card">
+                        <h3 style={{ margin: '0 0 2px', fontSize: '0.95rem', color: '#183052' }}>Sales by Payment</h3>
+                        <span style={{ fontSize: '0.72rem', color: '#718096' }}>How customers pay</span>
+                        {payTotal === 0 ? <div style={{ color: '#8794a8', fontSize: '0.82rem', padding: '24px 0', textAlign: 'center' }}>No sales yet.</div> : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                            <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: conic, flex: 'none', position: 'relative' }}>
+                              <div style={{ position: 'absolute', inset: '15px', background: '#fff', borderRadius: '50%' }} />
+                            </div>
+                            <div style={{ display: 'grid', gap: '8px', flex: 1 }}>
+                              {payEntries.map(([k, v]) => (
+                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#66758a' }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: payColors[k] || '#9fb0cc' }} />{payNames[k] || k}</span>
+                                  <b style={{ color: '#233d61' }}>{Math.round((v / payTotal) * 100)}%</b>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
@@ -1532,79 +1564,87 @@ const Dashboard = () => {
 
       {/* ════════ INBOX TAB ════════ */}
       {activeTab === 'inbox' && (
-        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-          <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #e4eaf3', overflowY: 'auto', background: '#ffffff' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid #e4eaf3', fontWeight: 700, fontSize: '1rem', color: '#2563eb' }}>💬 Unified Inbox</div>
-            {inboxLoading && <div style={{ padding: '24px', color: '#718096', textAlign: 'center' }}>Loading conversations...</div>}
-            {inboxError && <div style={{ padding: '16px', color: '#c44d4d', fontSize: '0.9rem' }}>{inboxError}</div>}
-            {!inboxLoading && !inboxError && conversations.length === 0 && (
-              <div style={{ padding: '24px', color: '#718096', textAlign: 'center', fontSize: '0.9rem' }}>No conversations yet.<br />Connect Facebook or WhatsApp to start.</div>
-            )}
-            {conversations.map(conv => (
-              <div key={conv.id} onClick={() => { setSelectedConversation(conv); setReplyText(''); setReplyError(''); }} style={{ padding: '14px 16px',
-                borderBottom: '1px solid #edf1f6', cursor: 'pointer',
-                background: selectedConversation?.id === conv.id ? '#f0f4fb' : 'transparent', transition: 'background 0.15s' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{conv.name}</span>
-                  <span style={{ color: '#718096', fontSize: '0.75rem' }}>{formatTime(conv.last_time)}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <PlatformBadge platform={conv.platform} />
-                  <span style={{ color: '#718096', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{conv.last_message}</span>
-                </div>
-              </div>
-            ))}
+        <div style={{ padding: '32px 24px', maxWidth: '1150px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            <div>
+              <div className="amr-eyebrow">Customer communication</div>
+              <h2 style={{ color: '#12284c', margin: '2px 0 2px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Unified Inbox</h2>
+              <p className="amr-sub" style={{ margin: 0 }}>All customer conversations — Facebook, Messenger, WhatsApp &amp; website chat — in one place.</p>
+            </div>
+            <span className="amr-btn" style={{ cursor: 'default', flex: 'none' }}>{conversations.length} conversation{conversations.length === 1 ? '' : 's'}</span>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {!selectedConversation ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096', flexDirection: 'column', gap: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>💬</span>
-                <span>Select a conversation to view messages</span>
-              </div>
-            ) : (
-              <>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid #e4eaf3', background: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{selectedConversation.name}</div>
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-                      <PlatformBadge platform={selectedConversation.platform} />
-                      <span style={{ color: '#718096', fontSize: '0.78rem' }}>{selectedConversation.sender_id}</span>
-                    </div>
+          <div className="amr-inbox" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: '480px', border: '1px solid #e4eaf3', borderRadius: '14px', overflow: 'hidden', background: '#fff', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
+            <div style={{ borderRight: '1px solid #e4eaf3', overflowY: 'auto', maxHeight: '600px' }}>
+              {inboxLoading && <div style={{ padding: '24px', color: '#718096', textAlign: 'center', fontSize: '0.88rem' }}>Loading conversations…</div>}
+              {inboxError && <div style={{ padding: '16px', color: '#c44d4d', fontSize: '0.88rem' }}>{inboxError}</div>}
+              {!inboxLoading && !inboxError && conversations.length === 0 && (
+                <div style={{ padding: '28px 18px', color: '#718096', textAlign: 'center', fontSize: '0.88rem' }}>No conversations yet.<br />Connect Facebook or WhatsApp to start.</div>
+              )}
+              {conversations.map(conv => (
+                <div key={conv.id} onClick={() => { setSelectedConversation(conv); setReplyText(''); setReplyError(''); }} style={{ padding: '13px 15px',
+                  borderBottom: '1px solid #edf1f6', cursor: 'pointer',
+                  background: selectedConversation?.id === conv.id ? '#edf5ff' : 'transparent', transition: 'background 0.15s' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#213b5e' }}>{conv.name}</span>
+                    <span style={{ color: '#8794a8', fontSize: '0.72rem', flex: 'none' }}>{formatTime(conv.last_time)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PlatformBadge platform={conv.platform} />
+                    <span style={{ color: '#718096', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{conv.last_message}</span>
                   </div>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {selectedConversation.messages.slice().sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-                    .map((msg, i) => {
-                      const isUser = msg.role === 'user';
-                      return (
-                        <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-start' : 'flex-end' }}>
-                          <div style={{ maxWidth: '65%', padding: '10px 14px', borderRadius: isUser ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-                            background: isUser ? '#eef4fb' : '#2563eb', color: isUser ? '#17243b' : 'white', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                            <div>{msg.message}</div>
-                            <div style={{ fontSize: '0.72rem', color: isUser ? '#718096' : 'rgba(255,255,255,0.6)', marginTop: '4px', textAlign: 'right' }}>{formatTime(msg.timestamp)}</div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', background: '#f8faff', maxHeight: '600px' }}>
+              {!selectedConversation ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8794a8', flexDirection: 'column', gap: '10px', padding: '40px', minHeight: '300px' }}>
+                  <span style={{ fontSize: '1.8rem' }}>💬</span>
+                  <span style={{ fontSize: '0.9rem' }}>Select a conversation to view messages</span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ padding: '14px 18px', borderBottom: '1px solid #e4eaf3', background: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#12284c' }}>{selectedConversation.name}</div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                        <PlatformBadge platform={selectedConversation.platform} />
+                        <span style={{ color: '#8794a8', fontSize: '0.76rem' }}>{selectedConversation.sender_id}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '18px', display: 'flex', flexDirection: 'column', gap: '9px', minHeight: '240px' }}>
+                    {selectedConversation.messages.slice().sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                      .map((msg, i) => {
+                        const isUser = msg.role === 'user';
+                        return (
+                          <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-start' : 'flex-end' }}>
+                            <div style={{ maxWidth: '72%', padding: '9px 13px', borderRadius: isUser ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
+                              background: isUser ? '#fff' : '#2563eb', border: isUser ? '1px solid #e4eaf3' : 'none', color: isUser ? '#17243b' : 'white', fontSize: '0.88rem', lineHeight: '1.5' }}>
+                              <div>{msg.message}</div>
+                              <div style={{ fontSize: '0.68rem', color: isUser ? '#8794a8' : 'rgba(255,255,255,0.65)', marginTop: '4px', textAlign: 'right' }}>{formatTime(msg.timestamp)}</div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                </div>
-                {replyError && (
-                  <div style={{ padding: '8px 20px', background: '#ffeded', color: '#c44d4d', fontSize: '0.8rem' }}>❌ {replyError}</div>
-                )}
-                <div style={{ padding: '14px 20px', borderTop: '1px solid #e4eaf3', background: '#ffffff', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input placeholder="Type your reply..." value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !replySending) handleSendReply(); }}
-                    disabled={replySending}
-                    style={{ flex: 1, padding: '10px 14px', background: '#fff', border: '1px solid #dbe3f0', borderRadius: '10px', color: '#17243b', fontSize: '0.9rem', outline: 'none' }} />
-                  <button onClick={handleSendReply} disabled={replySending || !replyText.trim()}
-                    style={{ padding: '10px 18px', background: replySending || !replyText.trim() ? '#2563eb44' : '#2563eb',
-                      color: replySending || !replyText.trim() ? '#2563eb' : 'white', border: 'none', borderRadius: '10px',
-                      cursor: replySending || !replyText.trim() ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-                    {replySending ? '...' : 'Send'}
-                  </button>
-                </div>
-              </>
-            )}
+                        );
+                      })}
+                  </div>
+                  {replyError && (
+                    <div style={{ padding: '8px 18px', background: '#ffeded', color: '#c44d4d', fontSize: '0.8rem' }}>❌ {replyError}</div>
+                  )}
+                  <div style={{ padding: '12px 16px', borderTop: '1px solid #e4eaf3', background: '#fff', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input placeholder="Write a reply…" value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && !replySending) handleSendReply(); }}
+                      disabled={replySending}
+                      style={{ flex: 1, padding: '10px 13px', background: '#fff', border: '1px solid #dbe3f0', borderRadius: '9px', color: '#17243b', fontSize: '0.88rem', outline: 'none' }} />
+                    <button onClick={handleSendReply} disabled={replySending || !replyText.trim()}
+                      className="amr-btn amr-btn-primary"
+                      style={{ color: '#fff', opacity: replySending || !replyText.trim() ? 0.55 : 1, whiteSpace: 'nowrap' }}>
+                      {replySending ? '…' : 'Send ↗'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
