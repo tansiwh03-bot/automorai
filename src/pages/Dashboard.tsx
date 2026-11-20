@@ -23,6 +23,7 @@ const WEBSITE_UPDATE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/upda
 const MY_WEBSITES_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-websites';
 const ORDERS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orders';
 const ORDER_STATUS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-orders/update-status';
+const NEW_ORDER_API = 'https://n8n2.kingpurefood.com/webhook/automorai/new-order';
 const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-products';
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 const MY_PACKAGE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/my-package';
@@ -289,6 +290,10 @@ const Dashboard = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderSearch,   setOrderSearch]   = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
+  const [createOrderOpen, setCreateOrderOpen] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createForm, setCreateForm] = useState({ product_title: '', product_price: 0, quantity: 1, customer_name: '', customer_phone: '', customer_address: '', payment_method: 'cod', delivery_location: 'inside' });
   // Courier delivery-history check per phone (fraud/return risk), keyed by phone
   const [phoneRisk, setPhoneRisk] = useState<Record<string, { found: boolean; delivered: number; returned: number; total: number; return_rate: number; risk: string }>>({});
 
@@ -455,6 +460,37 @@ const Dashboard = () => {
       loadBookings();
     } catch { setOrders([]); }
     setOrdersLoading(false);
+  };
+
+  const handleCreateOrder = async () => {
+    setCreateError('');
+    const f = createForm;
+    if (!currentSiteId) { setCreateError('Select a website first.'); return; }
+    if (!f.product_title.trim() || !f.customer_name.trim()) { setCreateError('Product and customer name are required.'); return; }
+    if (!/^01[3-9]\d{8}$/.test(f.customer_phone.trim())) { setCreateError('Enter a valid 11-digit mobile number (01XXXXXXXXX).'); return; }
+    if (!(Number(f.product_price) > 0)) { setCreateError('Enter a valid price.'); return; }
+    setCreateSaving(true);
+    try {
+      const qty = Number(f.quantity) || 1;
+      const res = await fetch(NEW_ORDER_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_slug: currentSiteId, product_title: f.product_title.trim(), product_price: Number(f.product_price), quantity: qty,
+          selected_size: '', selected_color: '', customer_name: f.customer_name.trim(), customer_phone: f.customer_phone.trim(), customer_email: '',
+          customer_address: f.customer_address.trim(), payment_method: f.payment_method, transaction_id: '', delivery_location: f.delivery_location,
+          delivery_charge: 0, total_price: Number(f.product_price) * qty, source: 'manual',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        setCreateOrderOpen(false);
+        setCreateForm({ product_title: '', product_price: 0, quantity: 1, customer_name: '', customer_phone: '', customer_address: '', payment_method: 'cod', delivery_location: 'inside' });
+        loadOrders();
+      } else {
+        setCreateError(data.error || 'Could not create the order. Make sure your website is live.');
+      }
+    } catch { setCreateError('Connection error. Please try again.'); }
+    setCreateSaving(false);
   };
 
   // AI Business Assistant — answers only from the store's real loaded orders/products. Never invents numbers.
@@ -1161,7 +1197,7 @@ const Dashboard = () => {
         @media (max-width: 760px){ .amr-inbox{ grid-template-columns:1fr !important; } }
         .amr-stats4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
         .amr-quick4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-        @media (max-width: 920px){ .amr-stats4, .amr-quick4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width: 1050px){ .amr-stats4, .amr-quick4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         .amr-desktop-topbar { display:flex; }
         @media (max-width: 768px){ .amr-desktop-topbar{ display:none !important; } }
         .amr-mobile-topbar { display: none; }
@@ -1276,7 +1312,7 @@ const Dashboard = () => {
             </div>
             <div style={{ display: 'flex', gap: '9px', flexWrap: 'wrap' }}>
               <span className="amr-btn" style={{ cursor: 'default' }}>📅 Today</span>
-              <button className="amr-btn amr-btn-primary" style={{ color: '#fff' }} onClick={() => setActiveTab('products')}>＋ Add Product</button>
+              <button className="amr-btn amr-btn-primary" style={{ color: '#fff' }} onClick={() => { setCreateError(''); setCreateOrderOpen(true); }}>＋ Create Order</button>
             </div>
           </div>
 
@@ -1344,11 +1380,11 @@ const Dashboard = () => {
                   const xTicks = [0, 3, 6, 9, 13].filter(i => i < days.length);
                   const kfmt = (v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v);
                   const total14 = days.reduce((s, d) => s + d.sales, 0);
-                  // Sales by payment method (real) — mirrors the demo's "Sales by Channel" donut
-                  const payNames: Record<string, string> = { cod: 'Cash on Delivery', bkash: 'bKash', nagad: 'Nagad', bank: 'Bank Transfer' };
-                  const payColors: Record<string, string> = { cod: '#2563eb', bkash: '#26c9ef', nagad: '#16a879', bank: '#f59e0b' };
+                  // Sales by channel (real) — orders currently come through the website storefront
+                  const payNames: Record<string, string> = { website: 'Website', facebook: 'Facebook', messenger: 'Messenger', whatsapp: 'WhatsApp', other: 'Other' };
+                  const payColors: Record<string, string> = { website: '#2563eb', facebook: '#1877f2', messenger: '#26c9ef', whatsapp: '#16a879', other: '#f59e0b' };
                   const payMap: Record<string, number> = {};
-                  orders.forEach(o => { if ((o.status || '').toLowerCase() === 'cancelled') return; const k = (o.payment_method || 'cod').toLowerCase(); payMap[k] = (payMap[k] || 0) + amt(o); });
+                  orders.forEach(o => { if ((o.status || '').toLowerCase() === 'cancelled') return; const k = (((o as unknown as { channel?: string }).channel) || 'website').toLowerCase(); payMap[k] = (payMap[k] || 0) + amt(o); });
                   const payEntries = Object.entries(payMap).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
                   const payTotal = payEntries.reduce((s, [, v]) => s + v, 0);
                   let acc = 0;
@@ -1375,8 +1411,8 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <div className="amr-card">
-                        <h3 style={{ margin: '0 0 2px', fontSize: '0.95rem', color: '#183052' }}>Sales by Payment</h3>
-                        <span style={{ fontSize: '0.72rem', color: '#718096' }}>How customers pay</span>
+                        <h3 style={{ margin: '0 0 2px', fontSize: '0.95rem', color: '#183052' }}>Sales by Channel</h3>
+                        <span style={{ fontSize: '0.72rem', color: '#718096' }}>Where your orders come from</span>
                         {payTotal === 0 ? <div style={{ color: '#8794a8', fontSize: '0.82rem', padding: '24px 0', textAlign: 'center' }}>No sales yet.</div> : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
                             <div style={{ width: '104px', height: '104px', borderRadius: '50%', background: conic, flex: 'none', position: 'relative' }}>
@@ -1400,7 +1436,7 @@ const Dashboard = () => {
                 <div className="amr-quick4" style={{ marginBottom: '18px' }}>
                   {[
                     { ico: '📦', t: 'Add Product', s: 'Publish a new item', go: () => setActiveTab('products') },
-                    { ico: '🛍️', t: 'View Orders', s: 'Manage your orders', go: () => setActiveTab('orders') },
+                    { ico: '🧾', t: 'Create Order', s: 'Place an order manually', go: () => { setCreateError(''); setCreateOrderOpen(true); } },
                     { ico: '🌐', t: 'Edit Website', s: 'Update your storefront', go: () => setActiveTab('website') },
                     { ico: '◎', t: 'Marketing Setup', s: 'Pixel & tracking tools', go: () => setActiveTab('marketing') },
                   ].map(q => (
@@ -1596,6 +1632,34 @@ const Dashboard = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px' }}>
             <Toggle label="Comment Auto-Reply" desc="Auto-reply to Facebook comments" value={commentReply} onChange={v => handleToggleChange('comment', v)} />
             <Toggle label="Messenger Auto-Reply" desc="Auto-reply to Messenger messages" value={messengerReply} onChange={v => handleToggleChange('messenger', v)} />
+          </div>
+        </div>
+      )}
+
+      {createOrderOpen && (
+        <div onClick={() => !createSaving && setCreateOrderOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,20,38,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', padding: '22px', width: '100%', maxWidth: '460px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 70px rgba(7,26,60,.35)' }}>
+            <h3 style={{ margin: '0 0 14px', color: '#12284c' }}>Create New Order</h3>
+            {createError && <div style={{ background: '#ffeded', color: '#c44d4d', borderRadius: '8px', padding: '9px 12px', fontSize: '0.82rem', marginBottom: '12px' }}>{createError}</div>}
+            <FormField label="Product *">
+              <input list="co-products" className="amr-input" value={createForm.product_title} onChange={e => { const t = e.target.value; const match = products.find(p => p.title === t); setCreateForm(f => ({ ...f, product_title: t, product_price: match ? Number(match.price) : f.product_price })); }} placeholder="Type or pick a product" />
+              <datalist id="co-products">{products.map(p => <option key={p.product_id} value={p.title} />)}</datalist>
+            </FormField>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <FormField label="Price (৳) *"><input type="number" className="amr-input" value={createForm.product_price || ''} onChange={e => setCreateForm(f => ({ ...f, product_price: parseFloat(e.target.value) || 0 }))} /></FormField>
+              <FormField label="Quantity"><input type="number" className="amr-input" value={createForm.quantity} onChange={e => setCreateForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} /></FormField>
+            </div>
+            <FormField label="Customer name *"><input className="amr-input" value={createForm.customer_name} onChange={e => setCreateForm(f => ({ ...f, customer_name: e.target.value }))} /></FormField>
+            <FormField label="Mobile number *"><input className="amr-input" value={createForm.customer_phone} onChange={e => setCreateForm(f => ({ ...f, customer_phone: e.target.value }))} placeholder="01XXXXXXXXX" /></FormField>
+            <FormField label="Address"><textarea className="amr-input" style={{ height: '56px' }} value={createForm.customer_address} onChange={e => setCreateForm(f => ({ ...f, customer_address: e.target.value }))} /></FormField>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <FormField label="Payment"><select className="amr-input" value={createForm.payment_method} onChange={e => setCreateForm(f => ({ ...f, payment_method: e.target.value }))}><option value="cod">Cash on Delivery</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="bank">Bank</option></select></FormField>
+              <FormField label="Delivery"><select className="amr-input" value={createForm.delivery_location} onChange={e => setCreateForm(f => ({ ...f, delivery_location: e.target.value }))}><option value="inside">Inside Dhaka</option><option value="outside">Outside Dhaka</option></select></FormField>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button onClick={handleCreateOrder} disabled={createSaving} className="amr-btn amr-btn-primary" style={{ flex: 1, color: '#fff' }}>{createSaving ? 'Creating…' : 'Create Order'}</button>
+              <button onClick={() => setCreateOrderOpen(false)} className="amr-btn" style={{ flex: 1 }}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
