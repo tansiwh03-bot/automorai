@@ -99,10 +99,10 @@ export default function SalesReport({ orders, loading }: { orders: ReportOrder[]
   return (
     <div>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
-        <h2 style={{ color: '#7c5cff', margin: 0 }}>📈 Sales Report</h2>
+        <h2 style={{ color: '#2563eb', margin: 0 }}>📈 Sales Report</h2>
         <div style={{ display: 'flex', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3 }}>
           {([7, 30, 90] as const).map(d => (
-            <button key={d} onClick={() => setRange(d)} style={{ border: 'none', cursor: 'pointer', padding: '7px 14px', borderRadius: 8, fontWeight: 600, fontSize: '0.85rem', background: range === d ? '#7c5cff' : 'transparent', color: range === d ? 'white' : C.muted }}>Last {d} days</button>
+            <button key={d} onClick={() => setRange(d)} style={{ border: 'none', cursor: 'pointer', padding: '7px 14px', borderRadius: 8, fontWeight: 600, fontSize: '0.85rem', background: range === d ? '#2563eb' : 'transparent', color: range === d ? 'white' : C.muted }}>Last {d} days</button>
           ))}
         </div>
       </div>

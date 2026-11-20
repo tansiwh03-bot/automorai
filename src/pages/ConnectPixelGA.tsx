@@ -110,7 +110,7 @@ const ConnectPixelGA = () => {
               style={{
                 width: '100%',
                 padding: '14px',
-                background: '#7c5cff',
+                background: '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '10px',

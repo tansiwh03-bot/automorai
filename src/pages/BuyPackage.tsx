@@ -126,7 +126,7 @@ const BuyPackage = () => {
               Once confirmed, it will be activated on your account — usually within a few hours.
             </p>
             <button onClick={() => navigate('/dashboard')} style={{
-              width: '100%', padding: '14px', background: '#7c5cff', color: 'white', border: 'none',
+              width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none',
               borderRadius: '10px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer',
             }}>
               Back to dashboard
@@ -159,9 +159,9 @@ const BuyPackage = () => {
                 <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                   {(['bkash', 'nagad'] as const).map(m => (
                     <button key={m} type="button" onClick={() => setPaymentMethod(m)} style={{
-                      flex: 1, padding: '10px', borderRadius: '8px', border: paymentMethod === m ? '1px solid #7c5cff' : '1px solid #262a38',
-                      background: paymentMethod === m ? '#7c5cff22' : '#181b26',
-                      color: paymentMethod === m ? '#7c5cff' : '#8b90a3', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
+                      flex: 1, padding: '10px', borderRadius: '8px', border: paymentMethod === m ? '1px solid #2563eb' : '1px solid #262a38',
+                      background: paymentMethod === m ? '#2563eb22' : '#181b26',
+                      color: paymentMethod === m ? '#2563eb' : '#8b90a3', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
                     }}>{m}</button>
                   ))}
                 </div>

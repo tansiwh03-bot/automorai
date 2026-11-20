@@ -109,7 +109,7 @@ const taskCardDescStyle: React.CSSProperties = {
   color: '#8b90a3', fontSize: '0.82rem', lineHeight: 1.6, marginBottom: '16px', flex: 1,
 };
 const taskCardBtnStyle: React.CSSProperties = {
-  padding: '9px 16px', background: '#7c5cff', color: 'white', border: 'none',
+  padding: '9px 16px', background: '#2563eb', color: 'white', border: 'none',
   borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', alignSelf: 'flex-start',
 };
 
@@ -150,7 +150,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
     whatsapp:  { label: 'WhatsApp',  color: '#25D366' },
     messenger: { label: 'Messenger', color: '#0099FF' },
     facebook:  { label: 'Facebook',  color: '#1877F2' },
-    website:   { label: 'Website',   color: '#7c5cff' },
+    website:   { label: 'Website',   color: '#2563eb' },
   };
   const c = config[platform] ?? { label: platform, color: '#8b90a3' };
   return (
@@ -187,7 +187,7 @@ const Dashboard = () => {
 
   // Website Builder state
   const [websiteForm, setWebsiteForm] = useState<WebsiteForm>({
-    business_name: '', niche: 'kids_wear', whatsapp_number: '', accent_color: '#7c5cff',
+    business_name: '', niche: 'kids_wear', whatsapp_number: '', accent_color: '#2563eb',
   });
   const [websiteBuilding,  setWebsiteBuilding]  = useState(false);
   const [websiteResult,    setWebsiteResult]    = useState<{ url: string; business_name: string; site_id?: string; status?: 'draft' | 'active' } | null>(null);
@@ -1039,7 +1039,7 @@ const Dashboard = () => {
   };
 
   const statusColors: Record<string, string> = {
-    pending: '#ffb84c', confirmed: '#7c5cff', shipped: '#0099FF', delivered: '#25D366', cancelled: '#ff5c5c'
+    pending: '#ffb84c', confirmed: '#2563eb', shipped: '#0099FF', delivered: '#25D366', cancelled: '#ff5c5c'
   };
   const paymentLabels: Record<string, string> = { cod: '🚚 Cash on Delivery', bkash: '📱 bKash', nagad: '💵 Nagad', bank: '🏦 Bank Transfer' };
 
@@ -1089,7 +1089,7 @@ const Dashboard = () => {
       <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ background: '#0d0e14', borderRight: '1px solid #1e2130',
         display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto' }}>
         <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
+          <span style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
           <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
             display: 'none', background: 'transparent', border: 'none', color: '#8b90a3', fontSize: '1.3rem', cursor: 'pointer',
           }}>✕</button>
@@ -1100,8 +1100,8 @@ const Dashboard = () => {
               display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
               padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
               fontWeight: 600, fontSize: '0.88rem',
-              background: activeTab === tab.key ? '#7c5cff22' : 'transparent',
-              color: activeTab === tab.key ? '#7c5cff' : '#8b90a3', transition: 'all 0.15s',
+              background: activeTab === tab.key ? '#2563eb22' : 'transparent',
+              color: activeTab === tab.key ? '#2563eb' : '#8b90a3', transition: 'all 0.15s',
             }}>
               <span>{tab.icon}</span><span>{tab.label}</span>
             </button>
@@ -1127,7 +1127,7 @@ const Dashboard = () => {
           <button onClick={() => setSidebarOpen(true)} style={{
             background: 'transparent', border: 'none', color: 'white', fontSize: '1.4rem', cursor: 'pointer', padding: 0,
           }}>☰</button>
-          <span style={{ color: '#7c5cff', fontWeight: 800, fontSize: '1.1rem' }}>Automorai</span>
+          <span style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.1rem' }}>Automorai</span>
         </div>
 
       {/* ════════ HOME TAB ════════ */}
@@ -1137,7 +1137,7 @@ const Dashboard = () => {
           <p style={{ color: '#8b90a3', margin: '0 0 28px' }}>Hello, {user.email}!</p>
 
           {status && (
-            <div style={{ background: '#181b26', border: '1px solid #7c5cff', borderRadius: '8px',
+            <div style={{ background: '#181b26', border: '1px solid #2563eb', borderRadius: '8px',
               padding: '12px', marginBottom: '20px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
           )}
 
@@ -1151,7 +1151,7 @@ const Dashboard = () => {
             const cta = !websiteResult ? 'Get Started →' : isDraftSite ? 'View Preview →' : 'View →';
             return (
               <div onClick={() => setActiveTab('website')} style={{
-                background: 'linear-gradient(135deg,#7c5cff,#5b3ff0)', borderRadius: '16px', padding: '28px',
+                background: 'linear-gradient(135deg,#2563eb,#1b4dd1)', borderRadius: '16px', padding: '28px',
                 marginBottom: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
               }}>
                 <div>
@@ -1160,7 +1160,7 @@ const Dashboard = () => {
                   <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>{desc}</div>
                 </div>
                 <button onClick={e => { e.stopPropagation(); setActiveTab('website'); }} style={{
-                  padding: '12px 24px', background: 'white', color: '#5b3ff0', border: 'none', borderRadius: '8px',
+                  padding: '12px 24px', background: 'white', color: '#1b4dd1', border: 'none', borderRadius: '8px',
                   fontWeight: 800, fontSize: '0.92rem', cursor: 'pointer', whiteSpace: 'nowrap',
                 }}>
                   {cta}
@@ -1170,8 +1170,8 @@ const Dashboard = () => {
           })()}
 
           {mySites.length > 1 && (
-            <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-              <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>
+            <div style={{ background: '#0e1018', border: '1px solid #2563eb44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+              <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#2563eb' }}>
                 {websiteResult ? `You have ${mySites.length} websites — switch between them:` : `You have ${mySites.length} websites — which one do you want to manage?`}
               </p>
               {mySites.map(s => {
@@ -1186,13 +1186,13 @@ const Dashboard = () => {
                   }} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
                     width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
-                    background: isActive ? '#7c5cff22' : '#181b26', color: 'white',
-                    border: isActive ? '1px solid #7c5cff' : '1px solid #262a38', borderRadius: '8px',
+                    background: isActive ? '#2563eb22' : '#181b26', color: 'white',
+                    border: isActive ? '1px solid #2563eb' : '1px solid #262a38', borderRadius: '8px',
                     cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
                   }}>
                     <span>{isActive ? '✓ ' : ''}{s.business_name}</span>
                     <a href={s.website_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ color: '#7c5cff', fontWeight: 400, fontSize: '0.8rem', whiteSpace: 'nowrap', textDecoration: 'underline' }}>
+                      style={{ color: '#2563eb', fontWeight: 400, fontSize: '0.8rem', whiteSpace: 'nowrap', textDecoration: 'underline' }}>
                       Open ↗
                     </a>
                   </div>
@@ -1241,15 +1241,15 @@ const Dashboard = () => {
           </div>
 
           {waPageId && (
-            <div style={{ background: '#0e1018', border: '1px solid #7c5cff44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-              <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#7c5cff' }}>🌐 Your Website Widget Code</p>
+            <div style={{ background: '#0e1018', border: '1px solid #2563eb44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#2563eb' }}>🌐 Your Website Widget Code</p>
               <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>Paste this code into your website</p>
               <pre style={{ background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', padding: '12px',
                 fontSize: '0.72rem', color: '#c8ff5c', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`}
+                {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#2563eb">\n</script>`}
               </pre>
-              <button onClick={() => { navigator.clipboard.writeText(`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#7c5cff">\n</script>`); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
-                style={{ width: '100%', padding: '10px', background: widgetCopied ? '#c8ff5c' : '#7c5cff',
+              <button onClick={() => { navigator.clipboard.writeText(`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#2563eb">\n</script>`); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
+                style={{ width: '100%', padding: '10px', background: widgetCopied ? '#c8ff5c' : '#2563eb',
                   color: widgetCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px',
                   fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
                 {widgetCopied ? '✅ Copied!' : '📋 Copy Code'}
@@ -1268,7 +1268,7 @@ const Dashboard = () => {
       {activeTab === 'inbox' && (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
           <div style={{ width: '320px', minWidth: '320px', borderRight: '1px solid #262a38', overflowY: 'auto', background: '#0e1018' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid #262a38', fontWeight: 700, fontSize: '1rem', color: '#7c5cff' }}>💬 Unified Inbox</div>
+            <div style={{ padding: '16px', borderBottom: '1px solid #262a38', fontWeight: 700, fontSize: '1rem', color: '#2563eb' }}>💬 Unified Inbox</div>
             {inboxLoading && <div style={{ padding: '24px', color: '#8b90a3', textAlign: 'center' }}>Loading conversations...</div>}
             {inboxError && <div style={{ padding: '16px', color: '#ff5c5c', fontSize: '0.9rem' }}>{inboxError}</div>}
             {!inboxLoading && !inboxError && conversations.length === 0 && (
@@ -1313,7 +1313,7 @@ const Dashboard = () => {
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-start' : 'flex-end' }}>
                           <div style={{ maxWidth: '65%', padding: '10px 14px', borderRadius: isUser ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-                            background: isUser ? '#1e2130' : '#7c5cff', color: 'white', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                            background: isUser ? '#1e2130' : '#2563eb', color: 'white', fontSize: '0.9rem', lineHeight: '1.5' }}>
                             <div>{msg.message}</div>
                             <div style={{ fontSize: '0.72rem', color: isUser ? '#8b90a3' : 'rgba(255,255,255,0.6)', marginTop: '4px', textAlign: 'right' }}>{formatTime(msg.timestamp)}</div>
                           </div>
@@ -1331,8 +1331,8 @@ const Dashboard = () => {
                     disabled={replySending}
                     style={{ flex: 1, padding: '10px 14px', background: '#1e2130', border: '1px solid #262a38', borderRadius: '10px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
                   <button onClick={handleSendReply} disabled={replySending || !replyText.trim()}
-                    style={{ padding: '10px 18px', background: replySending || !replyText.trim() ? '#7c5cff44' : '#7c5cff',
-                      color: replySending || !replyText.trim() ? '#7c5cff' : 'white', border: 'none', borderRadius: '10px',
+                    style={{ padding: '10px 18px', background: replySending || !replyText.trim() ? '#2563eb44' : '#2563eb',
+                      color: replySending || !replyText.trim() ? '#2563eb' : 'white', border: 'none', borderRadius: '10px',
                       cursor: replySending || !replyText.trim() ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
                     {replySending ? '...' : 'Send'}
                   </button>
@@ -1356,7 +1356,7 @@ const Dashboard = () => {
                 </button>
               ) : (
                 <button onClick={() => { window.location.href = '/buy-package?package=automation'; }}
-                  style={{ padding: '8px 14px', background: '#7c5cff', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  style={{ padding: '8px 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>
                   💳 Buy Package to Go Live
                 </button>
               )}
@@ -1376,12 +1376,12 @@ const Dashboard = () => {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
           <div style={{ width: '100%', maxWidth: '580px' }}>
             <div style={{ marginBottom: '28px' }}>
-              <h2 style={{ color: '#7c5cff', margin: '0 0 6px', fontSize: '1.4rem' }}>🌐 Website Builder</h2>
+              <h2 style={{ color: '#2563eb', margin: '0 0 6px', fontSize: '1.4rem' }}>🌐 Website Builder</h2>
               <p style={{ color: '#8b90a3', margin: 0, fontSize: '0.9rem' }}>AI will build a beautiful website for you.</p>
             </div>
 
             {websiteResult && (
-              <div style={{ background: isDraftSite ? '#141024' : '#0d1f12', border: `1px solid ${isDraftSite ? '#7c5cff' : '#c8ff5c'}`, borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
+              <div style={{ background: isDraftSite ? '#141024' : '#0d1f12', border: `1px solid ${isDraftSite ? '#2563eb' : '#c8ff5c'}`, borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
                 {isDraftSite ? (
                   <>
                     <p style={{ color: '#b9a8ff', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>👀 Website preview (not live yet)</p>
@@ -1393,14 +1393,14 @@ const Dashboard = () => {
                         {goingLive ? '⏳ Making it live... (30-60 seconds)' : '🚀 Go Live Now'}
                       </button>
                     ) : (
-                      <button onClick={() => { window.location.href = '/buy-package?package=automation'; }} style={btnStyle('#7c5cff', 'white')}>
+                      <button onClick={() => { window.location.href = '/buy-package?package=automation'; }} style={btnStyle('#2563eb', 'white')}>
                         💳 Buy Package to Go Live
                       </button>
                     )}
                     {goLiveError && <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{goLiveError}</p>}
                     {previewDoc && (
                       <button onClick={() => setPreviewFullscreen(true)}
-                        style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#7c5cff22', color: '#b9a8ff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                        style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#2563eb22', color: '#b9a8ff', border: '1px solid #2563eb', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                         🖥️ Open full page preview
                       </button>
                     )}
@@ -1424,12 +1424,12 @@ const Dashboard = () => {
                     <p style={{ color: '#c8ff5c', fontWeight: 700, margin: '0 0 4px', fontSize: '1rem' }}>✅ Website created successfully!</p>
                     <p style={{ color: '#8b90a3', margin: '0 0 16px', fontSize: '0.85rem' }}>{websiteResult.business_name} 's website is now live.</p>
                     <a href={websiteResult.url} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'block', color: '#7c5cff', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
+                      style={{ display: 'block', color: '#2563eb', fontWeight: 600, fontSize: '0.95rem', marginBottom: '12px', wordBreak: 'break-all' }}>
                       {websiteResult.url}
                     </a>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                       <button onClick={() => { navigator.clipboard.writeText(websiteResult.url); setWebsiteUrlCopied(true); setTimeout(() => setWebsiteUrlCopied(false), 2000); }}
-                        style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#7c5cff',
+                        style={{ flex: 1, padding: '10px', background: websiteUrlCopied ? '#c8ff5c' : '#2563eb',
                           color: websiteUrlCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', transition: 'all 0.2s' }}>
                         {websiteUrlCopied ? '✅ Copied!' : '📋 Copy URL'}
                       </button>
@@ -1442,7 +1442,7 @@ const Dashboard = () => {
                   </>
                 )}
                 <button onClick={() => { setActiveTab('products'); }}
-                  style={{ width: '100%', padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                  style={{ width: '100%', padding: '10px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
                   📦 Add Products
                 </button>
                 <button onClick={() => setShowSettings(s => !s)}
@@ -1491,7 +1491,7 @@ const Dashboard = () => {
                         )}
                         <div style={{ display: 'flex', gap: '10px' }}>
                           <button onClick={loadDomainStatus} disabled={domainBusy || domainLoading}
-                            style={{ flex: 1, padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
+                            style={{ flex: 1, padding: '10px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
                             🔄 Check again
                           </button>
                           <button onClick={handleDisconnectDomain} disabled={domainBusy}
@@ -1665,7 +1665,7 @@ const Dashboard = () => {
 
                           {courierProvider !== 'none' && (
                             <button onClick={handleSaveCourierSettings} disabled={courierSaving}
-                              style={{ ...btnStyle(courierSaved ? '#c8ff5c' : '#7c5cff', courierSaved ? '#06070a' : 'white'), marginTop: '6px' }}>
+                              style={{ ...btnStyle(courierSaved ? '#c8ff5c' : '#2563eb', courierSaved ? '#06070a' : 'white'), marginTop: '6px' }}>
                               {courierSaving ? '⏳ Saving...' : courierSaved ? '✅ Saved!' : '💾 Save Courier Settings'}
                             </button>
                           )}
@@ -1711,10 +1711,10 @@ const Dashboard = () => {
                                   <button onClick={() => removeSubItem(idx, subIdx)} style={{ padding: '0 8px', background: 'transparent', color: '#ff5c5c', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                                 </div>
                               ))}
-                              <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#7c5cff', border: '1px dashed #7c5cff44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ Sub-item</button>
+                              <button onClick={() => addSubItem(idx)} style={{ marginLeft: '16px', padding: '4px 10px', background: 'transparent', color: '#2563eb', border: '1px dashed #2563eb44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>+ Sub-item</button>
                             </div>
                           ))}
-                          <button onClick={addNavItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add menu item</button>
+                          <button onClick={addNavItem} style={{ padding: '6px 14px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add menu item</button>
                         </div>
 
                         {/* ── Testimonials ── */}
@@ -1735,7 +1735,7 @@ const Dashboard = () => {
                               <button onClick={() => removeTestimonialItem(idx)} style={{ padding: '4px 10px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>Remove</button>
                             </div>
                           ))}
-                          <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add testimonial</button>
+                          <button onClick={addTestimonialItem} style={{ padding: '6px 14px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>+ Add testimonial</button>
                         </div>
 
                         {/* ── About / Our Story ── */}
@@ -1755,7 +1755,7 @@ const Dashboard = () => {
                         </div>
 
                         <button onClick={handleSaveSettings} disabled={settingsSaving}
-                          style={btnStyle(settingsSaved ? '#c8ff5c' : '#7c5cff', settingsSaved ? '#06070a' : 'white')}>
+                          style={btnStyle(settingsSaved ? '#c8ff5c' : '#2563eb', settingsSaved ? '#06070a' : 'white')}>
                           {settingsSaving ? '⏳ Saving...' : settingsSaved ? '✅ Saved!' : '💾 Save'}
                         </button>
                       </>
@@ -1799,7 +1799,7 @@ const Dashboard = () => {
                     Free: you'll get a private preview of your website. Buy the Automation package anytime to make this same website live. One website per account.
                   </p>
                 )}
-                <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#7c5cff', 'white')}>
+                <button onClick={handleBuildWebsite} disabled={websiteBuilding} style={btnStyle('#2563eb', 'white')}>
                   {websiteBuilding ? '⏳ Creating website... (30-60 seconds)' : '🚀 Create Website'}
                 </button>
               </div>
@@ -1813,7 +1813,7 @@ const Dashboard = () => {
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
-              <h2 style={{ color: '#7c5cff', margin: 0 }}>📦 Product Management</h2>
+              <h2 style={{ color: '#2563eb', margin: 0 }}>📦 Product Management</h2>
               <p style={{ color: '#8b90a3', margin: '4px 0 0', fontSize: '0.85rem' }}>Website: {currentSiteId || 'Not created yet'}</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -1823,7 +1823,7 @@ const Dashboard = () => {
                   🗑️ Remove all sample products
                 </button>
               )}
-              <button onClick={() => { setEditingProductId(null); setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 }); setShowAddProduct(true); }} style={{ ...btnStyle('#7c5cff', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
+              <button onClick={() => { setEditingProductId(null); setProductForm({ business_slug: currentSiteId, title: '', description: '', category: '', price: 0, original_price: 0, images: [], sizes: [], colors: [], stock: 10 }); setShowAddProduct(true); }} style={{ ...btnStyle('#2563eb', 'white'), width: 'auto', padding: '10px 20px', margin: 0 }}>
                 + Add Product
               </button>
             </div>
@@ -1833,7 +1833,7 @@ const Dashboard = () => {
           {showAddProduct && (
             <div style={{ fixed: 'inset-0', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99, padding: '20px' }}>
               <div style={{ background: '#12141c', border: '1px solid #262a38', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#7c5cff' }}>{editingProductId ? 'Edit Product' : 'Add New Product'}</h3>
+                <h3 style={{ margin: '0 0 16px', color: '#2563eb' }}>{editingProductId ? 'Edit Product' : 'Add New Product'}</h3>
                 {productError && <div style={{ color: '#ff5c5c', marginBottom: '12px', fontSize: '0.85rem' }}>{productError}</div>}
                 
                 <FormField label="Title *">
@@ -1869,7 +1869,7 @@ const Dashboard = () => {
                       </div>
                     ))}
                     <button onClick={() => fileInputRef.current?.click()} disabled={imageUploading}
-                      style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px dashed #7c5cff', background: '#181b26', color: '#7c5cff', cursor: 'pointer', fontSize: '1.2rem' }}>
+                      style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px dashed #2563eb', background: '#181b26', color: '#2563eb', cursor: 'pointer', fontSize: '1.2rem' }}>
                       {imageUploading ? '⏳' : '+'}
                     </button>
                   </div>
@@ -1884,7 +1884,7 @@ const Dashboard = () => {
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
                     {commonSizes.map(s => (
                       <button key={s} onClick={() => setProductForm(p => ({ ...p, sizes: p.sizes.includes(s) ? p.sizes.filter(x => x !== s) : [...p.sizes, s] }))}
-                        style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #262a38', background: productForm.sizes.includes(s) ? '#7c5cff' : '#1e2130', color: 'white', cursor: 'pointer' }}>{s}</button>
+                        style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #262a38', background: productForm.sizes.includes(s) ? '#2563eb' : '#1e2130', color: 'white', cursor: 'pointer' }}>{s}</button>
                     ))}
                   </div>
                 </FormField>
@@ -1892,7 +1892,7 @@ const Dashboard = () => {
                 <FormField label="Colors (optional)">
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
                     {productForm.colors.map(c => (
-                      <span key={c} style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: '#7c5cff', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span key={c} style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {c}
                         <span onClick={() => setProductForm(p => ({ ...p, colors: p.colors.filter(x => x !== c) }))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
                       </span>
@@ -1912,7 +1912,7 @@ const Dashboard = () => {
                 </FormField>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                  <button onClick={handleSaveProduct} disabled={productSaving} style={{ ...btnStyle('#7c5cff', 'white'), flex: 1, margin: 0 }}>
+                  <button onClick={handleSaveProduct} disabled={productSaving} style={{ ...btnStyle('#2563eb', 'white'), flex: 1, margin: 0 }}>
                     {productSaving ? 'Saving...' : (editingProductId ? 'Update Product' : 'Save Product')}
                   </button>
                   <button onClick={() => { setShowAddProduct(false); setEditingProductId(null); }} style={{ ...btnStyle('#262a38', '#8b90a3'), flex: 1, margin: 0 }}>Cancel</button>
@@ -1937,10 +1937,10 @@ const Dashboard = () => {
                   </div>
                   <div style={{ padding: '14px' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>{p.title}</div>
-                    <div style={{ color: '#7c5cff', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
+                    <div style={{ color: '#2563eb', fontWeight: 800 }}>৳{p.price} {p.original_price ? <span style={{ color: '#8b90a3', textDecoration: 'line-through', fontSize: '0.8rem' }}>৳{p.original_price}</span> : null}</div>
                     <div style={{ fontSize: '0.75rem', color: '#8b90a3', marginTop: '6px' }}>Stock: {p.stock} pcs</div>
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <button onClick={() => handleEditProduct(p)} style={{ flex: 1, padding: '6px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
+                      <button onClick={() => handleEditProduct(p)} style={{ flex: 1, padding: '6px', background: '#2563eb22', color: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
                       <button onClick={() => p.product_id && handleDeleteProduct(p.product_id)} style={{ flex: 1, padding: '6px', background: '#1f0e0e', color: '#ff5c5c', border: '1px solid #ff5c5c44', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
                     </div>
                   </div>
@@ -1960,7 +1960,7 @@ const Dashboard = () => {
 
       {activeTab === 'stock' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-          <h2 style={{ color: '#7c5cff', margin: '0 0 4px' }}>📊 Stock</h2>
+          <h2 style={{ color: '#2563eb', margin: '0 0 4px' }}>📊 Stock</h2>
           <p style={{ color: '#8b90a3', margin: '0 0 20px', fontSize: '0.9rem' }}>Keep an eye on what's in stock and what's running low. Update any product's stock right here.</p>
           {!currentSiteId ? (
             <div style={{ color: '#8b90a3' }}>Build your website and add products first — your stock will show here.</div>
@@ -1992,7 +1992,7 @@ const Dashboard = () => {
                     onChange={e => setStockEdit(prev => ({ ...prev, [id]: e.target.value }))}
                     style={{ width: 70, background: '#1e2130', color: 'white', border: '1px solid #262a38', borderRadius: 8, padding: '6px 8px', fontSize: '0.85rem', textAlign: 'center' }} />
                   <button onClick={() => handleSaveStock(p)} disabled={!changed || stockSavingId === id}
-                    style={{ background: changed ? '#7c5cff' : '#1e2130', color: changed ? 'white' : '#8b90a3', border: '1px solid #262a38', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: changed ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
+                    style={{ background: changed ? '#2563eb' : '#1e2130', color: changed ? 'white' : '#8b90a3', border: '1px solid #262a38', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: changed ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
                     {stockSavingId === id ? '…' : 'Save'}
                   </button>
                 </div>
@@ -2057,7 +2057,7 @@ const Dashboard = () => {
 
       {activeTab === 'orders' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-          <h2 style={{ color: '#7c5cff', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
+          <h2 style={{ color: '#2563eb', margin: '0 0 16px' }}>🛍️ Customer Orders</h2>
           {ordersLoading ? <div style={{ color: '#8b90a3' }}>Loading orders...</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
@@ -2103,7 +2103,7 @@ const Dashboard = () => {
                         <div>{paymentLabels[o.payment_method] || o.payment_method}</div>
                         {o.transaction_id && <div style={{ fontSize: '0.72rem', color: '#c8ff5c' }}>TrxID: {o.transaction_id}</div>}
                       </td>
-                      <td style={{ padding: '12px', fontWeight: 700, color: '#7c5cff' }}>
+                      <td style={{ padding: '12px', fontWeight: 700, color: '#2563eb' }}>
                         ৳{o.product_price * o.quantity + (o.delivery_charge || 0)}
                         <div style={{ fontSize: '0.68rem', color: '#8b90a3', fontWeight: 400 }}>incl. ৳{o.delivery_charge || 0} delivery</div>
                       </td>

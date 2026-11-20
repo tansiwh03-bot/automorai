@@ -58,7 +58,7 @@
     --popover: 225 80% 3%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 255 100% 70%; /* violet #7c5cff */
+    --primary: 255 100% 70%; /* violet #2563eb */
     --primary-foreground: 210 40% 98%; /* white */
 
     --secondary: 217.2 32.6% 17.5%; /* dark gray */
@@ -67,7 +67,7 @@
     --muted: 225 80% 10%; /* slightly lighter than background */
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 255 100% 70%; /* violet #7c5cff */
+    --accent: 255 100% 70%; /* violet #2563eb */
     --accent-foreground: 210 40% 98%; /* white */
 
     --destructive: 0 62.8% 30.6%;
