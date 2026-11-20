@@ -29,6 +29,7 @@ const COURIER_SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/co
 const COURIER_PHONE_CHECK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/phone-check';
 const COURIER_BOOK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/book';
 const COURIER_BOOKINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/bookings';
+const COURIER_PATHAO_GEO_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/pathao/geo';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -784,6 +785,80 @@ const Dashboard = () => {
       else alert('Could not book: ' + (d.error || 'unknown error'));
     } catch { alert('Could not reach the courier service. Try again.'); }
     setBookingOrderId('');
+  };
+
+  // ── Courier booking (Pathao) ──
+  type GeoItem = { id: number; name: string };
+  const [pathaoOrder, setPathaoOrder] = useState<Order | null>(null);
+  const [geoStores, setGeoStores] = useState<GeoItem[]>([]);
+  const [geoCities, setGeoCities] = useState<GeoItem[]>([]);
+  const [geoZones, setGeoZones] = useState<GeoItem[]>([]);
+  const [geoAreas, setGeoAreas] = useState<GeoItem[]>([]);
+  const [geoSel, setGeoSel] = useState<{ store: string; city: string; zone: string; area: string }>({ store: '', city: '', zone: '', area: '' });
+  const [geoLoading, setGeoLoading] = useState('');
+  const [pathaoBooking, setPathaoBooking] = useState(false);
+
+  const fetchGeo = async (kind: string, id?: string | number): Promise<GeoItem[]> => {
+    try {
+      const url = `${COURIER_PATHAO_GEO_API}?kind=${kind}${id != null ? `&id=${id}` : ''}`;
+      const res = await fetch(url, { headers: await getAuthHeader() });
+      const d = await res.json();
+      return (d && d.success && Array.isArray(d.items)) ? d.items : [];
+    } catch { return []; }
+  };
+
+  const openPathaoBooking = async (o: Order) => {
+    if (!courierConfigured.pathao) { alert('First save your Pathao API keys in Settings → Courier Integration.'); return; }
+    setPathaoOrder(o);
+    setGeoSel({ store: '', city: '', zone: '', area: '' });
+    setGeoZones([]); setGeoAreas([]);
+    setGeoLoading('loading');
+    const [stores, cities] = await Promise.all([fetchGeo('store'), fetchGeo('city')]);
+    setGeoStores(stores); setGeoCities(cities);
+    setGeoSel(s => ({ ...s, store: stores.length === 1 ? String(stores[0].id) : '' }));
+    setGeoLoading('');
+  };
+
+  const onGeoCity = async (cityId: string) => {
+    setGeoSel(s => ({ ...s, city: cityId, zone: '', area: '' }));
+    setGeoZones([]); setGeoAreas([]);
+    if (!cityId) return;
+    setGeoLoading('zone');
+    setGeoZones(await fetchGeo('zone', cityId));
+    setGeoLoading('');
+  };
+  const onGeoZone = async (zoneId: string) => {
+    setGeoSel(s => ({ ...s, zone: zoneId, area: '' }));
+    setGeoAreas([]);
+    if (!zoneId) return;
+    setGeoLoading('area');
+    setGeoAreas(await fetchGeo('area', zoneId));
+    setGeoLoading('');
+  };
+
+  const confirmPathaoBooking = async () => {
+    const o = pathaoOrder;
+    if (!o) return;
+    if (!geoSel.store || !geoSel.city || !geoSel.zone) { alert('Please select store, city and zone.'); return; }
+    setPathaoBooking(true);
+    try {
+      const res = await fetch(COURIER_BOOK_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({
+          provider: 'pathao', business_slug: currentSiteId, order_id: o.id,
+          recipient_name: o.customer_name, recipient_phone: o.customer_phone, recipient_address: o.customer_address,
+          cod_amount: o.product_price * o.quantity + (o.delivery_charge || 0),
+          item_description: `${o.product_title} (x${o.quantity})`,
+          store_id: Number(geoSel.store), recipient_city: Number(geoSel.city),
+          recipient_zone: Number(geoSel.zone), recipient_area: geoSel.area ? Number(geoSel.area) : undefined,
+        }),
+      });
+      const d = await res.json();
+      if (d.success) { await loadBookings(); await handleUpdateOrderStatus(o.id, 'shipped'); setPathaoOrder(null); }
+      else alert('Could not book: ' + (d.error || 'unknown error'));
+    } catch { alert('Could not reach the courier service. Try again.'); }
+    setPathaoBooking(false);
   };
 
   const handleFacebookConnect = () => {
@@ -1925,15 +2000,28 @@ const Dashboard = () => {
                       <td style={{ padding: '12px' }}>
                         {bookings[o.id] ? (
                           <div style={{ fontSize: '0.75rem' }}>
-                            <div style={{ color: '#8fe388', fontWeight: 600 }}>🚚 Steadfast</div>
+                            <div style={{ color: '#8fe388', fontWeight: 600 }}>🚚 Booked</div>
                             <div style={{ color: '#c8ff5c' }}>{bookings[o.id].tracking_code}</div>
                             <div style={{ color: '#8b90a3', fontSize: '0.68rem' }}>{bookings[o.id].courier_status}</div>
                           </div>
                         ) : (
-                          <button onClick={() => handleSendToCourier(o)} disabled={bookingOrderId === o.id}
-                            style={{ background: '#1e2130', color: '#c8ff5c', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            {bookingOrderId === o.id ? '⏳ Booking…' : '🚚 Send to Steadfast'}
-                          </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {courierConfigured.steadfast && (
+                              <button onClick={() => handleSendToCourier(o)} disabled={bookingOrderId === o.id}
+                                style={{ background: '#1e2130', color: '#c8ff5c', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                {bookingOrderId === o.id ? '⏳ Booking…' : '🚚 Steadfast'}
+                              </button>
+                            )}
+                            {courierConfigured.pathao && (
+                              <button onClick={() => openPathaoBooking(o)}
+                                style={{ background: '#1e2130', color: '#ff9e6d', border: '1px solid #39405c', borderRadius: '6px', padding: '6px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                🚚 Pathao
+                              </button>
+                            )}
+                            {!courierConfigured.steadfast && !courierConfigured.pathao && (
+                              <span style={{ color: '#8b90a3', fontSize: '0.7rem' }}>Set courier keys in Settings</span>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -1945,6 +2033,49 @@ const Dashboard = () => {
         </div>
       )}
       </div>
+
+      {pathaoOrder && (
+        <div onClick={() => !pathaoBooking && setPathaoOrder(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#13161f', border: '1px solid #2a2f45', borderRadius: '14px', padding: '22px', width: '100%', maxWidth: '440px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '4px', color: '#fff' }}>🚚 Book with Pathao</div>
+            <div style={{ color: '#8b90a3', fontSize: '0.8rem', marginBottom: '16px' }}>
+              {pathaoOrder.customer_name} · {pathaoOrder.customer_phone} · COD ৳{pathaoOrder.product_price * pathaoOrder.quantity + (pathaoOrder.delivery_charge || 0)}
+            </div>
+            {geoLoading === 'loading' ? (
+              <div style={{ color: '#8b90a3', padding: '20px 0' }}>Loading Pathao locations…</div>
+            ) : (
+              <>
+                {[
+                  { label: 'Pickup Store', val: geoSel.store, items: geoStores, on: (v: string) => setGeoSel(s => ({ ...s, store: v })), ph: 'Select store' },
+                  { label: 'Recipient City', val: geoSel.city, items: geoCities, on: onGeoCity, ph: 'Select city' },
+                  { label: `Zone${geoLoading === 'zone' ? ' (loading…)' : ''}`, val: geoSel.zone, items: geoZones, on: onGeoZone, ph: 'Select zone', dis: !geoSel.city || geoLoading === 'zone' },
+                  { label: `Area (optional)${geoLoading === 'area' ? ' (loading…)' : ''}`, val: geoSel.area, items: geoAreas, on: (v: string) => setGeoSel(s => ({ ...s, area: v })), ph: 'Select area', dis: !geoSel.zone || geoLoading === 'area' },
+                ].map(row => (
+                  <div key={row.label} style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#8b90a3', marginBottom: '4px' }}>{row.label}</label>
+                    <select value={row.val} disabled={(row as { dis?: boolean }).dis}
+                      onChange={e => row.on(e.target.value)}
+                      style={{ width: '100%', background: '#1e2130', color: '#fff', border: '1px solid #39405c', borderRadius: '8px', padding: '9px 10px', fontSize: '0.85rem' }}>
+                      <option value="">{row.ph}</option>
+                      {row.items.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
+                    </select>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
+                  <button onClick={() => setPathaoOrder(null)} disabled={pathaoBooking}
+                    style={{ flex: 1, background: '#1e2130', color: '#8b90a3', border: '1px solid #39405c', borderRadius: '8px', padding: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={confirmPathaoBooking} disabled={pathaoBooking || !geoSel.store || !geoSel.city || !geoSel.zone}
+                    style={{ flex: 2, background: '#ff7a3c', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 700, cursor: 'pointer', opacity: (pathaoBooking || !geoSel.store || !geoSel.city || !geoSel.zone) ? 0.6 : 1 }}>
+                    {pathaoBooking ? '⏳ Booking…' : 'Book Parcel'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
