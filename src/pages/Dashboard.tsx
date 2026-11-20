@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
-import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -166,7 +166,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'assistant' | 'billing' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'assistant' | 'integrations' | 'billing' | 'reports'>('home');
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -393,6 +393,12 @@ const Dashboard = () => {
     loadWebsiteSettings();
     loadCourierSettings();
   }, [activeTab, currentSiteId, showSettings]);
+
+  useEffect(() => {
+    if (activeTab !== 'integrations' || !user?.email) return;
+    loadCourierSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user?.email]);
 
   useEffect(() => {
     if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home' && activeTab !== 'customers' && activeTab !== 'assistant') || !currentSiteId) return;
@@ -1101,16 +1107,17 @@ const Dashboard = () => {
   const commonColors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Gray', 'Navy', 'Brown'];
 
   const navTabs = [
-    { key: 'home' as const, label: 'Overview', Icon: LayoutDashboard },
-    { key: 'inbox' as const, label: 'Unified Inbox', Icon: InboxIcon },
-    { key: 'website' as const, label: 'Website & Store', Icon: Globe },
-    { key: 'products' as const, label: 'Products', Icon: Package },
-    { key: 'stock' as const, label: 'Inventory', Icon: Boxes },
-    { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag },
-    { key: 'customers' as const, label: 'Customers', Icon: Users },
-    { key: 'assistant' as const, label: 'AI Assistant', Icon: Sparkles },
-    { key: 'reports' as const, label: 'Analytics', Icon: BarChart3 },
-    { key: 'billing' as const, label: 'Billing', Icon: CreditCard },
+    { key: 'home' as const, label: 'Overview', Icon: LayoutDashboard, group: 'Main menu' },
+    { key: 'inbox' as const, label: 'Unified Inbox', Icon: InboxIcon, group: 'Main menu' },
+    { key: 'website' as const, label: 'Website & Store', Icon: Globe, group: 'Main menu' },
+    { key: 'products' as const, label: 'Products', Icon: Package, group: 'Main menu' },
+    { key: 'stock' as const, label: 'Inventory', Icon: Boxes, group: 'Main menu' },
+    { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag, group: 'Main menu' },
+    { key: 'customers' as const, label: 'Customers', Icon: Users, group: 'Main menu' },
+    { key: 'reports' as const, label: 'Analytics', Icon: BarChart3, group: 'Main menu' },
+    { key: 'assistant' as const, label: 'AI Assistant', Icon: Sparkles, group: 'Growth & tools' },
+    { key: 'integrations' as const, label: 'Integrations', Icon: Plug, group: 'Growth & tools' },
+    { key: 'billing' as const, label: 'Billing', Icon: CreditCard, group: 'Growth & tools' },
   ];
   const curTab = navTabs.find(t => t.key === activeTab);
   const wsName = websiteResult?.business_name || (mySites[0]?.business_name) || 'My Store';
@@ -1180,13 +1187,15 @@ const Dashboard = () => {
             <ChevronDown size={14} color="#9db9ee" style={{ flex: 'none' }} />
           </div>
         </div>
-        <div style={{ fontSize: '.6rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8da8d8', padding: '2px 20px 7px', fontWeight: 700 }}>Main menu</div>
         <div style={{ flex: '1 0 auto', padding: '0 12px' }}>
-          {navTabs.map(tab => {
+          {navTabs.map((tab, idx) => {
             const on = activeTab === tab.key;
             const Ic = tab.Icon;
+            const showGroup = idx === 0 || navTabs[idx - 1].group !== tab.group;
             return (
-            <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
+            <Fragment key={tab.key}>
+            {showGroup && <div style={{ fontSize: '.58rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8da8d8', padding: idx === 0 ? '0 8px 7px' : '15px 8px 7px', fontWeight: 700 }}>{tab.group}</div>}
+            <button onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
               display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
               padding: '11px 13px', borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '3px',
               fontWeight: 600, fontSize: '0.88rem',
@@ -1195,6 +1204,7 @@ const Dashboard = () => {
             }}>
               <Ic size={18} strokeWidth={2} /><span>{tab.label}</span>
             </button>
+            </Fragment>
           );})}
         </div>
         <div style={{ padding: '14px 18px', borderTop: '1px solid #ffffff20' }}>
@@ -2260,6 +2270,41 @@ const Dashboard = () => {
               <button className="amr-btn amr-btn-primary" style={{ color: '#fff', whiteSpace: 'nowrap' }} onClick={() => askAI()}>Ask</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ════════ INTEGRATIONS TAB ════════ */}
+      {activeTab === 'integrations' && (
+        <div style={{ padding: '32px 24px', maxWidth: '900px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Connected services</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Integrations</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Connect your store to messaging, marketing and delivery platforms.</p>
+          {(() => {
+            const hasPkg = packages.includes('automation');
+            const rows = [
+              { icon: '📘', name: 'Facebook & Messenger', desc: 'Auto-reply to page comments and Messenger.', connected: !!connectedPage, action: hasPkg ? handleFacebookConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Connect' : 'Buy Package' },
+              { icon: '💬', name: 'WhatsApp Business', desc: 'Chat with customers and show products on WhatsApp.', connected: !!waPageId, action: hasPkg ? handleWhatsAppConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Connect' : 'Buy Package' },
+              { icon: '📊', name: 'Meta Pixel & Google Analytics', desc: 'Track visitors, add-to-cart and purchases.', connected: false, action: hasPkg ? handlePixelGAConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Set up' : 'Buy Package' },
+              { icon: '🚚', name: 'Steadfast Courier', desc: 'Book parcels and check delivery / fraud history.', connected: courierConfigured.steadfast, action: () => { setActiveTab('website'); setShowSettings(true); }, label: 'Configure' },
+              { icon: '➤', name: 'Pathao Courier', desc: 'Book parcels across 64 districts.', connected: courierConfigured.pathao, action: () => { setActiveTab('website'); setShowSettings(true); }, label: 'Configure' },
+            ];
+            return (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {rows.map(r => (
+                  <div key={r.name} className="amr-card" style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#edf4ff', display: 'grid', placeItems: 'center', fontSize: '20px', flex: 'none' }}>{r.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#12284c' }}>{r.name}</div>
+                      <div style={{ color: '#718096', fontSize: '0.76rem' }}>{r.desc}</div>
+                    </div>
+                    {r.connected
+                      ? <span className="amr-pill delivered" style={{ flex: 'none' }}>✓ Connected</span>
+                      : <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={r.action}>{r.label}</button>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
