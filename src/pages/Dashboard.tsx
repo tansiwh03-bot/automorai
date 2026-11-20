@@ -96,8 +96,9 @@ const btnStyle = (bg: string, fg: string): React.CSSProperties => ({
 });
 
 const taskCardStyle: React.CSSProperties = {
-  background: '#12141c', border: '1px solid #262a38', borderRadius: '14px',
-  padding: '22px', display: 'flex', flexDirection: 'column',
+  background: '#fff', border: '1px solid #e4eaf3', borderRadius: '14px',
+  padding: '20px', display: 'flex', flexDirection: 'column',
+  boxShadow: '0 8px 26px rgba(15,39,83,.06)',
 };
 const taskCardIconStyle: React.CSSProperties = {
   fontSize: '1.6rem', marginBottom: '12px',
@@ -106,7 +107,7 @@ const taskCardTitleStyle: React.CSSProperties = {
   fontWeight: 700, fontSize: '0.98rem', marginBottom: '6px',
 };
 const taskCardDescStyle: React.CSSProperties = {
-  color: '#8b90a3', fontSize: '0.82rem', lineHeight: 1.6, marginBottom: '16px', flex: 1,
+  color: '#718096', fontSize: '0.82rem', lineHeight: 1.6, marginBottom: '16px', flex: 1,
 };
 const taskCardBtnStyle: React.CSSProperties = {
   padding: '9px 16px', background: '#2563eb', color: 'white', border: 'none',
@@ -116,7 +117,7 @@ const taskCardBtnStyle: React.CSSProperties = {
 const TaskCard = ({ icon, title, desc, action, done }: { icon: string; title: string; desc: string; action?: { label: string; onClick: () => void }; done?: boolean }) => (
   <div style={taskCardStyle}>
     <div style={taskCardIconStyle}>{icon}</div>
-    <div style={{ ...taskCardTitleStyle, color: done ? '#c8ff5c' : 'white' }}>{done ? `✅ ${title}` : title}</div>
+    <div style={{ ...taskCardTitleStyle, color: done ? '#159768' : '#12284c' }}>{done ? `✅ ${title}` : title}</div>
     <div style={taskCardDescStyle}>{desc}</div>
     {action && <button onClick={action.onClick} style={taskCardBtnStyle}>{action.label}</button>}
   </div>
@@ -136,10 +137,10 @@ const FormField = ({ label, children }: { label: string; children: React.ReactNo
 };
 
 const Toggle = ({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContents: 'space-between', background: '#181b26', padding: '12px 16px', borderRadius: '10px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fff', border: '1px solid #e4eaf3', padding: '14px 16px', borderRadius: '12px', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
     <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{label}</div>
-      <div style={{ fontSize: '0.78rem', color: '#8b90a3' }}>{desc}</div>
+      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#12284c' }}>{label}</div>
+      <div style={{ fontSize: '0.78rem', color: '#718096' }}>{desc}</div>
     </div>
     <input type="checkbox" checked={value} onChange={e => onChange(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px' }} />
   </div>
@@ -1065,20 +1066,40 @@ const Dashboard = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#06070a', fontFamily: 'sans-serif', color: 'white', display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: '#f3f6fb', fontFamily: "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif", color: '#17243b', display: 'flex' }}>
 
       <style>{`
-        .amr-sidebar { width: 220px; min-width: 220px; position: sticky; top: 0; left: auto; }
+        /* ===== Automor.ai dashboard design tokens (navy / electric-blue / cyan) ===== */
+        .amr-sidebar { width: 248px; min-width: 248px; position: sticky; top: 0; left: auto; }
         .amr-sidebar-overlay { display: none; }
+        .amr-mobile-topbar { display: none; }
+        .amr-card { background:#fff; border:1px solid #e4eaf3; border-radius:14px; padding:18px; box-shadow:0 8px 26px rgba(15,39,83,.06); }
+        .amr-pagehead h1 { font-size:1.55rem; margin:4px 0; color:#12284c; letter-spacing:-.4px; }
+        .amr-eyebrow { font-size:.68rem; letter-spacing:1px; text-transform:uppercase; color:#2563eb; font-weight:800; }
+        .amr-sub { color:#718096; font-size:.85rem; }
+        .amr-btn { border:1px solid #e4eaf3; background:#fff; color:#29405f; padding:10px 15px; border-radius:9px; font-weight:650; cursor:pointer; font-size:.82rem; transition:.15s; }
+        .amr-btn:hover { filter:brightness(.98); transform:translateY(-1px); }
+        .amr-btn-primary { background:linear-gradient(110deg,#2563eb,#16b8e8); color:#fff; border:0; box-shadow:0 6px 14px #2563eb33; }
+        .amr-stat-num { font-size:1.55rem; font-weight:800; letter-spacing:-.6px; margin:11px 0 5px; color:#10264b; }
+        .amr-stat-ico { width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background:#eaf2ff; color:#2563eb; font-size:17px; }
+        .amr-pill { display:inline-flex; padding:4px 9px; border-radius:20px; font-size:.66rem; font-weight:700; }
+        .amr-pill.pending{background:#fff4df;color:#b87914}.amr-pill.processing{background:#e8f2ff;color:#2563eb}
+        .amr-pill.delivered{background:#e4f8ef;color:#159768}.amr-pill.cancelled{background:#ffeded;color:#c44d4d}
+        .amr-table { border-collapse:collapse; width:100%; font-size:.8rem; }
+        .amr-table th { text-align:left; color:#8794a8; font-weight:600; font-size:.62rem; text-transform:uppercase; letter-spacing:.5px; padding:10px 8px; border-bottom:1px solid #e4eaf3; }
+        .amr-table td { padding:12px 8px; border-bottom:1px solid #edf1f6; color:#40536f; }
+        .amr-table tr:last-child td { border-bottom:0; }
+        .amr-input { width:100%; box-sizing:border-box; border:1px solid #dbe3f0; border-radius:10px; padding:11px 13px; font:inherit; font-size:.9rem; color:#17243b; background:#fff; }
+        .amr-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px #2563eb1f; }
         .amr-mobile-topbar { display: none; }
         @media (max-width: 768px) {
           .amr-sidebar {
-            position: fixed !important; left: -240px; top: 0; z-index: 210; width: 240px; min-width: 240px;
-            box-shadow: 8px 0 24px rgba(0,0,0,0.5); transition: left 0.25s;
+            position: fixed !important; left: -268px; top: 0; z-index: 210; width: 264px; min-width: 264px;
+            box-shadow: 15px 0 40px rgba(7,26,60,.4); transition: left 0.25s;
           }
           .amr-sidebar.open { left: 0 !important; }
           .amr-sidebar-overlay.open {
-            display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 205;
+            display: block; position: fixed; inset: 0; background: rgba(7,20,38,.55); z-index: 205;
           }
           .amr-mobile-topbar { display: flex !important; }
           .amr-sidebar-close { display: inline-flex !important; }
@@ -1086,31 +1107,37 @@ const Dashboard = () => {
       `}</style>
 
       {/* ── Sidebar ── */}
-      <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ background: '#0d0e14', borderRight: '1px solid #1e2130',
+      <div className={`amr-sidebar${sidebarOpen ? ' open' : ''}`} style={{ background: 'linear-gradient(180deg,#0a1f5c,#10264b)', color: '#dce8ff',
         display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto' }}>
-        <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.2rem' }}>Automorai</span>
+        <div style={{ padding: '22px 18px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 800, fontSize: '1.2rem', color: '#fff', letterSpacing: '.2px' }}>
+            <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg,#2563eb,#16b8e8)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, boxShadow: '0 5px 15px #07183e' }}>A</span>
+            Automor<span style={{ color: '#26c9ef' }}>ai</span>
+          </span>
           <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
-            display: 'none', background: 'transparent', border: 'none', color: '#8b90a3', fontSize: '1.3rem', cursor: 'pointer',
+            display: 'none', background: 'transparent', border: 'none', color: '#9db9ee', fontSize: '1.3rem', cursor: 'pointer',
           }}>✕</button>
         </div>
+        <div style={{ fontSize: '.62rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8da8d8', padding: '10px 20px 7px', fontWeight: 700 }}>Main menu</div>
         <div style={{ flex: '1 0 auto', padding: '0 12px' }}>
-          {navTabs.map(tab => (
+          {navTabs.map(tab => {
+            const on = activeTab === tab.key;
+            return (
             <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
-              display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
-              padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
+              display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
+              padding: '11px 13px', borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '3px',
               fontWeight: 600, fontSize: '0.88rem',
-              background: activeTab === tab.key ? '#2563eb22' : 'transparent',
-              color: activeTab === tab.key ? '#2563eb' : '#8b90a3', transition: 'all 0.15s',
+              background: on ? 'linear-gradient(90deg,#2563eb,#1c74df)' : 'transparent',
+              color: on ? '#fff' : '#c6d6f4', boxShadow: on ? '0 5px 14px #07183e55' : 'none', transition: 'all 0.15s',
             }}>
-              <span>{tab.icon}</span><span>{tab.label}</span>
+              <span style={{ width: '19px', textAlign: 'center', fontSize: '15px' }}>{tab.icon}</span><span>{tab.label}</span>
             </button>
-          ))}
+          );})}
         </div>
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #1e2130' }}>
-          <div style={{ color: '#8b90a3', fontSize: '0.76rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
-          <button onClick={logout} style={{ width: '100%', padding: '8px', background: 'transparent',
-            color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer' }}>
+        <div style={{ padding: '15px 18px', borderTop: '1px solid #ffffff20' }}>
+          <div style={{ color: '#a9bee5', fontSize: '0.74rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
+          <button onClick={logout} style={{ width: '100%', padding: '9px', background: '#ffffff12',
+            color: '#dce8ff', border: '1px solid #ffffff2e', borderRadius: '9px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
             Logout
           </button>
         </div>
@@ -1121,24 +1148,28 @@ const Dashboard = () => {
       {/* ── Main content ── */}
       <div style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto' }}>
         <div className="amr-mobile-topbar" style={{
-          alignItems: 'center', gap: '14px', padding: '14px 18px', background: '#0d0e14',
-          borderBottom: '1px solid #1e2130', position: 'sticky', top: 0, zIndex: 100,
+          alignItems: 'center', gap: '14px', padding: '12px 16px', background: '#fff',
+          borderBottom: '1px solid #e4eaf3', position: 'sticky', top: 0, zIndex: 100,
         }}>
           <button onClick={() => setSidebarOpen(true)} style={{
-            background: 'transparent', border: 'none', color: 'white', fontSize: '1.4rem', cursor: 'pointer', padding: 0,
+            background: '#eef4ff', border: 'none', color: '#17243b', fontSize: '1.2rem', cursor: 'pointer', padding: '7px 10px', borderRadius: '9px',
           }}>☰</button>
-          <span style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.1rem' }}>Automorai</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '1.1rem', color: '#12284c' }}>
+            <span style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg,#2563eb,#16b8e8)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, fontSize: '0.9rem' }}>A</span>
+            Automor<span style={{ color: '#2563eb' }}>ai</span>
+          </span>
         </div>
 
       {/* ════════ HOME TAB ════════ */}
       {activeTab === 'home' && (
         <div style={{ padding: '40px 32px', maxWidth: '1000px', margin: '0 auto' }}>
-          <h1 style={{ margin: '0 0 6px', fontSize: '1.6rem' }}>Welcome to Automorai</h1>
-          <p style={{ color: '#8b90a3', margin: '0 0 28px' }}>Hello, {user.email}!</p>
+          <div className="amr-eyebrow">Business command center</div>
+          <h1 className="amr-pagehead" style={{ fontSize: '1.55rem', margin: '4px 0 2px', color: '#12284c', letterSpacing: '-0.4px' }}>Welcome back 👋</h1>
+          <p className="amr-sub" style={{ margin: '0 0 26px' }}>{user.email}</p>
 
           {status && (
-            <div style={{ background: '#181b26', border: '1px solid #2563eb', borderRadius: '8px',
-              padding: '12px', marginBottom: '20px', fontSize: '0.9rem', color: '#c8ff5c' }}>{status}</div>
+            <div style={{ background: '#eaf2ff', border: '1px solid #cfe0ff', borderRadius: '10px',
+              padding: '12px 14px', marginBottom: '20px', fontSize: '0.9rem', color: '#1b4dd1', fontWeight: 600 }}>{status}</div>
           )}
 
           {(() => {
@@ -1170,7 +1201,7 @@ const Dashboard = () => {
           })()}
 
           {mySites.length > 1 && (
-            <div style={{ background: '#0e1018', border: '1px solid #2563eb44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+            <div style={{ background: '#fff', border: '1px solid #e4eaf3', borderRadius: '14px', padding: '18px', marginBottom: '20px', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
               <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem', color: '#2563eb' }}>
                 {websiteResult ? `You have ${mySites.length} websites — switch between them:` : `You have ${mySites.length} websites — which one do you want to manage?`}
               </p>
@@ -1186,8 +1217,8 @@ const Dashboard = () => {
                   }} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
                     width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: '8px',
-                    background: isActive ? '#2563eb22' : '#181b26', color: 'white',
-                    border: isActive ? '1px solid #2563eb' : '1px solid #262a38', borderRadius: '8px',
+                    background: isActive ? '#eaf2ff' : '#f6f9ff', color: '#17243b',
+                    border: isActive ? '1px solid #2563eb' : '1px solid #e4eaf3', borderRadius: '10px',
                     cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600,
                   }}>
                     <span>{isActive ? '✓ ' : ''}{s.business_name}</span>
@@ -1241,16 +1272,16 @@ const Dashboard = () => {
           </div>
 
           {waPageId && (
-            <div style={{ background: '#0e1018', border: '1px solid #2563eb44', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+            <div style={{ background: '#fff', border: '1px solid #e4eaf3', borderRadius: '14px', padding: '18px', marginBottom: '20px', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
               <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '0.9rem', color: '#2563eb' }}>🌐 Your Website Widget Code</p>
-              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#8b90a3' }}>Paste this code into your website</p>
-              <pre style={{ background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', padding: '12px',
-                fontSize: '0.72rem', color: '#c8ff5c', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#718096' }}>Paste this code into your website</p>
+              <pre style={{ background: '#0a1733', border: '1px solid #16315b', borderRadius: '8px', padding: '12px',
+                fontSize: '0.72rem', color: '#9df0ff', overflowX: 'auto', margin: '0 0 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#2563eb">\n</script>`}
               </pre>
               <button onClick={() => { navigator.clipboard.writeText(`<script\n  src="https://automorai.com/automorai-widget.js"\n  data-page-id="${waPageId}"\n  data-business="Your Business Name"\n  data-color="#2563eb">\n</script>`); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
-                style={{ width: '100%', padding: '10px', background: widgetCopied ? '#c8ff5c' : '#2563eb',
-                  color: widgetCopied ? '#06070a' : 'white', border: 'none', borderRadius: '8px',
+                style={{ width: '100%', padding: '10px', background: widgetCopied ? '#16a879' : '#2563eb',
+                  color: 'white', border: 'none', borderRadius: '8px',
                   fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
                 {widgetCopied ? '✅ Copied!' : '📋 Copy Code'}
               </button>
