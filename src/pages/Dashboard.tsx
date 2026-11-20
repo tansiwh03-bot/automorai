@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -1056,14 +1057,17 @@ const Dashboard = () => {
   const commonColors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Gray', 'Navy', 'Brown'];
 
   const navTabs = [
-    { key: 'home' as const, label: 'Home', icon: '🏠' },
-    { key: 'inbox' as const, label: 'Inbox', icon: '💬' },
-    { key: 'website' as const, label: 'Website', icon: '🌐' },
-    { key: 'products' as const, label: 'Products', icon: '📦' },
-    { key: 'stock' as const, label: 'Stock', icon: '📊' },
-    { key: 'orders' as const, label: 'Orders', icon: '🛍️' },
-    { key: 'reports' as const, label: 'Sales Report', icon: '📈' },
+    { key: 'home' as const, label: 'Overview', Icon: LayoutDashboard },
+    { key: 'inbox' as const, label: 'Unified Inbox', Icon: InboxIcon },
+    { key: 'website' as const, label: 'Website & Store', Icon: Globe },
+    { key: 'products' as const, label: 'Products', Icon: Package },
+    { key: 'stock' as const, label: 'Inventory', Icon: Boxes },
+    { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag },
+    { key: 'reports' as const, label: 'Analytics', Icon: BarChart3 },
   ];
+  const curTab = navTabs.find(t => t.key === activeTab);
+  const wsName = websiteResult?.business_name || (mySites[0]?.business_name) || 'My Store';
+  const wsInitials = (wsName.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2) || 'A').toUpperCase();
 
   return (
     <div style={{ minHeight: '100vh', background: '#f3f6fb', fontFamily: "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif", color: '#17243b', display: 'flex' }}>
@@ -1092,6 +1096,8 @@ const Dashboard = () => {
         .amr-input { width:100%; box-sizing:border-box; border:1px solid #dbe3f0; border-radius:10px; padding:11px 13px; font:inherit; font-size:.9rem; color:#17243b; background:#fff; }
         .amr-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px #2563eb1f; }
         @media (max-width: 860px){ .amr-overview-grid{ grid-template-columns:1fr !important; } }
+        .amr-desktop-topbar { display:flex; }
+        @media (max-width: 768px){ .amr-desktop-topbar{ display:none !important; } }
         .amr-mobile-topbar { display: none; }
         @media (max-width: 768px) {
           .amr-sidebar {
@@ -1119,10 +1125,19 @@ const Dashboard = () => {
             display: 'none', background: 'transparent', border: 'none', color: '#9db9ee', fontSize: '1.3rem', cursor: 'pointer',
           }}>✕</button>
         </div>
-        <div style={{ fontSize: '.62rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8da8d8', padding: '10px 20px 7px', fontWeight: 700 }}>Main menu</div>
+        <div onClick={() => { setActiveTab('home'); setSidebarOpen(false); }}
+          style={{ margin: '2px 14px 16px', padding: '11px 12px', border: '1px solid #ffffff24', borderRadius: '12px', background: '#ffffff0d', cursor: 'pointer' }}>
+          <div style={{ color: '#9db9ee', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Workspace</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '5px' }}>
+            <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wsName}</span>
+            <ChevronDown size={14} color="#9db9ee" style={{ flex: 'none' }} />
+          </div>
+        </div>
+        <div style={{ fontSize: '.6rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8da8d8', padding: '2px 20px 7px', fontWeight: 700 }}>Main menu</div>
         <div style={{ flex: '1 0 auto', padding: '0 12px' }}>
           {navTabs.map(tab => {
             const on = activeTab === tab.key;
+            const Ic = tab.Icon;
             return (
             <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }} style={{
               display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
@@ -1131,12 +1146,13 @@ const Dashboard = () => {
               background: on ? 'linear-gradient(90deg,#2563eb,#1c74df)' : 'transparent',
               color: on ? '#fff' : '#c6d6f4', boxShadow: on ? '0 5px 14px #07183e55' : 'none', transition: 'all 0.15s',
             }}>
-              <span style={{ width: '19px', textAlign: 'center', fontSize: '15px' }}>{tab.icon}</span><span>{tab.label}</span>
+              <Ic size={18} strokeWidth={2} /><span>{tab.label}</span>
             </button>
           );})}
         </div>
-        <div style={{ padding: '15px 18px', borderTop: '1px solid #ffffff20' }}>
-          <div style={{ color: '#a9bee5', fontSize: '0.74rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
+        <div style={{ padding: '14px 18px', borderTop: '1px solid #ffffff20' }}>
+          <div style={{ color: '#26c9ef', fontSize: '0.72rem', fontWeight: 600, marginBottom: '8px' }}>● All systems operational</div>
+          <div style={{ color: '#a9bee5', fontSize: '0.72rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
           <button onClick={logout} style={{ width: '100%', padding: '9px', background: '#ffffff12',
             color: '#dce8ff', border: '1px solid #ffffff2e', borderRadius: '9px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
             Logout
@@ -1159,6 +1175,22 @@ const Dashboard = () => {
             <span style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg,#2563eb,#16b8e8)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, fontSize: '0.9rem' }}>A</span>
             Automor<span style={{ color: '#2563eb' }}>ai</span>
           </span>
+        </div>
+
+        {/* ── Desktop topbar ── */}
+        <div className="amr-desktop-topbar" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', height: '66px', background: '#fff', borderBottom: '1px solid #e4eaf3', position: 'sticky', top: 0, zIndex: 90 }}>
+          <div style={{ fontSize: '0.82rem', color: '#718096' }}>Workspace / <b style={{ color: '#17243b' }}>{curTab?.label || 'Overview'}</b></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button title="Notifications" onClick={() => setActiveTab('inbox')} style={{ position: 'relative', width: '37px', height: '37px', border: '1px solid #e4eaf3', borderRadius: '10px', background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+              <Bell size={17} color="#52647d" />
+              {conversations.length > 0 && <span style={{ position: 'absolute', right: '7px', top: '6px', width: '7px', height: '7px', background: '#ef5d5d', borderRadius: '50%', border: '1px solid #fff' }} />}
+            </button>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#dcecff', color: '#0a1f5c', fontWeight: 800, fontSize: '0.8rem' }}>{wsInitials}</div>
+            <div style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
+              <div style={{ fontWeight: 700, color: '#17243b' }}>{wsName}</div>
+              <div style={{ color: '#8290a4' }}>Store Admin</div>
+            </div>
+          </div>
         </div>
 
       {/* ════════ HOME TAB ════════ */}
@@ -1205,6 +1237,21 @@ const Dashboard = () => {
                   <Stat label="Total Orders" ico="🛍️" value={String(orders.length)} foot={ordersLoading ? 'Loading…' : 'All time'} />
                   <Stat label="Pending Orders" ico="⏳" value={String(pending)} foot={pending ? <span style={{ color: '#b87914' }}>Needs action</span> : 'All clear'} />
                   <Stat label="Products" ico="📦" value={String(products.length)} foot={lowStock + outStock > 0 ? <span style={{ color: '#d98a20' }}>⚠ {lowStock + outStock} need restock</span> : 'In stock'} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(168px,1fr))', gap: '14px', marginBottom: '18px' }}>
+                  {[
+                    { ico: '📦', t: 'Add Product', s: 'Publish a new item', go: () => setActiveTab('products') },
+                    { ico: '🛍️', t: 'View Orders', s: 'Manage your orders', go: () => setActiveTab('orders') },
+                    { ico: '🌐', t: 'Edit Website', s: 'Update your storefront', go: () => setActiveTab('website') },
+                    { ico: '📈', t: 'Sales Report', s: 'See your analytics', go: () => setActiveTab('reports') },
+                  ].map(q => (
+                    <button key={q.t} onClick={q.go} style={{ textAlign: 'left', background: '#fff', border: '1px solid #e4eaf3', borderRadius: '12px', padding: '15px', cursor: 'pointer', boxShadow: '0 8px 26px rgba(15,39,83,.06)' }}>
+                      <div style={{ fontSize: '19px' }}>{q.ico}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.82rem', marginTop: '8px', color: '#1d3659' }}>{q.t}</div>
+                      <div style={{ color: '#718096', fontSize: '0.7rem' }}>{q.s}</div>
+                    </button>
+                  ))}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.55fr) minmax(260px,1fr)', gap: '16px', marginBottom: '20px' }} className="amr-overview-grid">
