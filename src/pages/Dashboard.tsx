@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
-import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug } from 'lucide-react';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug, Truck, Megaphone, Workflow, Settings as SettingsIcon } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -166,7 +166,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'assistant' | 'integrations' | 'billing' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'courier' | 'customers' | 'assistant' | 'marketing' | 'automations' | 'integrations' | 'settings' | 'billing' | 'reports'>('home');
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -395,13 +395,13 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
-    if (activeTab !== 'integrations' || !user?.email) return;
+    if (!['integrations', 'courier', 'marketing'].includes(activeTab) || !user?.email) return;
     loadCourierSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user?.email]);
 
   useEffect(() => {
-    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home' && activeTab !== 'customers' && activeTab !== 'assistant') || !currentSiteId) return;
+    if (!['orders', 'reports', 'home', 'customers', 'assistant', 'courier'].includes(activeTab) || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
 
@@ -1113,10 +1113,14 @@ const Dashboard = () => {
     { key: 'products' as const, label: 'Products', Icon: Package, group: 'Main menu' },
     { key: 'stock' as const, label: 'Inventory', Icon: Boxes, group: 'Main menu' },
     { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag, group: 'Main menu' },
+    { key: 'courier' as const, label: 'Courier & Delivery', Icon: Truck, group: 'Main menu' },
     { key: 'customers' as const, label: 'Customers', Icon: Users, group: 'Main menu' },
     { key: 'reports' as const, label: 'Analytics', Icon: BarChart3, group: 'Main menu' },
+    { key: 'marketing' as const, label: 'Marketing & Pixel', Icon: Megaphone, group: 'Growth & tools' },
+    { key: 'automations' as const, label: 'AI & Automations', Icon: Workflow, group: 'Growth & tools' },
     { key: 'assistant' as const, label: 'AI Assistant', Icon: Sparkles, group: 'Growth & tools' },
     { key: 'integrations' as const, label: 'Integrations', Icon: Plug, group: 'Growth & tools' },
+    { key: 'settings' as const, label: 'Settings', Icon: SettingsIcon, group: 'Growth & tools' },
     { key: 'billing' as const, label: 'Billing', Icon: CreditCard, group: 'Growth & tools' },
   ];
   const curTab = navTabs.find(t => t.key === activeTab);
@@ -2268,6 +2272,151 @@ const Dashboard = () => {
             <div style={{ display: 'flex', gap: '8px' }}>
               <input value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') askAI(); }} placeholder="Ask about sales, products, orders…" className="amr-input" />
               <button className="amr-btn amr-btn-primary" style={{ color: '#fff', whiteSpace: 'nowrap' }} onClick={() => askAI()}>Ask</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════ COURIER & DELIVERY TAB ════════ */}
+      {activeTab === 'courier' && (
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Fulfilment</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Courier &amp; Delivery</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Parcels booked from your orders, with tracking and status.</p>
+          {!currentSiteId ? <div className="amr-card" style={{ color: '#718096' }}>Build your website first.</div> :
+            ordersLoading ? <div className="amr-card" style={{ color: '#718096' }}>Loading shipments…</div> : (() => {
+            const list = Object.entries(bookings).map(([oid, b]) => ({ oid, ...b }));
+            const has = (s: string, kw: string[]) => kw.some(k => (s || '').toLowerCase().includes(k));
+            const delivered = list.filter(b => has(b.courier_status, ['deliver'])).length;
+            const transit = list.filter(b => has(b.courier_status, ['transit', 'pickup', 'ship', 'hold'])).length;
+            const returned = list.filter(b => has(b.courier_status, ['return', 'cancel'])).length;
+            const orderOf = (oid: string) => orders.find(o => o.id === oid);
+            const S = ({ l, v, c }: { l: string; v: string; c?: string }) => (<div className="amr-card"><div style={{ color: '#718096', fontSize: '0.78rem', fontWeight: 600 }}>{l}</div><div className="amr-stat-num" style={{ fontSize: '1.5rem', color: c || '#10264b' }}>{v}</div></div>);
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px,1fr))', gap: '16px', marginBottom: '18px' }}>
+                  <S l="Total Booked" v={String(list.length)} />
+                  <S l="In Transit" v={String(transit)} c="#2563eb" />
+                  <S l="Delivered" v={String(delivered)} c="#159768" />
+                  <S l="Returned" v={String(returned)} c="#c44d4d" />
+                </div>
+                <div className="amr-card" style={{ overflowX: 'auto' }}>
+                  <div style={{ fontWeight: 700, color: '#183052', marginBottom: '10px' }}>Shipments</div>
+                  {list.length === 0 ? <div style={{ padding: '22px', textAlign: 'center', color: '#8794a8', fontSize: '0.88rem' }}>No parcels booked yet. Open an order and click “Send to Steadfast / Pathao”.</div> : (
+                    <table className="amr-table" style={{ minWidth: '560px' }}>
+                      <thead><tr><th>Order</th><th>Customer</th><th>Tracking</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {list.map((b, i) => { const o = orderOf(b.oid); return (
+                          <tr key={i}>
+                            <td>{o?.product_title || b.oid}</td>
+                            <td>{o?.customer_name || '—'}</td>
+                            <td style={{ fontWeight: 650, color: '#213b5e' }}>{b.tracking_code || '—'}</td>
+                            <td><span className={`amr-pill ${has(b.courier_status, ['deliver']) ? 'delivered' : has(b.courier_status, ['return', 'cancel']) ? 'cancelled' : 'processing'}`}>{b.courier_status || 'booked'}</span></td>
+                          </tr>
+                        ); })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ════════ MARKETING & PIXEL TAB ════════ */}
+      {activeTab === 'marketing' && (
+        <div style={{ padding: '32px 24px', maxWidth: '900px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Growth &amp; attribution</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Marketing &amp; Pixel</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Connect tracking and measure how your campaigns perform.</p>
+          {(() => {
+            const hasPkg = packages.includes('automation');
+            const rows = [
+              { icon: '📊', name: 'Meta Pixel', desc: 'Track page views, add-to-cart and purchases on Facebook.', soon: false },
+              { icon: 'G', name: 'Google Analytics 4', desc: 'Measure website traffic and conversions.', soon: false },
+              { icon: '◉', name: 'Meta Conversions API', desc: 'Server-side purchase tracking (deduplicated).', soon: true },
+              { icon: '🏷️', name: 'Google Tag Manager', desc: 'Manage all your marketing tags in one place.', soon: true },
+            ];
+            return (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {rows.map(r => (
+                  <div key={r.name} className="amr-card" style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#edf4ff', color: '#2563eb', display: 'grid', placeItems: 'center', fontSize: '18px', fontWeight: 800, flex: 'none' }}>{r.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#12284c' }}>{r.name}</div>
+                      <div style={{ color: '#718096', fontSize: '0.76rem' }}>{r.desc}</div>
+                    </div>
+                    {r.soon ? <span className="amr-pill pending" style={{ flex: 'none' }}>Coming soon</span>
+                      : <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={hasPkg ? handlePixelGAConnect : () => { window.location.href = '/buy-package?package=automation'; }}>{hasPkg ? 'Set up' : 'Buy Package'}</button>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ════════ AI & AUTOMATIONS TAB ════════ */}
+      {activeTab === 'automations' && (
+        <div style={{ padding: '32px 24px', maxWidth: '900px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">AI powered operations</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>AI &amp; Automations</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Automate replies and routine work while keeping control of your business.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: '14px' }}>
+            {[
+              { name: 'AI Website Chat Reply', on: true, toggle: null as null | (() => void), desc: 'Your storefront AI answers customer questions and shows products, 24/7.' },
+              { name: 'Facebook Comment Auto-Reply', on: commentReply, toggle: () => handleToggleChange('comment', !commentReply), desc: 'Automatically reply to comments on your Facebook posts.' },
+              { name: 'Messenger Auto-Reply', on: messengerReply, toggle: () => handleToggleChange('messenger', !messengerReply), desc: 'Automatically answer Messenger messages with AI.' },
+              { name: 'Low Stock Alerts', on: true, toggle: null, desc: 'Products at or below reorder level are flagged on your Overview and Inventory.' },
+            ].map(a => (
+              <div key={a.name} className="amr-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '0.95rem', color: '#12284c' }}>{a.name}</h3>
+                  <span className={`amr-pill ${a.on ? 'delivered' : 'pending'}`} style={{ flex: 'none' }}>{a.on ? 'Active' : 'Off'}</span>
+                </div>
+                <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 14px', lineHeight: 1.6 }}>{a.desc}</p>
+                {a.toggle
+                  ? <button className="amr-btn" onClick={a.toggle}>{a.on ? 'Turn off' : 'Turn on'}</button>
+                  : <span style={{ color: '#159768', fontWeight: 700, fontSize: '0.8rem' }}>✓ Always on</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ════════ SETTINGS TAB ════════ */}
+      {activeTab === 'settings' && (
+        <div style={{ padding: '32px 24px', maxWidth: '900px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Workspace configuration</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 18px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Settings</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: '16px' }}>
+            <div className="amr-card">
+              <h3 style={{ margin: '0 0 12px', fontSize: '0.98rem', color: '#12284c' }}>Store Profile</h3>
+              <div style={{ display: 'grid', gap: '10px', fontSize: '0.86rem' }}>
+                <div><div style={{ color: '#52647d', fontWeight: 650, fontSize: '0.76rem', marginBottom: '3px' }}>Store name</div><div style={{ color: '#17243b', fontWeight: 600 }}>{wsName}</div></div>
+                <div><div style={{ color: '#52647d', fontWeight: 650, fontSize: '0.76rem', marginBottom: '3px' }}>Store link</div><div style={{ color: '#17243b', wordBreak: 'break-all' }}>{websiteResult?.url || '—'}</div></div>
+                <div><div style={{ color: '#52647d', fontWeight: 650, fontSize: '0.76rem', marginBottom: '3px' }}>Account email</div><div style={{ color: '#17243b' }}>{user.email}</div></div>
+              </div>
+              <button className="amr-btn" style={{ marginTop: '16px' }} onClick={() => { setActiveTab('website'); setShowSettings(true); }}>Edit store content &amp; settings</button>
+            </div>
+            <div className="amr-card">
+              <h3 style={{ margin: '0 0 12px', fontSize: '0.98rem', color: '#12284c' }}>Team &amp; Access</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#dcecff', color: '#0a1f5c', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: '0.78rem' }}>{wsInitials}</span>
+                <div><div style={{ fontWeight: 700, color: '#12284c', fontSize: '0.88rem' }}>Store Admin</div><div style={{ color: '#718096', fontSize: '0.76rem' }}>Full access · You</div></div>
+              </div>
+              <p style={{ color: '#718096', fontSize: '0.78rem', margin: '16px 0 0' }}>Inviting team members with limited roles is coming soon.</p>
+            </div>
+            <div className="amr-card">
+              <h3 style={{ margin: '0 0 12px', fontSize: '0.98rem', color: '#12284c' }}>Subscription</h3>
+              <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 12px' }}>Your current plan and payments.</p>
+              <button className="amr-btn" onClick={() => setActiveTab('billing')}>Open Billing →</button>
+            </div>
+            <div className="amr-card">
+              <h3 style={{ margin: '0 0 12px', fontSize: '0.98rem', color: '#12284c' }}>Account</h3>
+              <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 12px' }}>{user.email}</p>
+              <button className="amr-btn" style={{ color: '#c44d4d', borderColor: '#f3c4c4' }} onClick={logout}>Log out</button>
             </div>
           </div>
         </div>
