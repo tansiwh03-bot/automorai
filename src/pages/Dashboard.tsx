@@ -381,7 +381,7 @@ const Dashboard = () => {
   }, [activeTab, user]);
 
   useEffect(() => {
-    if ((activeTab !== 'products' && activeTab !== 'stock') || !currentSiteId) return;
+    if ((activeTab !== 'products' && activeTab !== 'stock' && activeTab !== 'home') || !currentSiteId) return;
     loadProducts();
   }, [activeTab, currentSiteId]);
 
@@ -392,7 +392,7 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
-    if ((activeTab !== 'orders' && activeTab !== 'reports') || !currentSiteId) return;
+    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home') || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
 
@@ -1091,6 +1091,7 @@ const Dashboard = () => {
         .amr-table tr:last-child td { border-bottom:0; }
         .amr-input { width:100%; box-sizing:border-box; border:1px solid #dbe3f0; border-radius:10px; padding:11px 13px; font:inherit; font-size:.9rem; color:#17243b; background:#fff; }
         .amr-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px #2563eb1f; }
+        @media (max-width: 860px){ .amr-overview-grid{ grid-template-columns:1fr !important; } }
         .amr-mobile-topbar { display: none; }
         @media (max-width: 768px) {
           .amr-sidebar {
@@ -1171,6 +1172,102 @@ const Dashboard = () => {
             <div style={{ background: '#eaf2ff', border: '1px solid #cfe0ff', borderRadius: '10px',
               padding: '12px 14px', marginBottom: '20px', fontSize: '0.9rem', color: '#1b4dd1', fontWeight: 600 }}>{status}</div>
           )}
+
+          {currentSiteId && !isDraftSite && (() => {
+            const amt = (o: Order) => (Number(o.product_price) || 0) * (Number(o.quantity) || 1) + (Number(o.delivery_charge) || 0);
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => { try { return new Date(o.created_at).toDateString() === today; } catch { return false; } });
+            const todayRev = todayOrders.reduce((s, o) => s + amt(o), 0);
+            const pending = orders.filter(o => (o.status || '').toLowerCase() === 'pending').length;
+            const lowStock = products.filter(p => Number(p.stock) <= 5 && Number(p.stock) > 0).length;
+            const outStock = products.filter(p => Number(p.stock) === 0).length;
+            const unread = conversations.length;
+            const recent = [...orders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
+            const pillClass = (s: string) => {
+              const v = (s || '').toLowerCase();
+              if (v === 'delivered') return 'delivered';
+              if (v === 'cancelled' || v === 'canceled' || v === 'returned') return 'cancelled';
+              if (v === 'pending' || v === '') return 'pending';
+              return 'processing';
+            };
+            const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
+            const Stat = ({ label, value, ico, foot }: { label: string; value: string; ico: string; foot?: React.ReactNode }) => (
+              <div className="amr-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#718096', fontSize: '0.75rem', fontWeight: 600 }}>{label}<span className="amr-stat-ico">{ico}</span></div>
+                <div className="amr-stat-num">{value}</div>
+                {foot && <div style={{ fontSize: '0.7rem', color: '#718096' }}>{foot}</div>}
+              </div>
+            );
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+                  <Stat label="Today's Revenue" ico="৳" value={`৳${todayRev.toLocaleString()}`} foot={`${todayOrders.length} orders today`} />
+                  <Stat label="Total Orders" ico="🛍️" value={String(orders.length)} foot={ordersLoading ? 'Loading…' : 'All time'} />
+                  <Stat label="Pending Orders" ico="⏳" value={String(pending)} foot={pending ? <span style={{ color: '#b87914' }}>Needs action</span> : 'All clear'} />
+                  <Stat label="Products" ico="📦" value={String(products.length)} foot={lowStock + outStock > 0 ? <span style={{ color: '#d98a20' }}>⚠ {lowStock + outStock} need restock</span> : 'In stock'} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.55fr) minmax(260px,1fr)', gap: '16px', marginBottom: '20px' }} className="amr-overview-grid">
+                  <div className="amr-card" style={{ overflowX: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div><h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Recent Orders</h3><span style={{ fontSize: '0.72rem', color: '#718096' }}>Latest activity from your store</span></div>
+                      <button className="amr-btn" onClick={() => setActiveTab('orders')}>View all →</button>
+                    </div>
+                    {recent.length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: '#8794a8', fontSize: '0.85rem' }}>No orders yet.</div>
+                    ) : (
+                      <table className="amr-table" style={{ minWidth: '460px' }}>
+                        <thead><tr><th>Customer</th><th>Product</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                          {recent.map((o, i) => (
+                            <tr key={o.id || i}>
+                              <td style={{ fontWeight: 650, color: '#213b5e' }}>{o.customer_name || '—'}</td>
+                              <td>{o.product_title || '—'}</td>
+                              <td>{fmtDate(o.created_at)}</td>
+                              <td><b>৳{amt(o).toLocaleString()}</b></td>
+                              <td><span className={`amr-pill ${pillClass(o.status)}`}>{o.status || 'pending'}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  <div className="amr-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                      <h3 style={{ margin: 0, fontSize: '0.95rem', color: '#183052' }}>Needs Your Attention</h3>
+                    </div>
+                    <div style={{ display: 'grid', gap: '13px' }}>
+                      {outStock + lowStock > 0 && (
+                        <div style={{ display: 'flex', gap: '11px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '9px', display: 'grid', placeItems: 'center', background: '#fff4df', flex: 'none' }}>⚠</div>
+                          <div><strong style={{ fontSize: '0.82rem', color: '#263d5d' }}>Low / out of stock</strong><div style={{ color: '#8794a8', fontSize: '0.76rem', marginTop: '3px' }}>{lowStock + outStock} products need restocking.</div><a onClick={() => setActiveTab('stock')} style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 700, cursor: 'pointer' }}>Review inventory →</a></div>
+                        </div>
+                      )}
+                      {pending > 0 && (
+                        <div style={{ display: 'flex', gap: '11px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '9px', display: 'grid', placeItems: 'center', background: '#eaf2ff', flex: 'none' }}>🛍️</div>
+                          <div><strong style={{ fontSize: '0.82rem', color: '#263d5d' }}>Pending orders</strong><div style={{ color: '#8794a8', fontSize: '0.76rem', marginTop: '3px' }}>{pending} orders waiting to be processed.</div><a onClick={() => setActiveTab('orders')} style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 700, cursor: 'pointer' }}>Open orders →</a></div>
+                        </div>
+                      )}
+                      {unread > 0 && (
+                        <div style={{ display: 'flex', gap: '11px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '9px', display: 'grid', placeItems: 'center', background: '#eaf2ff', flex: 'none' }}>✉️</div>
+                          <div><strong style={{ fontSize: '0.82rem', color: '#263d5d' }}>Customer messages</strong><div style={{ color: '#8794a8', fontSize: '0.76rem', marginTop: '3px' }}>{unread} conversations in your inbox.</div><a onClick={() => setActiveTab('inbox')} style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 700, cursor: 'pointer' }}>Open inbox →</a></div>
+                        </div>
+                      )}
+                      {outStock + lowStock === 0 && pending === 0 && (
+                        <div style={{ display: 'flex', gap: '11px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '9px', display: 'grid', placeItems: 'center', background: '#e4f8ef', flex: 'none' }}>✓</div>
+                          <div><strong style={{ fontSize: '0.82rem', color: '#263d5d' }}>Store health is good</strong><div style={{ color: '#8794a8', fontSize: '0.76rem', marginTop: '3px' }}>No pending orders or stock issues.</div></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {(() => {
             const title = !websiteResult ? 'Build Your Website' : isDraftSite ? 'Your Website Preview Is Ready' : 'View & Edit Your Website';
