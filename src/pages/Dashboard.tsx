@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
-import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -166,7 +166,9 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'billing' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'assistant' | 'billing' | 'reports'>('home');
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
+  const [aiInput, setAiInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
 
@@ -382,7 +384,7 @@ const Dashboard = () => {
   }, [activeTab, user]);
 
   useEffect(() => {
-    if ((activeTab !== 'products' && activeTab !== 'stock' && activeTab !== 'home') || !currentSiteId) return;
+    if ((activeTab !== 'products' && activeTab !== 'stock' && activeTab !== 'home' && activeTab !== 'assistant') || !currentSiteId) return;
     loadProducts();
   }, [activeTab, currentSiteId]);
 
@@ -393,7 +395,7 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
-    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home' && activeTab !== 'customers') || !currentSiteId) return;
+    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home' && activeTab !== 'customers' && activeTab !== 'assistant') || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
 
@@ -443,6 +445,48 @@ const Dashboard = () => {
       loadBookings();
     } catch { setOrders([]); }
     setOrdersLoading(false);
+  };
+
+  // AI Business Assistant — answers only from the store's real loaded orders/products. Never invents numbers.
+  const answerAI = (qRaw: string): string => {
+    const q = qRaw.toLowerCase();
+    const amt = (o: Order) => (Number(o.product_price) || 0) * (Number(o.quantity) || 1);
+    const now = Date.now(); const DAY = 86400000;
+    const inDays = (d: number) => orders.filter(o => now - new Date(o.created_at).getTime() < d * DAY);
+    const live = (list: Order[]) => list.filter(o => (o.status || '').toLowerCase() !== 'cancelled');
+    const sumSales = (list: Order[]) => live(list).reduce((s, o) => s + amt(o), 0);
+    const taka = (n: number) => '৳' + Math.round(n).toLocaleString();
+    const today = new Date().toDateString();
+    if (/today/.test(q) && /(sell|sale|sales|revenue|income|koto|bikri|earn)/.test(q)) {
+      const t = orders.filter(o => { try { return new Date(o.created_at).toDateString() === today; } catch { return false; } });
+      return `Today: ${t.length} order${t.length === 1 ? '' : 's'}, ${taka(sumSales(t))} in sales (cancelled excluded).`;
+    }
+    if (/(week|7 ?day)/.test(q)) { const l = inDays(7); return `Last 7 days: ${l.length} orders, ${taka(sumSales(l))} in sales.`; }
+    if (/(month|30 ?day)/.test(q)) { const l = inDays(30); return `Last 30 days: ${l.length} orders, ${taka(sumSales(l))} in sales.`; }
+    if (/(best|top|most)[^.]*(sell|sold|product)|which product/.test(q)) {
+      const m: Record<string, { u: number; s: number }> = {};
+      live(orders).forEach(o => { const k = o.product_title || 'Unknown'; m[k] = m[k] || { u: 0, s: 0 }; m[k].u += Number(o.quantity) || 1; m[k].s += amt(o); });
+      const top = Object.entries(m).sort((a, b) => b[1].s - a[1].s).slice(0, 3);
+      if (!top.length) return 'No sales yet, so there is no best-selling product.';
+      return 'Best sellers: ' + top.map(([n, v]) => `${n} (${v.u} sold, ${taka(v.s)})`).join('; ') + '.';
+    }
+    if (/(low stock|out of stock|restock|stock out|kom stock|running out)/.test(q)) {
+      const low = products.filter(p => Number(p.stock) <= 5 && Number(p.stock) > 0).map(p => `${p.title} (${p.stock})`);
+      const out = products.filter(p => Number(p.stock) === 0).map(p => p.title);
+      if (!low.length && !out.length) return 'All products are well stocked. 👍';
+      let s = ''; if (out.length) s += `Out of stock: ${out.join(', ')}. `; if (low.length) s += `Low stock: ${low.join(', ')}.`; return s.trim();
+    }
+    if (/pending/.test(q)) { const p = orders.filter(o => (o.status || '').toLowerCase() === 'pending'); return `You have ${p.length} pending order${p.length === 1 ? '' : 's'} waiting to be processed.`; }
+    if (/(how many order|total order|number of order)/.test(q)) return `You have ${orders.length} orders in total for ${wsName}.`;
+    if (/customer/.test(q)) { const set = new Set(orders.map(o => (o.customer_phone || o.customer_name || '').trim()).filter(Boolean)); return `You have ${set.size} unique customers so far.`; }
+    if (/(how many product|product count|total product)/.test(q)) return `You have ${products.length} products in your catalog.`;
+    return "I answer from your real store data. Ask about: today's / this week's / this month's sales, best-selling products, low or out-of-stock items, pending orders, customers, or product count.";
+  };
+  const askAI = (text?: string) => {
+    const q = (text ?? aiInput).trim(); if (!q) return;
+    const ans = answerAI(q);
+    setAiMessages(m => [...m, { role: 'user', text: q }, { role: 'ai', text: ans }]);
+    setAiInput('');
   };
 
   // check each customer's delivery history (delivered vs returned) from the courier data we collect
@@ -1064,6 +1108,7 @@ const Dashboard = () => {
     { key: 'stock' as const, label: 'Inventory', Icon: Boxes },
     { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag },
     { key: 'customers' as const, label: 'Customers', Icon: Users },
+    { key: 'assistant' as const, label: 'AI Assistant', Icon: Sparkles },
     { key: 'reports' as const, label: 'Analytics', Icon: BarChart3 },
     { key: 'billing' as const, label: 'Billing', Icon: CreditCard },
   ];
@@ -2187,6 +2232,34 @@ const Dashboard = () => {
               </>
             );
           })()}
+        </div>
+      )}
+
+      {/* ════════ AI ASSISTANT TAB ════════ */}
+      {activeTab === 'assistant' && (
+        <div style={{ padding: '32px 24px', maxWidth: '820px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">AI powered</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>AI Business Assistant</h2>
+          <p className="amr-sub" style={{ margin: '0 0 18px' }}>Ask about your store. Answers use your real orders and products — nothing is invented.</p>
+          <div className="amr-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '220px' }}>
+              {aiMessages.length === 0 && <div style={{ color: '#8794a8', fontSize: '0.88rem', textAlign: 'center', padding: '34px 0' }}>👋 Hi! Ask me something about {wsName}.</div>}
+              {aiMessages.map((m, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ maxWidth: '82%', padding: '10px 14px', borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: m.role === 'user' ? '#2563eb' : '#eef4fb', color: m.role === 'user' ? '#fff' : '#17243b', fontSize: '0.9rem', lineHeight: 1.5 }}>{m.text}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {["Today's sales", 'Best selling products', 'Low stock items', 'Pending orders', 'How many customers?'].map(s => (
+                <button key={s} onClick={() => askAI(s)} style={{ border: '1px solid #dbe3f0', background: '#f6f9ff', color: '#2563eb', borderRadius: '999px', padding: '6px 12px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{s}</button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') askAI(); }} placeholder="Ask about sales, products, orders…" className="amr-input" />
+              <button className="amr-btn amr-btn-primary" style={{ color: '#fff', whiteSpace: 'nowrap' }} onClick={() => askAI()}>Ask</button>
+            </div>
+          </div>
         </div>
       )}
 
