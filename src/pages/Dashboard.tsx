@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
-import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -166,7 +166,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'customers' | 'billing' | 'reports'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
 
@@ -393,7 +393,7 @@ const Dashboard = () => {
   }, [activeTab, currentSiteId, showSettings]);
 
   useEffect(() => {
-    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home') || !currentSiteId) return;
+    if ((activeTab !== 'orders' && activeTab !== 'reports' && activeTab !== 'home' && activeTab !== 'customers') || !currentSiteId) return;
     loadOrders();
   }, [activeTab, currentSiteId]);
 
@@ -1063,7 +1063,9 @@ const Dashboard = () => {
     { key: 'products' as const, label: 'Products', Icon: Package },
     { key: 'stock' as const, label: 'Inventory', Icon: Boxes },
     { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag },
+    { key: 'customers' as const, label: 'Customers', Icon: Users },
     { key: 'reports' as const, label: 'Analytics', Icon: BarChart3 },
+    { key: 'billing' as const, label: 'Billing', Icon: CreditCard },
   ];
   const curTab = navTabs.find(t => t.key === activeTab);
   const wsName = websiteResult?.business_name || (mySites[0]?.business_name) || 'My Store';
@@ -2132,6 +2134,99 @@ const Dashboard = () => {
       {activeTab === 'reports' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           {currentSiteId ? <SalesReport orders={orders} loading={ordersLoading} /> : <div style={{ color: '#718096' }}>Build your website first — your sales report will show here.</div>}
+        </div>
+      )}
+
+      {/* ════════ CUSTOMERS TAB ════════ */}
+      {activeTab === 'customers' && (
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Customer relationships</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 18px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Customers</h2>
+          {!currentSiteId ? <div className="amr-card" style={{ color: '#718096' }}>Build your website first — your customers will show here.</div> :
+            ordersLoading ? <div className="amr-card" style={{ color: '#718096' }}>Loading customers…</div> : (() => {
+            const amt = (o: Order) => (Number(o.product_price) || 0) * (Number(o.quantity) || 1);
+            const map: Record<string, { name: string; phone: string; orders: number; spent: number; last: string }> = {};
+            orders.forEach(o => {
+              const key = (o.customer_phone || '').trim() || (o.customer_name || '').trim();
+              if (!key) return;
+              if (!map[key]) map[key] = { name: o.customer_name || '—', phone: o.customer_phone || '', orders: 0, spent: 0, last: o.created_at };
+              map[key].orders++; map[key].spent += amt(o);
+              if (new Date(o.created_at).getTime() > new Date(map[key].last).getTime()) { map[key].last = o.created_at; if (o.customer_name) map[key].name = o.customer_name; }
+            });
+            const list = Object.values(map).sort((a, b) => b.spent - a.spent);
+            const repeat = list.filter(c => c.orders > 1).length;
+            const avg = list.length ? Math.round(list.reduce((s, c) => s + c.spent, 0) / list.length) : 0;
+            const fd = (d: string) => { try { return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }); } catch { return '—'; } };
+            const initials = (n: string) => (n.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2) || '?').toUpperCase();
+            const S = ({ l, v }: { l: string; v: string }) => (<div className="amr-card"><div style={{ color: '#718096', fontSize: '0.78rem', fontWeight: 600 }}>{l}</div><div className="amr-stat-num" style={{ fontSize: '1.5rem' }}>{v}</div></div>);
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: '16px', marginBottom: '18px' }}>
+                  <S l="Total Customers" v={String(list.length)} />
+                  <S l="Repeat Customers" v={String(repeat)} />
+                  <S l="Avg. Spend" v={`৳${avg.toLocaleString()}`} />
+                </div>
+                <div className="amr-card" style={{ overflowX: 'auto' }}>
+                  {list.length === 0 ? <div style={{ padding: '24px', textAlign: 'center', color: '#8794a8', fontSize: '0.88rem' }}>No customers yet. They appear here after your first order.</div> : (
+                    <table className="amr-table" style={{ minWidth: '560px' }}>
+                      <thead><tr><th>Customer</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th></tr></thead>
+                      <tbody>
+                        {list.map((c, i) => (
+                          <tr key={i}>
+                            <td><span style={{ display: 'flex', alignItems: 'center', gap: '9px', fontWeight: 650, color: '#213b5e' }}><span style={{ width: '28px', height: '28px', borderRadius: '9px', background: '#e7f1ff', color: '#2563eb', display: 'grid', placeItems: 'center', fontSize: '0.68rem', fontWeight: 800, flex: 'none' }}>{initials(c.name)}</span>{c.name}</span></td>
+                            <td>{c.phone || '—'}</td>
+                            <td>{c.orders}{c.orders > 1 && <span className="amr-pill processing" style={{ marginLeft: '6px' }}>repeat</span>}</td>
+                            <td><b>৳{c.spent.toLocaleString()}</b></td>
+                            <td>{fd(c.last)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ════════ BILLING TAB ════════ */}
+      {activeTab === 'billing' && (
+        <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="amr-eyebrow">Subscription &amp; billing</div>
+          <h2 style={{ color: '#12284c', margin: '2px 0 18px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Billing</h2>
+          {(() => {
+            const plans = [
+              { key: 'automation', name: 'Automation', price: '৳2,490 / month', desc: 'Website, Facebook, Messenger, WhatsApp, Inbox, Orders, Courier, Analytics.' },
+              { key: 'tender', name: 'Tender', price: '৳20,000 setup + ৳5,000 / month', desc: 'Automatic tender alerts & setup (separate package).' },
+            ];
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: '16px' }}>
+                {plans.map(p => {
+                  const active = packages.includes(p.key);
+                  return (
+                    <div key={p.key} className="amr-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#12284c' }}>{p.name}</h3>
+                        <span className={`amr-pill ${active ? 'delivered' : 'pending'}`}>{active ? 'Active' : 'Not active'}</span>
+                      </div>
+                      <div style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', marginBottom: '8px' }}>{p.price}</div>
+                      <p style={{ color: '#718096', fontSize: '0.85rem', margin: '0 0 16px', lineHeight: 1.6 }}>{p.desc}</p>
+                      {active ? (
+                        <div style={{ color: '#159768', fontWeight: 700, fontSize: '0.85rem' }}>✓ You are subscribed</div>
+                      ) : (
+                        <button className="amr-btn-primary amr-btn" style={{ color: '#fff' }} onClick={() => { window.location.href = `/buy-package?package=${p.key}`; }}>Buy {p.name} →</button>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="amr-card" style={{ gridColumn: '1 / -1' }}>
+                  <h3 style={{ margin: '0 0 6px', fontSize: '0.98rem', color: '#12284c' }}>Payment method</h3>
+                  <p style={{ color: '#718096', fontSize: '0.85rem', margin: 0 }}>Payments are made manually via bKash/Nagad (01674610578) and verified by the Automorai team. After you submit a payment on the Buy Package page, your plan is activated once approved.</p>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
