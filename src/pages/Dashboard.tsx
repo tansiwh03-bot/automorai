@@ -1212,6 +1212,7 @@ const Dashboard = () => {
               color: on ? '#fff' : '#c6d6f4', boxShadow: on ? '0 5px 14px #07183e55' : 'none', transition: 'all 0.15s',
             }}>
               <Ic size={18} strokeWidth={2} /><span>{tab.label}</span>
+              {tab.key === 'inbox' && conversations.length > 0 && <span style={{ marginLeft: 'auto', background: '#26c9ef', color: '#09265a', borderRadius: '20px', padding: '1px 7px', fontSize: '0.62rem', fontWeight: 800 }}>{conversations.length}</span>}
             </button>
             </Fragment>
           );})}
