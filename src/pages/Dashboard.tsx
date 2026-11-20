@@ -30,6 +30,7 @@ const COURIER_PHONE_CHECK_API = 'https://n8n2.kingpurefood.com/webhook/automorai
 const COURIER_BOOK_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/book';
 const COURIER_BOOKINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/bookings';
 const COURIER_PATHAO_GEO_API = 'https://n8n2.kingpurefood.com/webhook/automorai/courier/pathao/geo';
+const CUSTOM_DOMAIN_API = 'https://n8n2.kingpurefood.com/webhook/automorai/custom-domain';
 const SUPABASE_URL = 'https://wwettpkioulkofohfdxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 
@@ -194,6 +195,13 @@ const Dashboard = () => {
   const [websiteUpdating,  setWebsiteUpdating]  = useState(false);
   const [websiteUpdateMsg, setWebsiteUpdateMsg] = useState('');
   const [websiteUrlCopied, setWebsiteUrlCopied] = useState(false);
+  // Custom domain (Cloudflare for SaaS)
+  const [showDomain,    setShowDomain]    = useState(false);
+  const [domainInput,   setDomainInput]   = useState('');
+  const [domainInfo,    setDomainInfo]    = useState<{ has_domain?: boolean; connected?: boolean; domain?: string; ssl_status?: string; hostname_status?: string; cname_target?: string; verification?: string } | null>(null);
+  const [domainLoading, setDomainLoading] = useState(false);
+  const [domainBusy,    setDomainBusy]    = useState(false);
+  const [domainMsg,     setDomainMsg]     = useState('');
   // Free draft sites are only previewed here (never deployed) until the Automation package is bought.
   const [previewHtml,      setPreviewHtml]      = useState('');
   const [previewLoading,   setPreviewLoading]   = useState(false);
@@ -966,6 +974,60 @@ const Dashboard = () => {
     setWebsiteUpdating(false);
   };
 
+  // ----- Custom domain -----
+  const loadDomainStatus = async () => {
+    if (!currentSiteId) return;
+    setDomainLoading(true);
+    try {
+      const res = await fetch(`${CUSTOM_DOMAIN_API}/status?business_slug=${encodeURIComponent(currentSiteId)}`, { headers: await getAuthHeader() });
+      const data = await res.json();
+      if (data.success) setDomainInfo(data);
+    } catch { /* ignore */ }
+    setDomainLoading(false);
+  };
+
+  const handleConnectDomain = async () => {
+    if (!currentSiteId) return;
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\.$/, '');
+    if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(d.replace(/^www\./, ''))) {
+      setDomainMsg('Please enter a valid domain, e.g. shop.yourbrand.com'); return;
+    }
+    setDomainBusy(true); setDomainMsg('');
+    try {
+      const res = await fetch(`${CUSTOM_DOMAIN_API}/connect`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ business_slug: currentSiteId, domain: d }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDomainMsg('ok');
+        setDomainInput('');
+        await loadDomainStatus();
+      } else {
+        setDomainMsg(data.error || 'Could not connect the domain. Please try again.');
+      }
+    } catch {
+      setDomainMsg('Connection error. Please try again.');
+    }
+    setDomainBusy(false);
+  };
+
+  const handleDisconnectDomain = async () => {
+    if (!currentSiteId) return;
+    if (!confirm('Disconnect this custom domain? Your store will still work on its normal link; only the custom domain stops working.')) return;
+    setDomainBusy(true); setDomainMsg('');
+    try {
+      const res = await fetch(`${CUSTOM_DOMAIN_API}/disconnect`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ business_slug: currentSiteId }),
+      });
+      const data = await res.json();
+      if (data.success) { setDomainInfo(null); setDomainMsg(''); await loadDomainStatus(); }
+      else setDomainMsg(data.error || 'Could not disconnect. Please try again.');
+    } catch { setDomainMsg('Connection error. Please try again.'); }
+    setDomainBusy(false);
+  };
+
   const formatTime = (ts: string) => {
     if (!ts) return '';
     try {
@@ -1395,6 +1457,64 @@ const Dashboard = () => {
                 )}
                 {websiteUpdateMsg && (
                   <p style={{ fontSize: '0.8rem', color: websiteUpdateMsg.startsWith('Updated') ? '#22c55e' : '#ff6b6b', marginTop: '6px', textAlign: 'center' }}>{websiteUpdateMsg}</p>
+                )}
+
+                {!isDraftSite && (
+                  <button onClick={() => { const n = !showDomain; setShowDomain(n); if (n && !domainInfo) loadDomainStatus(); }}
+                    style={{ width: '100%', padding: '10px', marginTop: '10px', background: 'transparent', color: '#8b90a3', border: '1px solid #262a38', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700 }}>
+                    🌐 Connect your own domain {showDomain ? '▲' : '▼'}
+                  </button>
+                )}
+                {!isDraftSite && showDomain && (
+                  <div style={{ marginTop: '12px', background: '#0e0f16', border: '1px solid #262a38', borderRadius: '12px', padding: '18px' }}>
+                    {domainLoading && <p style={{ color: '#8b90a3', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>Loading…</p>}
+                    {!domainLoading && domainInfo?.has_domain ? (
+                      <>
+                        <p style={{ color: '#c8ff5c', fontWeight: 700, fontSize: '0.9rem', margin: '0 0 4px' }}>Your domain</p>
+                        <p style={{ color: '#fff', fontWeight: 700, fontSize: '1rem', margin: '0 0 10px', wordBreak: 'break-all' }}>{domainInfo.domain}</p>
+                        {domainInfo.connected ? (
+                          <div style={{ background: '#0d1f12', border: '1px solid #22c55e', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px' }}>
+                            <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.85rem' }}>✅ Live &amp; secured (SSL active)</span>
+                          </div>
+                        ) : (
+                          <div style={{ background: '#1c1708', border: '1px solid #e0a500', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
+                            <p style={{ color: '#f0b400', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 8px' }}>⏳ Waiting for DNS — not live yet</p>
+                            <p style={{ color: '#c9ad6a', fontSize: '0.8rem', margin: '0 0 8px' }}>At your domain provider (GoDaddy, Namecheap, etc.) add this record:</p>
+                            <div style={{ background: '#06070a', borderRadius: '6px', padding: '10px', fontSize: '0.8rem', color: '#d7dbe8', fontFamily: 'monospace', lineHeight: 1.7 }}>
+                              <div>Type: <b>CNAME</b></div>
+                              <div>Name: <b style={{ wordBreak: 'break-all' }}>{domainInfo.domain}</b></div>
+                              <div>Target: <b>{domainInfo.cname_target || 'connect.automorai.com'}</b></div>
+                            </div>
+                            <p style={{ color: '#8b7b4a', fontSize: '0.72rem', margin: '8px 0 0' }}>After adding it, SSL activates automatically within a few minutes. Press “Check again”.</p>
+                            {domainInfo.verification ? <p style={{ color: '#ff8a8a', fontSize: '0.72rem', margin: '6px 0 0' }}>{domainInfo.verification}</p> : null}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={loadDomainStatus} disabled={domainBusy || domainLoading}
+                            style={{ flex: 1, padding: '10px', background: '#7c5cff22', color: '#7c5cff', border: '1px solid #7c5cff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
+                            🔄 Check again
+                          </button>
+                          <button onClick={handleDisconnectDomain} disabled={domainBusy}
+                            style={{ flex: 1, padding: '10px', background: 'transparent', color: '#ff6b6b', border: '1px solid #ff6b6b44', borderRadius: '8px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}>
+                            Disconnect
+                          </button>
+                        </div>
+                      </>
+                    ) : (!domainLoading && (
+                      <>
+                        <p style={{ color: '#8b90a3', fontSize: '0.82rem', margin: '0 0 12px' }}>Use your own web address (like <b style={{ color: '#d7dbe8' }}>shop.yourbrand.com</b>) instead of the default link. Enter the domain you own — we recommend a subdomain such as <b>shop.</b> or <b>www.</b></p>
+                        <input value={domainInput} onChange={e => setDomainInput(e.target.value)} placeholder="shop.yourbrand.com"
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '11px', background: '#06070a', border: '1px solid #262a38', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', marginBottom: '10px' }} />
+                        <button onClick={handleConnectDomain} disabled={domainBusy}
+                          style={{ width: '100%', padding: '11px', background: '#22c55e', color: '#06070a', border: 'none', borderRadius: '8px', cursor: domainBusy ? 'default' : 'pointer', fontSize: '0.9rem', fontWeight: 800 }}>
+                          {domainBusy ? 'Connecting…' : 'Connect domain'}
+                        </button>
+                        {domainMsg && domainMsg !== 'ok' && (
+                          <p style={{ color: '#ff6b6b', fontSize: '0.78rem', margin: '8px 0 0', textAlign: 'center' }}>{domainMsg}</p>
+                        )}
+                      </>
+                    ))}
+                  </div>
                 )}
 
                 {showSettings && (
