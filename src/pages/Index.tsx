@@ -64,13 +64,27 @@ const content = {
     replyDesc: "Messenger আর WhatsApp-এ \"দাম কত?\", \"আছে?\", \"ডেলিভারি কত?\" — AI উত্তর দেয় বাংলায়, ৩ সেকেন্ডে। রাত ২টায়ও। ছবি আর ভয়েস মেসেজও বোঝে।",
     replyPts: ["Messenger ও WhatsApp", "Facebook কমেন্টের উত্তর", "সব মেসেজ এক Inbox-এ", "দরদাম করলে আপনাকে জানায়"],
     mock: { shop: "আপনার দোকান", online: "এখন অনলাইনে", q1: "ভাই কালো পাঞ্জাবিটার দাম কত? M সাইজ আছে?", a1: "জি, কালো পাঞ্জাবি M সাইজ স্টকে আছে। দাম ১,২৫০ টাকা, ঢাকায় ডেলিভারি ৬০ টাকা।", q2: "ক্যাশ অন ডেলিভারি হবে?", a2: "জি, ক্যাশ অন ডেলিভারি আছে। bKash-এও দিতে পারেন।", time: "রাত ২:১৪" },
+    auto: {
+      tag: "নতুন · বিক্রির পরের কাজও automatic",
+      title: "অর্ডার আসার পরের ঝামেলাও Automorai সামলায়",
+      desc: "Facebook-এ বিক্রি করুন বা নিজের WooCommerce সাইটে — অর্ডার যাচাই, courier, আর ক্রেতাকে মনে করিয়ে দেওয়া, সব এক Dashboard থেকে।",
+      cards: [
+        { i: "🛍️", t: "WooCommerce দোকান যুক্ত করুন", d: "আপনার WooCommerce সাইটের প্রতিটা অর্ডার নিজে থেকেই Automorai-তে চলে আসে। সাইট বদলাতে হয় না, শুধু একটা key দিন।" },
+        { i: "🛡️", t: "ভুয়া অর্ডার আগেই ধরুন", d: "প্রতিটা অর্ডারের পাশে ক্রেতার নম্বরের courier ইতিহাস — আগে কতগুলো পার্সেল নিয়েছে, কতগুলো ফেরত দিয়েছে।" },
+        { i: "🚚", t: "এক ক্লিকে Steadfast বুকিং", d: "অর্ডার থেকে সরাসরি Steadfast-এ পার্সেল বুক, tracking code সহ। আলাদা করে ঠিকানা কপি করতে হয় না।" },
+        { i: "🛒", t: "কার্ট ছেড়ে গেলে মনে করিয়ে দেয়", d: "ক্রেতা অর্ডার শেষ না করলে তাকে email-এ মনে করিয়ে দেয় (বড় প্যাকেজে WhatsApp-এও), আর আপনাকে জানায়।" },
+        { i: "🔔", t: "অর্ডারের খবর সাথে সাথে", d: "নতুন অর্ডার, দরদাম বা কার্ট ছাড়লে — আপনার WhatsApp আর email-এ খবর যায়।" },
+        { i: "📈", t: "Facebook Pixel, GA4, GTM", d: "শুধু ID বসান — পণ্য দেখা, Add to Cart, Checkout আর Purchase নিজে থেকেই যায়। বিজ্ঞাপন আরও ভালো কাজ করে।" },
+      ],
+      cta: "বিনামূল্যে শুরু করুন",
+    },
     priceTitle: "সহজ দাম, লুকানো খরচ নেই",
     priceDesc: "মাসিক — যেকোনো সময় বন্ধ করতে পারবেন।",
     perMonth: "/মাস", popular: "সবচেয়ে জনপ্রিয়", soon: "শিগগিরই আসছে",
     plans: [
       { key: "starter", name: "শুরু", price: "৳৯৯০", desc: "ছোট দোকানের জন্য", features: ["ছোট website — পণ্য ও দাম", "Messenger-এ AI উত্তর", "\"WhatsApp-এ অর্ডার\" বাটন", "Pixel নিজে বসানোর সুবিধা"], cta: "শিগগিরই আসছে", href: "", soon: true },
-      { key: "business", name: "ব্যবসা", price: "৳২,৪৯০", desc: "যারা নিয়মিত অনলাইনে বিক্রি করেন", features: ["পুরো অনলাইন দোকান (কার্ট, COD, bKash/Nagad)", "WhatsApp ও Messenger-এ AI উত্তর", "মাসে ৫,০০০ AI উত্তর পর্যন্ত", "বিক্রির গ্রাফ ও Sales Report", "সব মেসেজ এক জায়গায়", "Pixel ও Google Analytics আমরা বসিয়ে দিই"], cta: "শুরু করুন", href: "/signup", popular: true },
-      { key: "big", name: "বড়", price: "৳৪,৯৯০", desc: "একাধিক পেজ বা বড় দোকান", features: ["ব্যবসা প্যাকেজের সব কিছু", "একাধিক Facebook পেজ", "WooCommerce দোকান যুক্ত করা", "দ্রুত, অগ্রাধিকার সাপোর্ট"], cta: "WhatsApp-এ যোগাযোগ", href: waLink("আমি Automorai-র বড় প্যাকেজ (৪,৯৯০) সম্পর্কে জানতে চাই"), external: true },
+      { key: "business", name: "ব্যবসা", price: "৳২,৪৯০", desc: "যারা নিয়মিত অনলাইনে বিক্রি করেন", features: ["পুরো অনলাইন দোকান (কার্ট, COD, bKash/Nagad)", "WhatsApp ও Messenger-এ AI উত্তর", "মাসে ৫,০০০ AI উত্তর পর্যন্ত", "বিক্রির গ্রাফ ও Sales Report", "সব মেসেজ এক জায়গায়", "Steadfast বুকিং ও ভুয়া অর্ডার যাচাই", "কার্ট ছাড়লে ক্রেতাকে email", "Pixel, GA4 ও GTM"], cta: "শুরু করুন", href: "/signup", popular: true },
+      { key: "big", name: "বড়", price: "৳৪,৯৯০", desc: "একাধিক পেজ বা বড় দোকান", features: ["ব্যবসা প্যাকেজের সব কিছু", "একাধিক Facebook পেজ", "WooCommerce দোকান যুক্ত করা", "কার্ট ছাড়লে ক্রেতাকে WhatsApp", "দ্রুত, অগ্রাধিকার সাপোর্ট"], cta: "WhatsApp-এ যোগাযোগ", href: waLink("আমি Automorai-র বড় প্যাকেজ (৪,৯৯০) সম্পর্কে জানতে চাই"), external: true },
     ] as Plan[],
     tender: {
       tag: "eGP টেন্ডার ঠিকাদারদের জন্য", title: "Tender System",
@@ -82,6 +96,7 @@ const content = {
     faqTitle: "সাধারণ প্রশ্ন",
     faqs: [
       { q: "দোকান বানাতে কি কোড বা ডিজাইন জানতে হবে?", a: "না। দোকানের নাম আর ধরন দিলেই দোকান সাজানো অবস্থায় তৈরি হয়। পরে Dashboard থেকে পণ্য, ছবি, দাম, ডেলিভারি চার্জ আর পেমেন্টের নম্বর বসাবেন।" },
+      { q: "আমার আগে থেকেই WooCommerce সাইট আছে, কাজে লাগবে?", a: "হ্যাঁ। Dashboard-এর Integrations থেকে আপনার WooCommerce দোকান যুক্ত করুন — প্রতিটা নতুন অর্ডার Automorai-তে চলে আসবে, সাথে ভুয়া অর্ডার যাচাই, Steadfast বুকিং আর WhatsApp/email খবর। সাইট বদলাতে হয় না।" },
       { q: "AI কি বাংলা বোঝে?", a: "হ্যাঁ। বাংলা, English আর Banglish (\"bhai dam koto\") — ক্রেতা যে ভাষায় লেখে সেই ভাষায় উত্তর দেয়। ভয়েস মেসেজ আর ছবিও বোঝে।" },
       { q: "পেমেন্ট কীভাবে করব?", a: "bKash বা Nagad-এ — Dashboard-এর \"Buy Package\" পাতা থেকে। ডলার কার্ড লাগে না।" },
       { q: "আমার পেজ ও তথ্য কি নিরাপদ?", a: "আপনার Facebook পেজের চাবি (token) তালাবদ্ধ (encrypted) অবস্থায় রাখা হয়। এক দোকানের তথ্য অন্য দোকান দেখতে পারে না। আপনার তথ্য আমরা কারো কাছে বিক্রি করি না।" },
@@ -140,13 +155,27 @@ const content = {
     replyDesc: "On Messenger and WhatsApp — \"price?\", \"in stock?\", \"delivery?\" — the AI answers in Bangla within 3 seconds, even at 2 AM. It understands photos and voice messages too.",
     replyPts: ["Messenger & WhatsApp", "Replies to Facebook comments", "All messages in one inbox", "Tells you when a buyer bargains"],
     mock: { shop: "Your shop", online: "Online now", q1: "How much is the black panjabi? Size M?", a1: "Yes, the black panjabi in M is in stock. 1,250 BDT, delivery in Dhaka 60 BDT.", q2: "Cash on delivery?", a2: "Yes, cash on delivery is available. bKash works too.", time: "2:14 AM" },
+    auto: {
+      tag: "New · the work after the sale is automatic too",
+      title: "Automorai also handles what happens after an order",
+      desc: "Sell on Facebook or on your own WooCommerce site — order checks, courier booking and buyer reminders, all from one Dashboard.",
+      cards: [
+        { i: "🛍️", t: "Connect your WooCommerce store", d: "Every order on your WooCommerce site comes into Automorai by itself. No need to change your site — just add a key." },
+        { i: "🛡️", t: "Catch fake orders early", d: "Next to each order: the buyer number's courier history — how many parcels they took and how many they returned." },
+        { i: "🚚", t: "1-click Steadfast booking", d: "Book the parcel on Steadfast straight from the order, with tracking code. No copying addresses." },
+        { i: "🛒", t: "Abandoned cart reminders", d: "If a buyer doesn't finish, they get an email reminder (WhatsApp too on the Big plan) — and you get notified." },
+        { i: "🔔", t: "Instant order alerts", d: "New order, price haggling or an abandoned cart — alerts go to your WhatsApp and email." },
+        { i: "📈", t: "Facebook Pixel, GA4, GTM", d: "Just paste the ID — product views, add to cart, checkout and purchase are sent automatically. Your ads work better." },
+      ],
+      cta: "Start free",
+    },
     priceTitle: "Simple pricing, no hidden costs",
     priceDesc: "Monthly — stop any time.",
     perMonth: "/month", popular: "Most popular", soon: "Coming soon",
     plans: [
       { key: "starter", name: "Starter", price: "৳990", desc: "For small shops", features: ["Small website — products & prices", "AI replies on Messenger", "\"Order on WhatsApp\" button", "Add your own Pixel"], cta: "Coming soon", href: "", soon: true },
-      { key: "business", name: "Business", price: "৳2,490", desc: "For shops selling online every day", features: ["Full online shop (cart, COD, bKash/Nagad)", "AI replies on WhatsApp & Messenger", "Up to 5,000 AI replies a month", "Sales graph & Sales Report", "All messages in one place", "We set up Pixel & Google Analytics"], cta: "Get started", href: "/signup", popular: true },
-      { key: "big", name: "Big", price: "৳4,990", desc: "Several pages or a bigger shop", features: ["Everything in Business", "Several Facebook pages", "WooCommerce store connection", "Fast priority support"], cta: "Contact on WhatsApp", href: waLink("I want to know about Automorai's Big package (4,990)"), external: true },
+      { key: "business", name: "Business", price: "৳2,490", desc: "For shops selling online every day", features: ["Full online shop (cart, COD, bKash/Nagad)", "AI replies on WhatsApp & Messenger", "Up to 5,000 AI replies a month", "Sales graph & Sales Report", "All messages in one place", "Steadfast booking & fake-order check", "Abandoned cart emails to buyers", "Pixel, GA4 & GTM"], cta: "Get started", href: "/signup", popular: true },
+      { key: "big", name: "Big", price: "৳4,990", desc: "Several pages or a bigger shop", features: ["Everything in Business", "Several Facebook pages", "WooCommerce store connection", "Abandoned cart WhatsApp to buyers", "Fast priority support"], cta: "Contact on WhatsApp", href: waLink("I want to know about Automorai's Big package (4,990)"), external: true },
     ] as Plan[],
     tender: {
       tag: "For eGP tender contractors", title: "Tender System",
@@ -158,6 +187,7 @@ const content = {
     faqTitle: "Questions",
     faqs: [
       { q: "Do I need to know coding or design?", a: "No. Give your shop's name and type and a ready shop is made. Then add products, photos, prices, delivery charge and payment numbers from the Dashboard." },
+      { q: "I already have a WooCommerce site. Can I use it?", a: "Yes. Connect your WooCommerce store from Dashboard → Integrations — every new order comes into Automorai with a fake-order check, Steadfast booking and WhatsApp/email alerts. No need to change your site." },
       { q: "Does the AI understand Bangla?", a: "Yes. Bangla, English and Banglish (\"bhai dam koto\") — it replies in the buyer's language. It understands voice messages and photos too." },
       { q: "How do I pay?", a: "bKash or Nagad, from the Dashboard's \"Buy Package\" page. No dollar card needed." },
       { q: "Are my page and data safe?", a: "Your Facebook page key (token) is stored encrypted. One shop can never see another shop's data. We never sell your data." },
@@ -542,6 +572,30 @@ const Index = () => {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* After-the-sale automation — every card is a live feature (Woo connect, courier phone-check, Steadfast booking,
+          abandoned-cart email/WA, owner alerts, Pixel/GA4/GTM) as of 2026-11-21 */}
+      <section className="bg-[#0b1530] text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+          <div className="max-w-3xl mb-10" data-reveal>
+            <span className="inline-block text-[15px] font-bold text-sky-200 bg-sky-500/15 border border-sky-400/30 rounded-full px-3.5 py-1 mb-5">{t.auto.tag}</span>
+            <h2 className="text-[2.2rem] leading-tight sm:text-5xl mb-4">{t.auto.title}</h2>
+            <p className="text-[1.15rem] sm:text-xl text-slate-300 leading-relaxed">{t.auto.desc}</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {t.auto.cards.map((c, i) => (
+              <div key={c.t} data-reveal data-d={String(i % 3)} className="rounded-2xl bg-white/[0.06] border border-white/10 p-5">
+                <div className="text-3xl mb-3">{c.i}</div>
+                <div className="font-bold text-[1.15rem] mb-1.5">{c.t}</div>
+                <div className="text-slate-300 text-[1rem] leading-relaxed">{c.d}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10" data-reveal>
+            <Link to="/signup" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-lg rounded-xl px-6 py-3.5">{t.auto.cta}</Link>
           </div>
         </div>
       </section>
