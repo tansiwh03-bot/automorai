@@ -66,6 +66,9 @@ interface WebsiteSettings {
   return_policy: string;
   shop_address: string;
   shop_hours: string;
+  fb_pixel_id: string;
+  ga_id: string;
+  gtm_id: string;
 }
 interface WebsiteForm {
   business_name: string; niche: string; whatsapp_number: string; accent_color: string;
@@ -234,6 +237,9 @@ const Dashboard = () => {
     return_policy: '',
     shop_address: '',
     shop_hours: '',
+    fb_pixel_id: '',
+    ga_id: '',
+    gtm_id: '',
   };
   const [showSettings,     setShowSettings]     = useState(false);
   const [websiteSettings,  setWebsiteSettings]  = useState<WebsiteSettings>(emptySettings);
@@ -966,7 +972,12 @@ const Dashboard = () => {
     window.location.href = fbURL;
   };
   const handleWhatsAppConnect = () => { window.location.href = '/connect-whatsapp'; };
-    const handlePixelGAConnect  = () => { window.location.href = '/connect-pixel-ga'; };
+    // Own website → self-serve IDs in Settings (applied live, no rebuild). No website yet → old request form.
+    const handlePixelGAConnect  = () => {
+      if (!currentSiteId) { window.location.href = '/connect-pixel-ga'; return; }
+      setActiveTab('website'); setShowSettings(true);
+      setTimeout(() => document.getElementById('amr-tracking')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 700);
+    };
 
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
     if (type === 'comment') setCommentReply(value); else setMessengerReply(value);
@@ -1037,7 +1048,7 @@ const Dashboard = () => {
 
   // Shown only inside the sandboxed preview: orders/chat are refused server-side for drafts anyway,
   // this just tells the owner why instead of looking broken.
-  const PREVIEW_GUARD = '<script>(function(){var f=window.fetch;window.fetch=function(u,o){var s=String(u||"");'
+  const PREVIEW_GUARD = '<script>window.__AMR_PREVIEW=true;(function(){var f=window.fetch;window.fetch=function(u,o){var s=String(u||"");'
     + 'if(s.indexOf("/new-order")>-1){alert("Preview mode: orders start working once your website is live.");'
     + 'return Promise.resolve(new Response(JSON.stringify({success:false}),{headers:{"Content-Type":"application/json"}}));}'
     + 'if(s.indexOf("/storefront-chat")>-1){return Promise.resolve(new Response(JSON.stringify({reply:"Preview mode: chat works once the website is live."}),{headers:{"Content-Type":"application/json"}}));}'
@@ -2069,6 +2080,34 @@ const Dashboard = () => {
                             </button>
                           )}
                           {courierError && <p style={{ fontSize: '0.8rem', color: '#c44d4d', marginTop: '6px', textAlign: 'center' }}>{courierError}</p>}
+                        </div>
+
+                        {/* ── Marketing tracking (Meta Pixel / GA4 / GTM) ── */}
+                        <div id="amr-tracking" style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
+                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Pixel &amp; Analytics</p>
+                          <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
+                            Paste only the ID. Your website then sends page views, product views, add-to-cart, checkout and purchases automatically. Works right after you save — no rebuild needed. Leave blank if you don't use it.
+                          </p>
+                          <FormField label="Meta (Facebook) Pixel ID">
+                            <input type="text" inputMode="numeric" placeholder="e.g. 123456789012345" value={websiteSettings.fb_pixel_id}
+                              onChange={e => handleSettingsChange('fb_pixel_id', e.target.value.replace(/[^0-9]/g, ''))} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Google Analytics 4 Measurement ID">
+                            <input type="text" placeholder="e.g. G-AB12CD34EF" value={websiteSettings.ga_id}
+                              onChange={e => handleSettingsChange('ga_id', e.target.value.trim().toUpperCase())} style={inputStyle} />
+                          </FormField>
+                          <FormField label="Google Tag Manager Container ID">
+                            <input type="text" placeholder="e.g. GTM-AB12CD3" value={websiteSettings.gtm_id}
+                              onChange={e => handleSettingsChange('gtm_id', e.target.value.trim().toUpperCase())} style={inputStyle} />
+                          </FormField>
+                          {((websiteSettings.fb_pixel_id && !/^[0-9]{6,20}$/.test(websiteSettings.fb_pixel_id)) ||
+                            (websiteSettings.ga_id && !/^G-[A-Z0-9]{4,15}$/.test(websiteSettings.ga_id)) ||
+                            (websiteSettings.gtm_id && !/^GTM-[A-Z0-9]{4,12}$/.test(websiteSettings.gtm_id))) && (
+                            <p style={{ fontSize: '0.78rem', color: '#c44d4d', margin: '4px 0 0' }}>
+                              One of the IDs doesn't look right. Pixel ID = numbers only, GA4 starts with G-, GTM starts with GTM-. Wrong IDs are ignored.
+                            </p>
+                          )}
+                          <p style={{ fontSize: '0.76rem', color: '#718096', margin: '8px 0 0' }}>Tip: if you use GTM, add Pixel/GA4 inside GTM and leave those two fields blank, so events are not counted twice.</p>
                         </div>
 
                         {/* ── Shop Info (used by the chat assistant) ── */}
