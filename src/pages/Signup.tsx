@@ -46,6 +46,7 @@ export default function Signup() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="pb-6">
+          <a href="/" className="text-sm text-muted-foreground hover:underline mb-2 inline-block">← Back to home</a>
           <CardTitle className="text-2xl">Create Account</CardTitle>
         </CardHeader>
         <CardContent>

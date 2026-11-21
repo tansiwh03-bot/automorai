@@ -105,15 +105,15 @@ export default function Login() {
         background: 'radial-gradient(60% 55% at 80% 15%, #1b57a6aa, transparent 60%), linear-gradient(140deg, #07122a, #0d2550 55%, #0a2a66)',
         padding: '56px 52px', flexDirection: 'column', justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '11px', fontWeight: 800, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
+        <a href="/" title="Back to home" style={{ display: 'flex', alignItems: 'center', gap: '11px', fontWeight: 800, fontSize: '1.4rem', letterSpacing: '-0.02em', color: '#fff', textDecoration: 'none' }}>
           <span style={{ width: '38px', height: '38px', borderRadius: '11px', background: 'linear-gradient(135deg,#19c6ea,#2563eb)', display: 'grid', placeItems: 'center', boxShadow: '0 8px 22px -6px #2563eb' }}>
             <svg viewBox="0 0 24 24" fill="none" style={{ width: '22px', height: '22px' }}>
               <path d="M5 18V9a7 7 0 0 1 14 0v9" stroke="#fff" strokeWidth="2.1" strokeLinecap="round" />
               <path d="M12 13l1.3 2.5 2.7.4-2 1.9.5 2.7L12 19.6 9.5 20.9l.5-2.7-2-1.9 2.7-.4z" fill="#fff" />
             </svg>
           </span>
-          Automor<span style={{ background: 'linear-gradient(90deg,#19c6ea,#8fd3ff)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>ai</span>
-        </div>
+          <span>Automor<span style={{ background: 'linear-gradient(90deg,#19c6ea,#8fd3ff)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>ai</span></span>
+        </a>
 
         <div>
           <h1 style={{ fontSize: '2.15rem', lineHeight: 1.15, fontWeight: 800, letterSpacing: '-0.01em', margin: '0 0 18px' }}>
@@ -138,15 +138,16 @@ export default function Login() {
       <div style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
         <div style={{ width: '100%', maxWidth: '400px' }}>
           {/* mobile logo */}
-          <div className="login-mobilelogo" style={{ display: 'none', alignItems: 'center', gap: '10px', fontWeight: 800, fontSize: '1.3rem', color: '#0f1c35', marginBottom: '28px', justifyContent: 'center' }}>
+          <a href="/" className="login-mobilelogo" style={{ display: 'none', alignItems: 'center', gap: '10px', fontWeight: 800, fontSize: '1.3rem', color: '#0f1c35', marginBottom: '28px', justifyContent: 'center', textDecoration: 'none' }}>
             <span style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'linear-gradient(135deg,#19c6ea,#2563eb)', display: 'grid', placeItems: 'center' }}>
               <svg viewBox="0 0 24 24" fill="none" style={{ width: '20px', height: '20px' }}>
                 <path d="M5 18V9a7 7 0 0 1 14 0v9" stroke="#fff" strokeWidth="2.1" strokeLinecap="round" />
               </svg>
             </span>
-            Automor<span style={{ color: '#2563eb' }}>ai</span>
-          </div>
+            <span>Automor<span style={{ color: '#2563eb' }}>ai</span></span>
+          </a>
 
+          <a href="/" style={{ display: 'inline-block', color: '#5e6d88', fontSize: '0.88rem', textDecoration: 'none', marginBottom: '18px' }}>← Back to home</a>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f1c35', margin: '0 0 6px', letterSpacing: '-0.01em' }}>Welcome back</h2>
           <p style={{ color: '#5e6d88', fontSize: '0.92rem', margin: '0 0 26px' }}>Log in to your Automorai dashboard.</p>
 
