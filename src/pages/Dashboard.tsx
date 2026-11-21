@@ -168,6 +168,46 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
+// ── "Install app" button (PWA). Hidden when already opened as an installed app. ──
+function InstallAppButton() {
+  const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true);
+  const [canPrompt, setCanPrompt] = useState<boolean>(() => typeof window !== 'undefined' && !!(window as any).__amrInstallPrompt);
+  const [showHelp, setShowHelp] = useState(false);
+  useEffect(() => {
+    const on = () => setCanPrompt(!!(window as any).__amrInstallPrompt);
+    window.addEventListener('amr-install-ready', on);
+    return () => window.removeEventListener('amr-install-ready', on);
+  }, []);
+  if (isStandalone) return null;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const onClick = async () => {
+    const ev = (window as any).__amrInstallPrompt;
+    if (ev) {
+      ev.prompt();
+      try { await ev.userChoice; } catch {}
+      (window as any).__amrInstallPrompt = null; setCanPrompt(false);
+    } else {
+      setShowHelp(v => !v);
+    }
+  };
+  return (
+    <div style={{ marginBottom: '10px' }}>
+      <button onClick={onClick} style={{ width: '100%', padding: '9px', background: 'linear-gradient(110deg,#19c6ea,#2563eb)', color: '#fff',
+        border: 'none', borderRadius: '9px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+        📲 Install app{canPrompt ? '' : ' on your phone'}
+      </button>
+      {showHelp && (
+        <div style={{ marginTop: '8px', background: '#ffffff14', border: '1px solid #ffffff2e', borderRadius: '9px', padding: '10px', fontSize: '0.74rem', color: '#dce8ff', lineHeight: 1.5 }}>
+          {isIOS
+            ? <>iPhone: open automorai.com in <b>Safari</b> → tap <b>Share</b> (□↑) → <b>Add to Home Screen</b>.</>
+            : <>Android: open automorai.com in <b>Chrome</b> → tap <b>⋮</b> (top right) → <b>Install app</b> or <b>Add to Home screen</b>.</>}
+          <div style={{ marginTop: '6px', color: '#a9bee5' }}>The Automorai icon will appear on your phone and open your dashboard directly.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'courier' | 'customers' | 'assistant' | 'marketing' | 'automations' | 'integrations' | 'settings' | 'billing' | 'reports'>('home');
@@ -1268,6 +1308,7 @@ const Dashboard = () => {
         </div>
         <div style={{ padding: '14px 18px', borderTop: '1px solid #ffffff20' }}>
           <div style={{ color: '#26c9ef', fontSize: '0.72rem', fontWeight: 600, marginBottom: '8px' }}>● All systems operational</div>
+          <InstallAppButton />
           <div style={{ color: '#a9bee5', fontSize: '0.72rem', marginBottom: '10px', wordBreak: 'break-all' }}>{user.email}</div>
           <button onClick={logout} style={{ width: '100%', padding: '9px', background: '#ffffff12',
             color: '#dce8ff', border: '1px solid #ffffff2e', borderRadius: '9px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>

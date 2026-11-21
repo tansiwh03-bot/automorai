@@ -10,6 +10,16 @@ if (typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
 }
 
+// "Install app" (PWA): keep Chrome's install prompt so the Dashboard can show its own button.
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    (window as any).__amrInstallPrompt = e;
+    window.dispatchEvent(new Event('amr-install-ready'));
+  });
+  window.addEventListener('appinstalled', () => { (window as any).__amrInstallPrompt = null; window.dispatchEvent(new Event('amr-install-ready')); });
+}
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
