@@ -7,12 +7,12 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ConnectWhatsApp from './pages/ConnectWhatsApp';
-import ConnectTender from './pages/ConnectTender';
 import ConnectPixelGA from './pages/ConnectPixelGA';
 import BuyPackage from './pages/BuyPackage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import TenderTrial from './pages/TenderTrial';
-import TenderGuide from './pages/TenderGuide';
+
+// Tender moved to its own site (tendermasterbd.com, user 2026-11-21) — old links redirect there.
+const ToTenderMaster = () => { window.location.replace('https://tendermasterbd.com'); return null; };
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -41,8 +41,9 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/tender-trial" element={<TenderTrial />} />
-      <Route path="/tender-guide" element={<TenderGuide />} />
+      <Route path="/tender-trial" element={<ToTenderMaster />} />
+      <Route path="/tender-guide" element={<ToTenderMaster />} />
+      <Route path="/connect-tender" element={<ToTenderMaster />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <Signup />} />
       <Route path="/dashboard" element={
@@ -53,11 +54,6 @@ const AppRoutes = () => {
       <Route path="/connect-whatsapp" element={
         <ProtectedRoute>
           <ConnectWhatsApp />
-        </ProtectedRoute>
-      } />
-                        <Route path="/connect-tender" element={
-        <ProtectedRoute>
-          <ConnectTender />
         </ProtectedRoute>
       } />
       <Route path="/connect-pixel-ga" element={

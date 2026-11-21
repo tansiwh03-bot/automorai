@@ -9,11 +9,6 @@ const PAYMENT_REQUEST_API = 'https://n8n2.kingpurefood.com/webhook/automorai/pac
 const BKASH_NAGAD_NUMBER = '01674610578';
 
 const PACKAGE_INFO: Record<string, { name: string; amount: number; note: string }> = {
-  tender: {
-    name: 'Tender Automation',
-    amount: 20000,
-    note: 'Installation charge (covers the first month). From the 2nd month, ৳5,000/month.',
-  },
   automation: {
     name: 'Automation — Business (Online shop + WhatsApp + Messenger AI + Inbox + Pixel/Analytics)',
     amount: 2490,
@@ -30,8 +25,7 @@ const getAuthHeader = async (): Promise<Record<string, string>> => {
 const BuyPackage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const params = new URLSearchParams(window.location.search);
-  const pkg = params.get('package') === 'automation' ? 'automation' : 'tender';
+  const pkg = 'automation'; // only package sold on Automorai (Tender → tendermasterbd.com)
   const info = PACKAGE_INFO[pkg];
 
   const [businessName, setBusinessName] = useState('');

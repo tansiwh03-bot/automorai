@@ -966,7 +966,6 @@ const Dashboard = () => {
     window.location.href = fbURL;
   };
   const handleWhatsAppConnect = () => { window.location.href = '/connect-whatsapp'; };
-  const handleTenderConnect   = () => { window.location.href = '/connect-tender'; };
     const handlePixelGAConnect  = () => { window.location.href = '/connect-pixel-ga'; };
 
   const handleToggleChange = (type: 'comment' | 'messenger', value: boolean) => {
@@ -1591,15 +1590,6 @@ const Dashboard = () => {
               <TaskCard icon="💬" title="Connect WhatsApp Business"
                 desc="Buy the Automation package to unlock Facebook, WhatsApp, and Pixel/Analytics."
                 action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=automation'; } }} />
-            )}
-            {packages.includes('tender') ? (
-              <TaskCard icon="📋" title="Connect Tender Automation"
-                desc="Enable automatic tender-related notifications."
-                action={{ label: 'Connect', onClick: handleTenderConnect }} />
-            ) : (
-              <TaskCard icon="📋" title="Tender Automation"
-                desc="Separate package — ৳20,000 installation (covers 1st month), then ৳5,000/month."
-                action={{ label: 'Buy Package', onClick: () => { window.location.href = '/buy-package?package=tender'; } }} />
             )}
             {packages.includes('automation') ? (
               <TaskCard icon="📊" title="Pixel and Analytics Setup"
@@ -2669,7 +2659,6 @@ const Dashboard = () => {
           {(() => {
             const plans = [
               { key: 'automation', name: 'Automation', price: '৳2,490 / month', desc: 'Website, Facebook, Messenger, WhatsApp, Inbox, Orders, Courier, Analytics.' },
-              { key: 'tender', name: 'Tender', price: '৳20,000 setup + ৳5,000 / month', desc: 'Automatic tender alerts & setup (separate package).' },
             ];
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: '16px' }}>
