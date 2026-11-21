@@ -85,6 +85,7 @@ interface Order {
   payment_method: string; transaction_id: string; status: string;
   delivery_location: string; delivery_charge: number;
   created_at: string;
+  source?: string; woo_order_id?: string;
 }
 
 // ─── UI Helpers & Styles ──────────────────────────────────────────────────────
@@ -168,6 +169,85 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
+// ── WooCommerce connection card (Integrations tab). Backend: n8n "Automorai - WooCommerce". ──
+const WOO_API = 'https://n8n2.kingpurefood.com/webhook/automorai/woo';
+function WooCommerceCard({ siteId, hasPkg, onOpenWebsite, onOpenOrders }: { siteId: string; hasPkg: boolean; onOpenWebsite: () => void; onOpenOrders: () => void }) {
+  const [st, setSt] = useState<{ connected: boolean; store_url: string; last_order_at: string } | null>(null);
+  const [form, setForm] = useState({ store_url: '', consumer_key: '', consumer_secret: '' });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [open, setOpen] = useState(false);
+  const load = async () => {
+    if (!siteId) return;
+    try {
+      const r = await fetch(`${WOO_API}/status?business_slug=${encodeURIComponent(siteId)}`, { headers: await getAuthHeader() });
+      const d = await r.json(); if (d.success) setSt(d);
+    } catch {}
+  };
+  useEffect(() => { load(); }, [siteId]);
+  const connect = async () => {
+    setErr(''); setBusy(true);
+    try {
+      const r = await fetch(`${WOO_API}/connect`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({ business_slug: siteId, ...form }) });
+      const d = await r.json().catch(() => ({}));
+      if (d.error_code === 'no_package') { window.location.href = '/buy-package?package=automation'; return; }
+      if (!d.success) setErr(d.error || 'Could not connect. Please try again.');
+      else { setForm({ store_url: '', consumer_key: '', consumer_secret: '' }); setOpen(false); await load(); }
+    } catch { setErr('Network error. Please try again.'); }
+    setBusy(false);
+  };
+  const disconnect = async () => {
+    if (!confirm('Disconnect your WooCommerce store? New Woo orders will stop coming to Automorai.')) return;
+    setBusy(true);
+    try { await fetch(`${WOO_API}/disconnect`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) }, body: JSON.stringify({ business_slug: siteId }) }); await load(); } catch {}
+    setBusy(false);
+  };
+  const box: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1px solid #dbe3f0', borderRadius: '9px', fontSize: '0.86rem', boxSizing: 'border-box', marginBottom: '8px' };
+  return (
+    <div className="amr-card" style={{ marginBottom: '14px', border: '1.5px solid #e9d5ff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f3e8ff', color: '#7c3aed', display: 'grid', placeItems: 'center', fontSize: '15px', fontWeight: 900, flex: 'none' }}>Woo</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#12284c' }}>WooCommerce store <span style={{ background: '#2563eb', color: '#fff', borderRadius: '6px', padding: '1px 6px', fontSize: '0.62rem', marginLeft: '4px' }}>NEW</span></div>
+          <div style={{ color: '#718096', fontSize: '0.76rem' }}>Every WooCommerce order comes into Automorai — fraud check, 1-click Steadfast booking, WhatsApp &amp; email alerts.</div>
+        </div>
+        {st?.connected
+          ? <span className="amr-pill delivered" style={{ flex: 'none' }}>✓ Connected</span>
+          : !siteId ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={onOpenWebsite}>Create workspace</button>
+          : !hasPkg ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => { window.location.href = '/buy-package?package=automation'; }}>Buy Package</button>
+          : <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => setOpen(v => !v)}>{open ? 'Close' : 'Connect'}</button>}
+      </div>
+      {!siteId && <p style={{ fontSize: '0.76rem', color: '#718096', margin: '10px 0 0' }}>First create your free Automorai website from the Website tab — it becomes your workspace where Woo orders appear.</p>}
+      {st?.connected && (
+        <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#344256', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+          <span>Store: <b>{st.store_url.replace(/^https?:\/\//, '')}</b></span>
+          <span style={{ color: '#718096' }}>Last order: {st.last_order_at ? new Date(st.last_order_at).toLocaleString('en-GB') : 'waiting for the first order'}</span>
+          <button onClick={onOpenOrders} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 700, cursor: 'pointer', padding: 0 }}>View orders →</button>
+          <button onClick={disconnect} disabled={busy} style={{ marginLeft: 'auto', background: 'none', border: '1px solid #f1c4c4', color: '#c44d4d', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.75rem' }}>Disconnect</button>
+        </div>
+      )}
+      {open && !st?.connected && siteId && hasPkg && (
+        <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '16px' }}>
+          <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '0.78rem', color: '#344256', lineHeight: 1.6 }}>
+            <li>Open your WordPress admin → <b>WooCommerce → Settings → Advanced → REST API</b>.</li>
+            <li>Click <b>Add key</b>. Description: <i>Automorai</i>, Permissions: <b>Read/Write</b> → <b>Generate API key</b>.</li>
+            <li>Copy the <b>Consumer key</b> and <b>Consumer secret</b> here and press Connect.</li>
+            <li style={{ color: '#718096' }}>We create one order webhook in your store. Your keys are stored encrypted. Disconnect any time.</li>
+          </ol>
+          <div>
+            <input style={box} placeholder="Store address, e.g. https://myshop.com" value={form.store_url} onChange={e => setForm({ ...form, store_url: e.target.value })} />
+            <input style={box} placeholder="Consumer key (ck_...)" value={form.consumer_key} onChange={e => setForm({ ...form, consumer_key: e.target.value.trim() })} />
+            <input style={box} type="password" placeholder="Consumer secret (cs_...)" value={form.consumer_secret} onChange={e => setForm({ ...form, consumer_secret: e.target.value.trim() })} />
+            {err && <p style={{ color: '#c44d4d', fontSize: '0.78rem', margin: '0 0 8px' }}>{err}</p>}
+            <button className="amr-btn" style={{ width: '100%' }} disabled={busy || !form.store_url || !form.consumer_key || !form.consumer_secret} onClick={connect}>{busy ? 'Connecting…' : 'Connect WooCommerce'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── "Install app" button (PWA). Hidden when already opened as an installed app. ──
 function InstallAppButton() {
   const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true);
@@ -1271,7 +1351,7 @@ const Dashboard = () => {
         <div style={{ padding: '22px 18px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 800, fontSize: '1.2rem', color: '#fff', letterSpacing: '.2px' }}>
             <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg,#2563eb,#16b8e8)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, boxShadow: '0 5px 15px #07183e' }}>A</span>
-            Automor<span style={{ color: '#26c9ef' }}>ai</span>
+            <span>Automor<span style={{ color: '#26c9ef' }}>ai</span></span>
           </span>
           <button className="amr-sidebar-close" onClick={() => setSidebarOpen(false)} style={{
             display: 'none', background: 'transparent', border: 'none', color: '#9db9ee', fontSize: '1.3rem', cursor: 'pointer',
@@ -1330,7 +1410,7 @@ const Dashboard = () => {
           }}>☰</button>
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '1.1rem', color: '#12284c' }}>
             <span style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg,#2563eb,#16b8e8)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, fontSize: '0.9rem' }}>A</span>
-            Automor<span style={{ color: '#2563eb' }}>ai</span>
+            <span>Automor<span style={{ color: '#2563eb' }}>ai</span></span>
           </span>
         </div>
 
@@ -2702,6 +2782,7 @@ const Dashboard = () => {
           <div className="amr-eyebrow">Connected services</div>
           <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Integrations</h2>
           <p className="amr-sub" style={{ margin: '0 0 18px' }}>Connect your store to messaging, marketing and delivery platforms.</p>
+          <WooCommerceCard siteId={currentSiteId} hasPkg={packages.includes('automation')} onOpenWebsite={() => setActiveTab('website')} onOpenOrders={() => setActiveTab('orders')} />
           {(() => {
             const hasPkg = packages.includes('automation');
             const rows = [
@@ -2709,7 +2790,7 @@ const Dashboard = () => {
               { icon: '💬', name: 'WhatsApp Business', desc: 'Chat with customers and show products on WhatsApp.', connected: !!waPageId, action: hasPkg ? handleWhatsAppConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Connect' : 'Buy Package' },
               { icon: '📊', name: 'Meta Pixel & Google Analytics', desc: 'Track visitors, add-to-cart and purchases.', connected: false, action: hasPkg ? handlePixelGAConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Set up' : 'Buy Package' },
               { icon: '🚚', name: 'Steadfast Courier', desc: 'Book parcels and check delivery / fraud history.', connected: courierConfigured.steadfast, action: () => { setActiveTab('website'); setShowSettings(true); }, label: 'Configure' },
-              { icon: '➤', name: 'Pathao Courier', desc: 'Book parcels across 64 districts.', connected: courierConfigured.pathao, action: () => { setActiveTab('website'); setShowSettings(true); }, label: 'Configure' },
+              { icon: '➤', name: 'Pathao Courier', desc: 'Parcel booking with Pathao — coming soon. Steadfast works today.', connected: false, soon: true, action: () => {}, label: 'Coming soon' },
             ];
             return (
               <div style={{ display: 'grid', gap: '12px' }}>
@@ -2722,6 +2803,7 @@ const Dashboard = () => {
                     </div>
                     {r.connected
                       ? <span className="amr-pill delivered" style={{ flex: 'none' }}>✓ Connected</span>
+                      : (r as any).soon ? <span className="amr-pill pending" style={{ flex: 'none' }}>Coming soon</span>
                       : <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={r.action}>{r.label}</button>}
                   </div>
                 ))}
@@ -2932,7 +3014,10 @@ const Dashboard = () => {
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div style={{ fontWeight: 600 }}>{o.product_title}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#718096' }}>{o.selected_size} {o.selected_color} (x{o.quantity})</div>
+                        <div style={{ fontSize: '0.75rem', color: '#718096' }}>{o.selected_size} {o.selected_color} (x{o.quantity})
+                          {o.source === 'woocommerce' && <span title={o.woo_order_id ? `WooCommerce order #${o.woo_order_id}` : 'WooCommerce order'} style={{ marginLeft: '6px', background: '#f3e8ff', color: '#7c3aed', borderRadius: '6px', padding: '1px 6px', fontSize: '0.68rem', fontWeight: 700 }}>WooCommerce{o.woo_order_id ? ` #${o.woo_order_id}` : ''}</span>}
+                          {o.source === 'manual' && <span style={{ marginLeft: '6px', background: '#eef2f8', color: '#5e6d88', borderRadius: '6px', padding: '1px 6px', fontSize: '0.68rem', fontWeight: 700 }}>Manual</span>}
+                        </div>
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div>{o.customer_name}</div>
