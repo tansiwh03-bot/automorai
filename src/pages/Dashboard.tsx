@@ -171,7 +171,7 @@ const PlatformBadge = ({ platform }: { platform: string }) => {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 // ── WooCommerce connection card (Integrations tab). Backend: n8n "Automorai - WooCommerce". ──
 const WOO_API = 'https://n8n2.kingpurefood.com/webhook/automorai/woo';
-function WooCommerceCard({ siteId, hasPkg, onOpenWebsite, onOpenOrders }: { siteId: string; hasPkg: boolean; onOpenWebsite: () => void; onOpenOrders: () => void }) {
+function WooCommerceCard({ siteId, hasPkg, isBig, onOpenWebsite, onOpenOrders }: { siteId: string; hasPkg: boolean; isBig: boolean; onOpenWebsite: () => void; onOpenOrders: () => void }) {
   const [st, setSt] = useState<{ connected: boolean; store_url: string; last_order_at: string } | null>(null);
   const [form, setForm] = useState({ store_url: '', consumer_key: '', consumer_secret: '' });
   const [busy, setBusy] = useState(false);
@@ -191,7 +191,8 @@ function WooCommerceCard({ siteId, hasPkg, onOpenWebsite, onOpenOrders }: { site
       const r = await fetch(`${WOO_API}/connect`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({ business_slug: siteId, ...form }) });
       const d = await r.json().catch(() => ({}));
-      if (d.error_code === 'no_package') { window.location.href = '/buy-package?package=automation'; return; }
+      if (d.error_code === 'no_package') { window.location.href = '/buy-package?package=automation&plan=big'; return; }
+      if (d.error_code === 'need_big') { window.location.href = '/buy-package?package=automation&plan=big'; return; }
       if (!d.success) setErr(d.error || 'Could not connect. Please try again.');
       else { setForm({ store_url: '', consumer_key: '', consumer_secret: '' }); setOpen(false); await load(); }
     } catch { setErr('Network error. Please try again.'); }
@@ -215,9 +216,11 @@ function WooCommerceCard({ siteId, hasPkg, onOpenWebsite, onOpenOrders }: { site
         {st?.connected
           ? <span className="amr-pill delivered" style={{ flex: 'none' }}>✓ Connected</span>
           : !siteId ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={onOpenWebsite}>Create workspace</button>
-          : !hasPkg ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => { window.location.href = '/buy-package?package=automation'; }}>Buy Package</button>
+          : !hasPkg ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => { window.location.href = '/buy-package?package=automation&plan=big'; }}>Buy Big plan</button>
+          : !isBig ? <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => { window.location.href = '/buy-package?package=automation&plan=big'; }}>Upgrade to Big</button>
           : <button className="amr-btn" style={{ flex: 'none', whiteSpace: 'nowrap' }} onClick={() => setOpen(v => !v)}>{open ? 'Close' : 'Connect'}</button>}
       </div>
+      {siteId && !st?.connected && !isBig && <p style={{ fontSize: '0.76rem', color: '#718096', margin: '10px 0 0' }}>WooCommerce connection is part of the Big plan (৳4,990/month).</p>}
       {!siteId && <p style={{ fontSize: '0.76rem', color: '#718096', margin: '10px 0 0' }}>First create your free Automorai website from the Website tab — it becomes your workspace where Woo orders appear.</p>}
       {st?.connected && (
         <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#344256', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
@@ -227,7 +230,7 @@ function WooCommerceCard({ siteId, hasPkg, onOpenWebsite, onOpenOrders }: { site
           <button onClick={disconnect} disabled={busy} style={{ marginLeft: 'auto', background: 'none', border: '1px solid #f1c4c4', color: '#c44d4d', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.75rem' }}>Disconnect</button>
         </div>
       )}
-      {open && !st?.connected && siteId && hasPkg && (
+      {open && !st?.connected && siteId && hasPkg && isBig && (
         <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '16px' }}>
           <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '0.78rem', color: '#344256', lineHeight: 1.6 }}>
             <li>Open your WordPress admin → <b>WooCommerce → Settings → Advanced → REST API</b>.</li>
@@ -295,6 +298,9 @@ const Dashboard = () => {
   const [aiInput, setAiInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
+  // Plan tier from the server: 'starter' | 'business' | 'big' ('' = no package). paidUntil = ISO date the plan runs until.
+  const [planTier, setPlanTier] = useState<string>('');
+  const [paidUntil, setPaidUntil] = useState<string>('');
 
   // Home state
   const [commentReply,   setCommentReply]   = useState(true);
@@ -442,7 +448,7 @@ const Dashboard = () => {
     if (!user?.email) return;
     getAuthHeader().then(headers => fetch(MY_PACKAGE_API, { headers }))
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data.packages)) setPackages(data.packages); })
+      .then(data => { if (Array.isArray(data.packages)) setPackages(data.packages); setPlanTier(data.tier || ''); setPaidUntil(data.paid_until || ''); })
       .catch(() => {});
   }, [user]);
 
@@ -2690,7 +2696,7 @@ const Dashboard = () => {
               { icon: '📊', name: 'Meta Pixel', desc: 'Track page views, add-to-cart and purchases on Facebook.', soon: false },
               { icon: 'G', name: 'Google Analytics 4', desc: 'Measure website traffic and conversions.', soon: false },
               { icon: '◉', name: 'Meta Conversions API', desc: 'Server-side purchase tracking (deduplicated).', soon: true },
-              { icon: '🏷️', name: 'Google Tag Manager', desc: 'Manage all your marketing tags in one place.', soon: true },
+              { icon: '🏷️', name: 'Google Tag Manager', desc: 'Manage all your marketing tags in one place (Business & Big).', soon: false },
             ];
             return (
               <div style={{ display: 'grid', gap: '12px' }}>
@@ -2782,15 +2788,17 @@ const Dashboard = () => {
           <div className="amr-eyebrow">Connected services</div>
           <h2 style={{ color: '#12284c', margin: '2px 0 4px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Integrations</h2>
           <p className="amr-sub" style={{ margin: '0 0 18px' }}>Connect your store to messaging, marketing and delivery platforms.</p>
-          <WooCommerceCard siteId={currentSiteId} hasPkg={packages.includes('automation')} onOpenWebsite={() => setActiveTab('website')} onOpenOrders={() => setActiveTab('orders')} />
+          <WooCommerceCard siteId={currentSiteId} hasPkg={packages.includes('automation')} isBig={planTier === 'big'} onOpenWebsite={() => setActiveTab('website')} onOpenOrders={() => setActiveTab('orders')} />
           {(() => {
             const hasPkg = packages.includes('automation');
+            const proOk = hasPkg && planTier !== 'starter'; // AI replies + courier API start from Business
+            const upgrade = () => { window.location.href = '/buy-package?package=automation&plan=business'; };
             const rows = [
-              { icon: '📘', name: 'Facebook & Messenger', desc: 'Auto-reply to page comments and Messenger.', connected: !!connectedPage, action: hasPkg ? handleFacebookConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Connect' : 'Buy Package' },
-              { icon: '💬', name: 'WhatsApp Business', desc: 'Chat with customers and show products on WhatsApp.', connected: !!waPageId, action: hasPkg ? handleWhatsAppConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Connect' : 'Buy Package' },
+              { icon: '📘', name: 'Facebook & Messenger', desc: 'Auto-reply to page comments and Messenger.', connected: !!connectedPage, action: proOk ? handleFacebookConnect : hasPkg ? upgrade : () => { window.location.href = '/buy-package?package=automation'; }, label: proOk ? 'Connect' : hasPkg ? 'Upgrade to Business' : 'Buy Package' },
+              { icon: '💬', name: 'WhatsApp Business', desc: 'Chat with customers and show products on WhatsApp.', connected: !!waPageId, action: proOk ? handleWhatsAppConnect : hasPkg ? upgrade : () => { window.location.href = '/buy-package?package=automation'; }, label: proOk ? 'Connect' : hasPkg ? 'Upgrade to Business' : 'Buy Package' },
               { icon: '📊', name: 'Meta Pixel & Google Analytics', desc: 'Track visitors, add-to-cart and purchases.', connected: false, action: hasPkg ? handlePixelGAConnect : () => { window.location.href = '/buy-package?package=automation'; }, label: hasPkg ? 'Set up' : 'Buy Package' },
-              { icon: '🚚', name: 'Steadfast Courier', desc: 'Book parcels and check delivery / fraud history.', connected: courierConfigured.steadfast, action: () => { setActiveTab('website'); setShowSettings(true); }, label: 'Configure' },
-              { icon: '➤', name: 'Pathao Courier', desc: 'Parcel booking with Pathao — coming soon. Steadfast works today.', connected: false, soon: true, action: () => {}, label: 'Coming soon' },
+              { icon: '🚚', name: 'Steadfast Courier', desc: 'Book parcels and check delivery / fraud history.', connected: courierConfigured.steadfast, action: (proOk || !hasPkg) ? () => { setActiveTab('website'); setShowSettings(true); } : upgrade, label: (proOk || !hasPkg) ? 'Configure' : 'Upgrade to Business' },
+              { icon: '➤', name: 'Pathao Courier (beta)', desc: 'Book Pathao parcels from your orders with your own Pathao merchant API keys.', connected: courierConfigured.pathao, action: (proOk || !hasPkg) ? () => { setActiveTab('website'); setShowSettings(true); } : upgrade, label: (proOk || !hasPkg) ? 'Configure' : 'Upgrade to Business' },
             ];
             return (
               <div style={{ display: 'grid', gap: '12px' }}>
@@ -2820,24 +2828,43 @@ const Dashboard = () => {
           <h2 style={{ color: '#12284c', margin: '2px 0 18px', fontSize: '1.5rem', letterSpacing: '-0.4px' }}>Billing</h2>
           {(() => {
             const plans = [
-              { key: 'automation', name: 'Automation', price: '৳2,490 / month', desc: 'Website, Facebook, Messenger, WhatsApp, Inbox, Orders, Courier, Analytics.' },
+              { key: 'starter', name: 'Starter', price: '৳990 / month', items: ['1 online shop website (up to 100 products)', 'Checkout, orders, stock & sales reports', 'Meta Pixel + Google Analytics 4', 'Order alerts by email', 'No AI replies / inbox'] },
+              { key: 'business', name: 'Business', price: '৳2,490 / month', items: ['Everything in Starter, up to 500 products', 'AI replies on Messenger, WhatsApp & website chat — 1,000 / month', 'Unified inbox + order alerts on WhatsApp', 'Steadfast / Pathao booking + fake-order check', 'Pixel + GA4 + Google Tag Manager'] },
+              { key: 'big', name: 'Big', price: '৳4,990 / month', items: ['Everything in Business, up to 2,000 products', 'AI replies — 5,000 / month', 'Up to 3 websites', 'WooCommerce store connection', 'Abandoned-cart WhatsApp reminders'] },
             ];
+            const rank: Record<string, number> = { starter: 1, business: 2, big: 3 };
+            const until = paidUntil ? new Date(paidUntil) : null;
+            const daysLeft = until && !isNaN(until.getTime()) ? Math.ceil((until.getTime() - Date.now()) / 86400000) : null;
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '16px' }}>
+                {planTier && (
+                  <div className="amr-card" style={{ gridColumn: '1 / -1', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                    <div style={{ flex: 1, minWidth: '220px' }}>
+                      <div style={{ fontWeight: 800, color: '#12284c' }}>Your plan: {planTier.charAt(0).toUpperCase() + planTier.slice(1)}</div>
+                      <div style={{ color: daysLeft !== null && daysLeft <= 3 ? '#c44d4d' : '#718096', fontSize: '0.85rem' }}>
+                        {daysLeft === null ? 'Monthly plan' : daysLeft >= 0 ? `Active until ${until!.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} (${daysLeft} day${daysLeft === 1 ? '' : 's'} left)` : `Ended on ${until!.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} — please renew`}
+                      </div>
+                    </div>
+                    <button className="amr-btn-primary amr-btn" style={{ color: '#fff' }} onClick={() => { window.location.href = `/buy-package?package=automation&plan=${planTier}`; }}>Renew →</button>
+                  </div>
+                )}
                 {plans.map(p => {
-                  const active = packages.includes(p.key);
+                  const active = planTier === p.key;
+                  const lower = !!planTier && rank[p.key] < rank[planTier];
                   return (
-                    <div key={p.key} className="amr-card">
+                    <div key={p.key} className="amr-card" style={active ? { border: '1.5px solid #2563eb' } : undefined}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#12284c' }}>{p.name}</h3>
-                        <span className={`amr-pill ${active ? 'delivered' : 'pending'}`}>{active ? 'Active' : 'Not active'}</span>
+                        {active && <span className="amr-pill delivered">Current plan</span>}
                       </div>
                       <div style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', marginBottom: '8px' }}>{p.price}</div>
-                      <p style={{ color: '#718096', fontSize: '0.85rem', margin: '0 0 16px', lineHeight: 1.6 }}>{p.desc}</p>
+                      <ul style={{ color: '#4a5568', fontSize: '0.82rem', margin: '0 0 16px', paddingLeft: '18px', lineHeight: 1.7 }}>
+                        {p.items.map(it => <li key={it}>{it}</li>)}
+                      </ul>
                       {active ? (
-                        <div style={{ color: '#159768', fontWeight: 700, fontSize: '0.85rem' }}>✓ You are subscribed</div>
+                        <div style={{ color: '#159768', fontWeight: 700, fontSize: '0.85rem' }}>✓ You are on this plan</div>
                       ) : (
-                        <button className="amr-btn-primary amr-btn" style={{ color: '#fff' }} onClick={() => { window.location.href = `/buy-package?package=${p.key}`; }}>Buy {p.name} →</button>
+                        <button className={lower ? 'amr-btn' : 'amr-btn-primary amr-btn'} style={lower ? undefined : { color: '#fff' }} onClick={() => { window.location.href = `/buy-package?package=automation&plan=${p.key}`; }}>{!planTier ? `Choose ${p.name} →` : lower ? `Switch to ${p.name}` : `Upgrade to ${p.name} →`}</button>
                       )}
                     </div>
                   );

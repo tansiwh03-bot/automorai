@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 
@@ -8,12 +8,11 @@ const SUPABASE_KEY = 'sb_publishable_ul461fEnojpr4GxdJv-P8Q_hySiflQt';
 const PAYMENT_REQUEST_API = 'https://n8n2.kingpurefood.com/webhook/automorai/package-payment-request';
 const BKASH_NAGAD_NUMBER = '01674610578';
 
-const PACKAGE_INFO: Record<string, { name: string; amount: number; note: string }> = {
-  automation: {
-    name: 'Automation — Business (Online shop + WhatsApp + Messenger AI + Inbox + Pixel/Analytics)',
-    amount: 2490,
-    note: '৳2,490/month.',
-  },
+// The approved amount decides the plan tier on the server (≥4000 Big, ≥2000 Business, else Starter).
+const PLANS: Record<string, { name: string; amount: number; note: string }> = {
+  starter: { name: 'Starter', amount: 990, note: '৳990/month — online shop website (up to 100 products), orders, stock & sales reports, Pixel + GA4.' },
+  business: { name: 'Business', amount: 2490, note: '৳2,490/month — Starter + AI replies (1,000/month), inbox, Steadfast/Pathao booking, fake-order check, GTM.' },
+  big: { name: 'Big', amount: 4990, note: '৳4,990/month — Business + 5,000 AI replies, up to 3 websites, WooCommerce, cart WhatsApp reminders.' },
 };
 
 const getAuthHeader = async (): Promise<Record<string, string>> => {
@@ -26,7 +25,9 @@ const BuyPackage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const pkg = 'automation'; // only package sold on Automorai (Tender → tendermasterbd.com)
-  const info = PACKAGE_INFO[pkg];
+  const [params] = useSearchParams();
+  const [plan, setPlan] = useState<string>(PLANS[params.get('plan') || ''] ? String(params.get('plan')) : 'business');
+  const info = PLANS[plan];
 
   const [businessName, setBusinessName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad'>('bkash');
@@ -79,6 +80,7 @@ const BuyPackage = () => {
         body: JSON.stringify({
           business_name: businessName,
           package: pkg,
+          plan,
           amount: info.amount,
           payment_method: paymentMethod,
           transaction_id: transactionId,
@@ -116,7 +118,7 @@ const BuyPackage = () => {
           <>
             <h1 style={{ color: '#c8ff5c', marginBottom: '8px' }}>✅ Payment submitted</h1>
             <p style={{ color: '#8b90a3', marginBottom: '24px' }}>
-              We're reviewing your payment for <strong style={{ color: 'white' }}>{info.name}</strong>.
+              We're reviewing your payment for the <strong style={{ color: 'white' }}>{info.name}</strong> plan.
               Once confirmed, it will be activated on your account — usually within a few hours.
             </p>
             <button onClick={() => navigate('/dashboard')} style={{
@@ -128,8 +130,17 @@ const BuyPackage = () => {
           </>
         ) : (
           <>
-            <h1 style={{ color: '#ffb84c', marginBottom: '8px' }}>Buy {info.name}</h1>
-            <p style={{ color: '#8b90a3', marginBottom: '20px' }}>{info.note}</p>
+            <h1 style={{ color: '#ffb84c', marginBottom: '8px' }}>Buy {info.name} plan</h1>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              {Object.entries(PLANS).map(([k, p]) => (
+                <button key={k} type="button" onClick={() => setPlan(k)} style={{
+                  flex: 1, padding: '10px 6px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
+                  border: plan === k ? '1px solid #2563eb' : '1px solid #262a38',
+                  background: plan === k ? '#2563eb22' : '#181b26', color: plan === k ? '#8fb4ff' : '#8b90a3',
+                }}>{p.name}<br /><span style={{ fontSize: '0.8rem', fontWeight: 600 }}>৳{p.amount.toLocaleString('en-US')}</span></button>
+              ))}
+            </div>
+            <p style={{ color: '#8b90a3', marginBottom: '20px', fontSize: '0.9rem' }}>{info.note}</p>
 
             <div style={{
               background: '#1a1d2b', border: '1px solid #262a38', borderRadius: '10px',
