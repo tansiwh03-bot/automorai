@@ -40,7 +40,8 @@ export interface Section<P = Record<string, unknown>> {
 export type SectionType =
   | 'notice_bar' | 'header' | 'hero_slider' | 'categories' | 'product_grid'
   | 'why_us' | 'testimonials' | 'about' | 'footer' | 'chat_bubble'
-  | 'page_title' | 'rich_text' | 'contact_info' | 'faq';
+  | 'page_title' | 'rich_text' | 'contact_info' | 'faq'
+  | 'columns' | 'banner' | 'gallery' | 'offers' | 'countdown' | 'featured_products' | 'delivery_info' | 'payment_info' | 'whatsapp_cta';
 
 export interface NavItem { label: Txt; link: string; children?: { label: Txt; link: string }[] }
 
@@ -105,7 +106,8 @@ export const newId = (prefix = 's'): string =>
   `${prefix}_${Date.now().toString(36)}${(++_n).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 const SECTION_TYPES: SectionType[] = ['notice_bar', 'header', 'hero_slider', 'categories', 'product_grid',
-  'why_us', 'testimonials', 'about', 'footer', 'chat_bubble', 'page_title', 'rich_text', 'contact_info', 'faq'];
+  'why_us', 'testimonials', 'about', 'footer', 'chat_bubble', 'page_title', 'rich_text', 'contact_info', 'faq',
+  'columns', 'banner', 'gallery', 'offers', 'countdown', 'featured_products', 'delivery_info', 'payment_info', 'whatsapp_cta'];
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 

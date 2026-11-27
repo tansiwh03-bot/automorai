@@ -2,7 +2,8 @@
 // Every change goes through `change(next, key)` so undo/redo and autosave see it.
 import { createContext, useContext, useRef, useState } from 'react';
 import { FONTS, safeUrl, type Block, type BoxStyle, type Device, type FontKey, type NavItem, type PageDoc, type Section, type SiteTheme, type Txt } from '../schema';
-import { SPECS, type Field } from './fields';
+import { SPECS, LIBRARY, type Field } from './fields';
+import { newId } from '../schema';
 import { uploadImage } from '../api';
 
 export interface Design { theme: SiteTheme; page: PageDoc }
@@ -14,6 +15,34 @@ const LINKS = [
 ];
 /** The site's pages, offered as link targets ("/" home, "/about-us" …). Set by the Builder tab. */
 export const PageLinksCtx = createContext<{ v: string; l: string }[]>([]);
+/** The shop's products (for "Featured products"). Set by the Builder tab. */
+export const ProductsCtx = createContext<{ product_id: string; title: string; price: number; images?: string[] }[]>([]);
+
+function ProductsInput({ value, onChange }: { value: unknown; onChange: (v: string[]) => void }) {
+  const products = useContext(ProductsCtx);
+  const ids = Array.isArray(value) ? value.map(String) : [];
+  const [q, setQ] = useState('');
+  const shown = products.filter(pr => !q || pr.title.toLowerCase().includes(q.toLowerCase())).slice(0, 40);
+  return (
+    <div>
+      {ids.length > 0 && <div className="amr-ed-help" style={{ marginTop: 0, marginBottom: 6 }}>{ids.length} chosen (shown in this order)</div>}
+      <input className="amr-ed-in" placeholder="Search products…" value={q} onChange={e => setQ(e.target.value)} />
+      <div style={{ maxHeight: 220, overflow: 'auto', marginTop: 6, display: 'grid', gap: 4 }}>
+        {shown.map(pr => {
+          const on = ids.includes(pr.product_id);
+          return (
+            <label key={pr.product_id} className="amr-ed-toggle" style={{ fontWeight: 500 }}>
+              <input type="checkbox" checked={on} disabled={!on && ids.length >= 12}
+                onChange={() => onChange(on ? ids.filter(x => x !== pr.product_id) : [...ids, pr.product_id])} />
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pr.title} · ৳{pr.price}</span>
+            </label>
+          );
+        })}
+        {!products.length && <div className="amr-ed-help">No products found in your shop yet.</div>}
+      </div>
+    </div>
+  );
+}
 
 // ── small inputs ──────────────────────────────────────────────────────────────
 const asTxt = (t: unknown): { en: string; bn: string } =>
@@ -104,6 +133,9 @@ function FieldInput({ f, value, onChange, siteId }: { f: Field; value: unknown; 
       return <select className="amr-ed-in" value={String(value ?? '')} onChange={e => onChange(e.target.value || undefined)}>
         {(f.options || []).map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>;
+    case 'products': return <ProductsInput value={value} onChange={onChange} />;
+    case 'datetime':
+      return <input className="amr-ed-in" type="datetime-local" value={String(value ?? '')} onChange={e => onChange(e.target.value)} />;
     case 'tags': {
       const list = Array.isArray(value) ? value.map(String) : [];
       return <input className="amr-ed-in" defaultValue={list.join(', ')} key={list.join('|')}
@@ -214,9 +246,14 @@ function BlocksEditor({ s, update, siteId, open, setOpen }: { s: Section; update
   const spec = SPECS[s.type].blocks!;
   const blocks = s.blocks || [];
   const setBlocks = (b: Block[], key: string) => update(x => ({ ...x, blocks: b }), key);
+  const kindOf = (b: Block) => spec.kinds?.find(k => k.type === b.type);
+  const nCols = s.type === 'columns' ? Math.max(1, Math.min(3, Number(s.props.columns) || 1)) : 1;
+  const colField: Field = { key: 'col', label: 'Column', kind: 'select', options: Array.from({ length: nCols }, (_, i) => ({ v: String(i), l: ['Left', 'Middle', 'Right'][nCols === 2 && i === 1 ? 2 : i] + ' column' })) };
+  const dup = (b: Block, i: number) => { const c = { ...JSON.parse(JSON.stringify(b)), id: newId('el') } as Block; const l = blocks.slice(); l.splice(i + 1, 0, c); setBlocks(l, `blkdup:${c.id}`); setOpen(c.id); };
+  const [adding, setAdding] = useState(false);
   return (
     <div className="amr-ed-box">
-      <div className="amr-ed-boxtitle">{spec.label}s ({blocks.length})</div>
+      <div className="amr-ed-boxtitle">{spec.kinds ? 'Elements' : spec.label + 's'} ({blocks.length})</div>
       {blocks.map((b, i) => {
         const locked = s.type === 'categories' && i === 0;      // first tile = "All products"
         return (
@@ -226,15 +263,16 @@ function BlocksEditor({ s, update, siteId, open, setOpen }: { s: Section; update
               <span>
                 <button type="button" className="amr-ed-ic" title="Move up" disabled={i === 0 || locked || (s.type === 'categories' && i === 1)} onClick={() => setBlocks(move(blocks, i, -1), `blk:${s.id}`)}>↑</button>
                 <button type="button" className="amr-ed-ic" title="Move down" disabled={i === blocks.length - 1 || locked} onClick={() => setBlocks(move(blocks, i, 1), `blk:${s.id}`)}>↓</button>
+                {blocks.length < spec.max && !locked && <button type="button" className="amr-ed-ic" title="Duplicate" onClick={() => dup(b, i)}>⧉</button>}
                 <button type="button" className="amr-ed-ic" title="Remove" disabled={blocks.length <= spec.min || locked}
                   onClick={() => { if (window.confirm(`Remove this ${spec.label.toLowerCase()}? You can undo.`)) setBlocks(blocks.filter(x => x.id !== b.id), `blk:${s.id}`); }}>✕</button>
               </span>
             </div>
             {open === b.id && (
               <div style={{ marginTop: 8 }}>
-                {spec.fields.filter(f => !(locked && f.key === 'match')).map(f => (
+                {[...(nCols > 1 ? [colField] : []), ...(kindOf(b)?.fields || spec.fields)].filter(f => !(locked && f.key === 'match')).map(f => (
                   <FieldRow key={f.key} f={f} props={b.props} siteId={siteId}
-                    set={(k, v) => setBlocks(blocks.map(x => (x.id === b.id ? { ...x, props: { ...x.props, [k]: v } } : x)), `bp:${b.id}:${k}`)} />
+                    set={(k, v) => setBlocks(blocks.map(x => (x.id === b.id ? { ...x, props: { ...x.props, [k]: k === 'col' ? Number(v) || 0 : v } } : x)), `bp:${b.id}:${k}`)} />
                 ))}
                 {locked && <div className="amr-ed-help">This first tile shows all products.</div>}
               </div>
@@ -242,11 +280,31 @@ function BlocksEditor({ s, update, siteId, open, setOpen }: { s: Section; update
           </div>
         );
       })}
-      {blocks.length < spec.max && (
+      {blocks.length < spec.max && !spec.kinds && (
         <button type="button" className="amr-ed-btn" onClick={() => { const nb = spec.make(); setBlocks([...blocks, nb], `blkadd:${nb.id}`); setOpen(nb.id); }}>+ Add {spec.label.toLowerCase()}</button>
       )}
+      {blocks.length < spec.max && spec.kinds && (!adding
+        ? <button type="button" className="amr-ed-btn" onClick={() => setAdding(true)}>+ Add element</button>
+        : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {spec.kinds.map(k => <button key={k.type} type="button" className="amr-ed-btn" style={{ textAlign: 'left' }}
+              onClick={() => { const nb = k.make(); nb.props = { ...nb.props, col: nCols - 1 }; setBlocks([...blocks, nb], `blkadd:${nb.id}`); setOpen(nb.id); setAdding(false); }}>{k.icon} {k.label}</button>)}
+            <button type="button" className="amr-ed-link" onClick={() => setAdding(false)}>Cancel</button>
+          </div>)}
     </div>
   );
+}
+
+/** What a merchant sees in the section list: "2 columns", "▶️ Video", "🔠 Heading: Big sale" … */
+function rowLabel(s: Section): string {
+  const spec = SPECS[s.type];
+  if (s.type !== 'columns') return `${spec.icon} ${spec.label}`;
+  const n = Number(s.props.columns) || 1;
+  if (n > 1) return `${n === 2 ? '◫' : '▥'} ${n} columns`;
+  const first = (s.blocks || [])[0];
+  const kind = spec.blocks?.kinds?.find(k => k.type === first?.type);
+  if (!kind) return `${spec.icon} Empty block`;
+  const t = asTxt(first.props.text ?? first.props.label).en;
+  return `${kind.icon} ${kind.label}${t ? ': ' + t.slice(0, 26) : ''}${(s.blocks || []).length > 1 ? ' +' + ((s.blocks || []).length - 1) : ''}`;
 }
 
 // ── main panel ────────────────────────────────────────────────────────────────
@@ -258,6 +316,8 @@ interface Props {
 
 export default function EditorPanel({ design, change, siteId, device, selected, setSelected, openBlock, setOpenBlock }: Props) {
   const [adding, setAdding] = useState(false);
+  const dragFrom = useRef(-1);
+  const [dragOver, setDragOver] = useState(-1);
   const { theme, page } = design;
   const sel = selected ? findSection(design, selected) : undefined;
   const update = (fn: (s: Section) => Section, key: string) => { if (sel) change(mapSection(design, sel.id, fn), key); };
@@ -268,6 +328,25 @@ export default function EditorPanel({ design, change, siteId, device, selected, 
       if (!window.confirm('Remove this section from the page? You can undo.')) return;
       change({ theme, page: { ...page, sections: page.sections.filter(s => s.id !== id) } }, `rm:${id}`);
       if (selected === id) setSelected('');
+    },
+    duplicate: (id: string) => {
+      const i = page.sections.findIndex(x => x.id === id); if (i < 0) return;
+      const src = page.sections[i];
+      const copy: Section = { ...JSON.parse(JSON.stringify(src)), id: newId(src.type.slice(0, 5)) };
+      copy.blocks = (copy.blocks || []).map(b => ({ ...b, id: newId('b') }));
+      const list = page.sections.slice(); list.splice(i + 1, 0, copy);
+      change({ theme, page: { ...page, sections: list } }, `dup:${copy.id}`);   // stay in the list; the copy sits right below
+    },
+    reorder: (from: number, to: number) => {
+      if (from === to || from < 0 || to < 0) return;
+      const list = page.sections.slice(); const [m] = list.splice(from, 1); list.splice(to, 0, m);
+      change({ theme, page: { ...page, sections: list } }, `drag:${m.id}`);
+    },
+    addMade: (s: Section) => {
+      const at = page.sections.findIndex(x => x.id === selected);
+      const list = page.sections.slice(); list.splice(at >= 0 ? at + 1 : list.length, 0, s);
+      change({ theme, page: { ...page, sections: list } }, `add:${s.id}`);
+      setSelected(s.id); setAdding(false);
     },
     add: (type: keyof typeof SPECS) => {
       const s = SPECS[type].addable!.make();
@@ -282,13 +361,22 @@ export default function EditorPanel({ design, change, siteId, device, selected, 
   const Row = ({ s, i }: { s: Section; i?: number }) => {
     const spec = SPECS[s.type];
     const hiddenOn = (['desktop', 'tablet', 'mobile'] as Device[]).filter(d => s.hidden?.[d]);
+    const drag = i !== undefined ? {
+      draggable: true,
+      onDragStart: (e: React.DragEvent) => { dragFrom.current = i; e.dataTransfer.effectAllowed = 'move'; },
+      onDragOver: (e: React.DragEvent) => { e.preventDefault(); setDragOver(i); },
+      onDragLeave: () => setDragOver(-1),
+      onDrop: (e: React.DragEvent) => { e.preventDefault(); setDragOver(-1); pageOps.reorder(dragFrom.current, i); dragFrom.current = -1; },
+    } : {};
     return (
-      <div className={'amr-ed-row' + (selected === s.id ? ' on' : '')} onClick={() => setSelected(s.id)}>
-        <span className="amr-ed-rowname">{spec.icon} {spec.label}{hiddenOn.length ? <em> · hidden on {hiddenOn.join(', ')}</em> : null}</span>
+      <div className={'amr-ed-row' + (selected === s.id ? ' on' : '') + (dragOver === i ? ' drop' : '')} onClick={() => setSelected(s.id)} {...drag}
+        title={i !== undefined ? 'Drag to move' : undefined}>
+        <span className="amr-ed-rowname">{rowLabel(s)}{hiddenOn.length ? <em> · hidden on {hiddenOn.join(', ')}</em> : null}</span>
         {i !== undefined && (
           <span onClick={e => e.stopPropagation()}>
             <button type="button" className="amr-ed-ic" title="Move up" disabled={i === 0} onClick={() => pageOps.move(i, -1)}>↑</button>
             <button type="button" className="amr-ed-ic" title="Move down" disabled={i === page.sections.length - 1} onClick={() => pageOps.move(i, 1)}>↓</button>
+            <button type="button" className="amr-ed-ic" title="Duplicate" disabled={!!spec.addable && count(s.type) >= spec.addable.max} onClick={() => pageOps.duplicate(s.id)}>⧉</button>
             <button type="button" className="amr-ed-ic" title="Remove section" onClick={() => pageOps.remove(s.id)}>✕</button>
           </span>
         )}
@@ -337,11 +425,22 @@ export default function EditorPanel({ design, change, siteId, device, selected, 
       ) : (
         <div className="amr-ed-box">
           <div className="amr-ed-boxtitle">Add a section {selected ? '(after the selected one)' : '(at the end)'}</div>
-          {(Object.keys(SPECS) as (keyof typeof SPECS)[]).filter(t => SPECS[t].addable).map(t => {
-            const full = count(t) >= SPECS[t].addable!.max;
-            return <button key={t} type="button" className="amr-ed-btn" disabled={full} style={{ width: '100%', textAlign: 'left', marginBottom: 6 }}
-              onClick={() => pageOps.add(t)}>{SPECS[t].icon} {SPECS[t].label}{full ? ' — already on the page' : ''}</button>;
-          })}
+          {[...new Set(LIBRARY.map(x => x.group))].map(g => (
+            <div key={g}>
+              <div className="amr-ed-group" style={{ marginTop: 4 }}>{g}</div>
+              <div className="amr-ed-lib">
+                {LIBRARY.filter(x => x.group === g).map(x => {
+                  const full = count(x.type) >= (SPECS[x.type].addable?.max ?? 99);
+                  return (
+                    <button key={x.key} type="button" className="amr-ed-libitem" disabled={full} onClick={() => pageOps.addMade(x.make())}
+                      title={full ? 'Already on this page' : x.desc}>
+                      <span className="amr-ed-libic">{x.icon}</span><b>{x.label}</b><span>{full ? 'Already on this page' : x.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           <button type="button" className="amr-ed-link" onClick={() => setAdding(false)}>Cancel</button>
         </div>
       )}
@@ -356,7 +455,12 @@ export const EDITOR_CSS = `
 .amr-ed-title{font-weight:800;font-size:1.02rem;margin:4px 0 6px}
 .amr-ed-group{font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7c97;margin-top:8px}
 .amr-ed-row{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:9px 10px;border:1px solid #dfe7f3;border-radius:10px;background:#fff;cursor:pointer}
-.amr-ed-row:hover{border-color:#93b4f5}.amr-ed-row.on{border-color:#2563eb;box-shadow:0 0 0 2px #2563eb22}
+.amr-ed-row:hover{border-color:#93b4f5}.amr-ed-row.drop{border-color:#06b6d4;box-shadow:0 -3px 0 #06b6d4}
+.amr-ed-lib{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.amr-ed-libitem{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;text-align:left;border:1px solid #dfe7f3;background:#fff;border-radius:10px;padding:8px;cursor:pointer;color:#12284c;font:inherit}
+.amr-ed-libitem:hover{border-color:#2563eb}.amr-ed-libitem:disabled{opacity:.45;cursor:default}
+.amr-ed-libitem b{font-size:.8rem}.amr-ed-libitem span:last-child{grid-column:2;font-size:.68rem;color:#6b7c97;line-height:1.3}
+.amr-ed-libic{grid-row:span 2;font-size:1.2rem}.amr-ed-row.on{border-color:#2563eb;box-shadow:0 0 0 2px #2563eb22}
 .amr-ed-rowname{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.amr-ed-rowname em{font-weight:500;color:#b45309;font-style:normal}
 .amr-ed-ic{border:1px solid #dfe7f3;background:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;margin-left:3px;color:#0a1f5c}
 .amr-ed-ic:disabled{opacity:.35;cursor:default}

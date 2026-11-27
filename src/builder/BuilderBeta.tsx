@@ -11,7 +11,7 @@ import { applyPlanToHome, aiPageDoc, type AiPlan } from './editor/aiApply';
 import { PAGE_SLUG_RE, RESERVED_SLUGS, type NavItem, type PageDoc, type SiteTheme } from './schema';
 import { buildLiveParts } from './publish/liveHtml';
 import type { Device, Product } from './schema';
-import EditorPanel, { EDITOR_CSS, PageLinksCtx, type Design } from './editor/EditorPanel';
+import EditorPanel, { EDITOR_CSS, PageLinksCtx, ProductsCtx, type Design } from './editor/EditorPanel';
 
 const WEBSITE_UPDATE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/update-website-template';
 const DEVICES: { key: Device; label: string; w: number }[] = [
@@ -628,9 +628,11 @@ ${EDITOR_CSS}`}</style>
                 </div>
               )}
             </div>
+            <ProductsCtx.Provider value={products}>
             <PageLinksCtx.Provider value={pages.filter(pg => !(docsRef.current[pg.id] || {}).archived).map(pg => ({ v: pageLink(pg), l: (pg.slug === 'home' ? 'Home' : pg.title) + ' page' }))}>
             <EditorPanel design={design} change={change} siteId={site.id} device={device} selected={selected} setSelected={pickFromPanel} openBlock={openBlock} setOpenBlock={setOpenBlock} />
             </PageLinksCtx.Provider>
+            </ProductsCtx.Provider>
           </div>
 
           <div className="amr-card amr-bld-prev" style={{ padding: '14px', minWidth: 0 }}>

@@ -101,7 +101,7 @@ function addLegacyHooks(doc: Document, isHome: boolean) {
     t.setAttribute('data-cat-idx', String(i)); setClick(t, `filterByCategory(${i})`); t.classList.toggle('active', i === 0);
     const img = t.querySelector('.cat-tile-img'); if (img) img.id = `catImg${i}`;
   });
-  const grid = $('.product-grid'); if (grid) grid.id = 'productGrid';
+  const grid = $('.product-grid:not(.amr-featured)'); if (grid) grid.id = 'productGrid';   // featured boxes are filled by the adapter
   else {
     // the shop's script expects a product grid; on pages without one it fills this hidden box instead
     const hidden = doc.createElement('div'); hidden.id = 'productGrid'; hidden.setAttribute('style', 'display:none');

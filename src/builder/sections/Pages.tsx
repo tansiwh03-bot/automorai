@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { txt, safeUrl, type Section, type Txt } from '../schema';
 import { useRender } from '../context';
+import { BLOCKS_CSS } from './Blocks';
 
 /** Paragraphs: a blank line starts a new paragraph. */
 const paras = (t: string) => t.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
@@ -83,7 +84,7 @@ export function Faq({ s }: { s: Section }) {
 /** CSS for the sections above + template looks (variants). Only adds rules for new classes / data-variant / theme
  *  options, so a shop without them renders exactly as before. */
 export function builderCss(theme: { radius?: string; tone?: string }): string {
-  const out = [`
+  const out = [BLOCKS_CSS, `
 .amr-ptitle{padding:64px 0 40px;background:var(--bg2);text-align:center}
 .amr-ptitle-img{background-size:cover;background-position:center;position:relative;color:#fff;padding:110px 0 90px}
 .amr-ptitle-img::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.42)}

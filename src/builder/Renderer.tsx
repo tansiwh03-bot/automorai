@@ -11,11 +11,14 @@ import { ProductGrid } from './sections/ProductGrid';
 import { WhyUs, Testimonials, About } from './sections/Content';
 import { Footer, ChatBubble } from './sections/Footer';
 import { PageTitle, RichText, ContactInfo, Faq, builderCss } from './sections/Pages';
+import { Columns, Banner, Gallery, Offers, Countdown, FeaturedProducts, DeliveryInfo, PaymentInfo, WhatsappCta } from './sections/Blocks';
 
 const REGISTRY: Record<string, ComponentType<{ s: Section }>> = {
   notice_bar: NoticeBar, header: Header, hero_slider: HeroSlider, categories: Categories, product_grid: ProductGrid,
   why_us: WhyUs, testimonials: Testimonials, about: About, footer: Footer, chat_bubble: ChatBubble,
   page_title: PageTitle, rich_text: RichText, contact_info: ContactInfo, faq: Faq,
+  columns: Columns, banner: Banner, gallery: Gallery, offers: Offers, countdown: Countdown, featured_products: FeaturedProducts,
+  delivery_info: DeliveryInfo, payment_info: PaymentInfo, whatsapp_cta: WhatsappCta,
 };
 
 /** Layout variants a section may have (templates); anything else is ignored. */
