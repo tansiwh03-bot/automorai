@@ -109,7 +109,9 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
   const imported = !!(site && home);
 
   return (
-    <div style={{ display: 'grid', gap: '16px' }}>
+    // same page padding as the other Dashboard tabs; minmax(0,1fr) stops the preview from widening the page
+    <div className="amr-builder-page" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '16px', maxWidth: '1100px', margin: '0 auto', minWidth: 0, boxSizing: 'border-box' }}>
+      <style>{`.amr-builder-page{padding:32px 24px}@media(max-width:768px){.amr-builder-page{padding:20px 14px}}`}</style>
       <div className="amr-pagehead">
         <div className="amr-eyebrow">Website Builder</div>
         <h1>Website Builder <span style={{ fontSize: '.7rem', verticalAlign: 'middle', background: '#e8f7fd', color: '#0b84ad', padding: '3px 8px', borderRadius: '20px', fontWeight: 800 }}>BETA</span></h1>
