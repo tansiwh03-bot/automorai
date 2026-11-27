@@ -31,7 +31,7 @@ const boxCss = (b: Partial<BoxStyle> | undefined): string => {
 const safeSid = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, '');
 
 /** Per-section CSS for style overrides and per-device hiding (no inline styles, so media queries work). */
-function sectionCss(sections: Section[]): string {
+export function sectionCss(sections: Section[]): string {
   const rules: string[] = [];
   for (const s of sections) {
     const sel = `[data-sid="${safeSid(s.id)}"]>*`;
@@ -65,7 +65,7 @@ export interface RendererProps {
 }
 
 /** Font pair override; the original pair adds nothing, so imported shops stay pixel-identical. */
-function fontCss(font: string | undefined): { imp: string; vars: string } {
+export function fontCss(font: string | undefined): { imp: string; vars: string } {
   const f = FONTS[font as FontKey];
   if (!f || !f.google) return { imp: '', vars: '' };
   return { imp: `@import url('https://fonts.googleapis.com/css2?family=${f.google}&display=swap');`, vars: `:root{--font-main:${f.main};--font-bn:${f.bn}}` };

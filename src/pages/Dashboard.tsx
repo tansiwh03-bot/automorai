@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
 import BuilderBeta from '../builder/BuilderBeta';
+import { liveDesignKind } from '@/builder/api';
 import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug, Truck, Megaphone, Workflow, Settings as SettingsIcon, LayoutTemplate } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
@@ -1184,7 +1185,10 @@ const Dashboard = () => {
 
   const handleUpdateWebsite = async () => {
     if (!currentSiteId) return;
-    if (!confirm('Update this website to the latest design and features? Your products and settings stay exactly as they are — only the site’s look and features get refreshed.')) return;
+    // a shop published from the Website Builder would lose that design here — say so clearly
+    const builderLive = (await liveDesignKind(currentSiteId).catch(() => null)) === 'builder';
+    if (builderLive && !confirm('Your live shop shows a design published from the Website Builder. Updating here replaces it with the standard template design (your builder design is kept — you can publish it again from Website Builder). Continue?')) return;
+    if (!builderLive && !confirm('Update this website to the latest design and features? Your products and settings stay exactly as they are — only the site’s look and features get refreshed.')) return;
     setWebsiteUpdating(true); setWebsiteUpdateMsg('');
     try {
       const res = await fetch(WEBSITE_UPDATE_API, {

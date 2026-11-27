@@ -4,7 +4,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { convertLegacy } from './convertLegacy';
-import { loadSite, startImport, saveImported, saveDraft, ConflictError, fetchSettings, fetchProducts, type BuilderSite, type BuilderPage } from './api';
+import { loadSite, startImport, saveImported, saveDraft, ConflictError, fetchSettings, fetchProducts, publishSite, restoreVersion, listVersions,
+  type BuilderSite, type BuilderPage, type SiteVersion } from './api';
+import { buildLiveParts } from './publish/liveHtml';
 import type { Device, Product } from './schema';
 import EditorPanel, { EDITOR_CSS, type Design } from './editor/EditorPanel';
 
@@ -53,6 +55,11 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
   const saving = useRef(false);
   const savedDesign = useRef<Design | null>(null);
   const [, force] = useState(0);
+  // ── publish / versions ──
+  const [versions, setVersions] = useState<SiteVersion[]>([]);
+  const [pubBusy, setPubBusy] = useState('');
+  const [pubMsg, setPubMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showVersions, setShowVersions] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!slug) return;
@@ -65,6 +72,7 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
       known.current = { site: r?.site?.updated_at || '', page: r?.home?.updated_at || '' };
       past.current = []; future.current = []; lastKey.current = { key: '', at: 0 };
       setSaveState('saved'); setSaveErr(''); setLastSaved(r?.home?.updated_at || ''); setSelected('');
+      if (r?.site) setVersions(await listVersions(r.site.id).catch(() => []));
     } catch (e) { setError((e as Error).message); }
     setLoading(false);
   }, [slug]);
@@ -223,6 +231,51 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
     setBusy('');
   };
 
+  // wait until the latest edits are saved (publish always uses the saved draft)
+  const flushSave = async (): Promise<boolean> => {
+    for (let i = 0; i < 40; i++) {
+      if (designRef.current === savedDesign.current && !saving.current) return true;
+      if (!saving.current) await save();
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return designRef.current === savedDesign.current;
+  };
+
+  const doPublish = async () => {
+    if (!site || !designRef.current) return;
+    setPubMsg(null);
+    if (saveState === 'conflict') { setPubMsg({ ok: false, text: 'Load the latest version first (it was changed in another tab).' }); return; }
+    let parts;
+    try { parts = buildLiveParts(designRef.current.theme, designRef.current.page); }
+    catch (e) { setPubMsg({ ok: false, text: 'This design cannot be published: ' + (e as Error).message }); return; }
+    const notes = parts.warnings.length ? '\n\nNote: ' + parts.warnings.join(' ') : '';
+    if (!window.confirm('Publish this design to your LIVE shop now?\n\nCustomers will see it right away. Products, cart, checkout and chat keep working as before. ' +
+      'Your current live design is saved first, so you can restore it with one click.' + notes)) return;
+    try {
+      setPubBusy('Saving your draft…');
+      if (!(await flushSave())) throw new Error('Your latest changes could not be saved, so nothing was published.');
+      setPubBusy('Publishing…');
+      const r = await publishSite(slug, parts);
+      setPubMsg({ ok: true, text: `Published! Version ${r.version} is now live on your shop.` });
+      setVersions(await listVersions(site.id).catch(() => versions));
+    } catch (e) { setPubMsg({ ok: false, text: (e as Error).message }); }
+    setPubBusy('');
+  };
+
+  const doRestore = async (v: SiteVersion) => {
+    if (!site) return;
+    const what = v.kind === 'legacy' ? "your shop's own design from before the builder" : `builder version ${v.version}`;
+    if (!window.confirm(`Put ${what} back on your LIVE shop now? (Your builder draft is not changed.)`)) return;
+    setPubMsg(null);
+    try {
+      setPubBusy(`Restoring version ${v.version}…`);
+      const r = await restoreVersion(slug, v.version);
+      setPubMsg({ ok: true, text: `Restored. Your live shop now shows version ${v.version} again (saved as version ${r.version}).` });
+      setVersions(await listVersions(site.id).catch(() => versions));
+    } catch (e) { setPubMsg({ ok: false, text: (e as Error).message }); }
+    setPubBusy('');
+  };
+
   const dev = DEVICES.find(d => d.key === device)!;
   const scale = Math.min(1, (boxW - 2) / dev.w);
   const imported = !!(site && home && design);
@@ -255,15 +308,21 @@ ${EDITOR_CSS}`}</style>
           <div>
             <div style={{ fontWeight: 800, color: '#12284c' }}>{siteName}</div>
             <div className="amr-sub" style={{ marginTop: 3 }}>
-              {loading ? 'Loading…' : imported ? 'In the builder · draft only, not live'
+              {loading ? 'Loading…' : imported ? (versions[0]?.kind === 'builder' ? `Live: builder version ${versions[0].version} · edits stay in the draft until you publish` : 'Edits stay in the draft until you publish')
                 : 'Not in the builder yet. Import copies your current design — your shop stays exactly as it is.'}
+              {imported && isDraft && ' · Publishing is available after your website goes live.'}
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {liveUrl && !isDraft && <a className="amr-btn" href={liveUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>Open live shop ↗</a>}
-            <button className={imported ? 'amr-btn' : 'amr-btn amr-btn-primary'} disabled={!!busy || loading} onClick={doImport}>
+            <button className={imported ? 'amr-btn' : 'amr-btn amr-btn-primary'} disabled={!!busy || loading || !!pubBusy} onClick={doImport}>
               {busy || (imported ? 'Re-import from live shop' : 'Import my current website')}
             </button>
+            {imported && !isDraft && (
+              <button className="amr-btn amr-btn-primary" disabled={!!busy || loading || !!pubBusy || saveState === 'conflict'} onClick={doPublish}>
+                {pubBusy || 'Publish to live shop'}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -277,6 +336,32 @@ ${EDITOR_CSS}`}</style>
         </div>
       )}
       {saveState === 'error' && saveErr && <div className="amr-card" style={{ borderColor: '#f5c2c0', background: '#fff6f5', color: '#b42318' }}>{saveErr}</div>}
+      {pubMsg && (
+        <div className="amr-card" style={pubMsg.ok ? { borderColor: '#bbf7d0', background: '#f0fdf4', color: '#15803d' } : { borderColor: '#f5c2c0', background: '#fff6f5', color: '#b42318' }}>
+          {pubMsg.text} {pubMsg.ok && liveUrl && <a href={liveUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 700 }}>Open live shop ↗</a>}
+        </div>
+      )}
+      {imported && versions.length > 0 && (
+        <div className="amr-card" style={{ padding: '14px' }}>
+          <button className="amr-ed-link" onClick={() => setShowVersions(!showVersions)}>{showVersions ? '▾' : '▸'} Version history ({versions.length})</button>
+          {showVersions && (
+            <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+              {versions.map((v, i) => (
+                <div key={v.version} className="amr-ed-row" style={{ cursor: 'default' }}>
+                  <span className="amr-ed-rowname" style={{ whiteSpace: 'normal' }}>
+                    v{v.version} · {v.kind === 'legacy' ? "Shop's own design (before the builder)" : 'Builder design'}
+                    {v.note && v.note.startsWith('Restored') ? <em> · {v.note}</em> : null}
+                    <span style={{ display: 'block', fontWeight: 500, fontSize: '.72rem', color: '#6b7c97' }}>{new Date(v.created_at).toLocaleString()}</span>
+                  </span>
+                  {i === 0
+                    ? <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#15803d', background: '#dcfce7', padding: '4px 10px', borderRadius: 20 }}>LIVE</span>
+                    : <button className="amr-ed-btn" disabled={!!pubBusy} onClick={() => doRestore(v)}>Restore</button>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {imported && design && site && (
         <div className="amr-bld-grid">

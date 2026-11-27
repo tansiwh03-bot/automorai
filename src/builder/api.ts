@@ -106,3 +106,37 @@ export async function uploadImage(siteId: string, file: File): Promise<string> {
   if (error) throw new Error('Upload failed: ' + error.message);
   return supabase.storage.from('site-assets').getPublicUrl(path).data.publicUrl;
 }
+
+// ── Publish / versions (Phase 3) ─────────────────────────────────────────────
+const PUBLISH_API = 'https://n8n2.kingpurefood.com/webhook/automorai/site-builder/publish';
+const RESTORE_API = 'https://n8n2.kingpurefood.com/webhook/automorai/site-builder/restore';
+
+export interface SiteVersion { version: number; note: string | null; created_at: string; kind: 'legacy' | 'builder' | null }
+
+const callServer = async (url: string, body: unknown): Promise<Record<string, unknown>> => {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeader()) }, body: JSON.stringify(body) });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j.success) throw new Error(j.error || `Server error (${res.status}). Nothing was changed.`);
+  return j;
+};
+
+/** Publish the saved draft to the live shop. `parts` comes from buildLiveParts(). */
+export const publishSite = (slug: string, parts: unknown) => callServer(PUBLISH_API, { business_slug: slug, parts });
+/** Put an older version back on the live shop (one click). */
+export const restoreVersion = (slug: string, version: number) => callServer(RESTORE_API, { business_slug: slug, version });
+
+/** Version history, newest first (the newest one is what the live shop shows). */
+export async function listVersions(siteId: string): Promise<SiteVersion[]> {
+  const { data, error } = await supabase.from('site_versions')
+    .select('version,note,created_at,kind:snapshot->>kind').eq('site_id', siteId).order('version', { ascending: false }).limit(30);
+  if (error) throw new Error(error.message);
+  return (data || []) as unknown as SiteVersion[];
+}
+
+/** 'builder' when the live shop currently shows a builder design (used to warn before the old "Update design" button). */
+export async function liveDesignKind(slug: string): Promise<'builder' | 'legacy' | null> {
+  const { data: site } = await supabase.from('sites').select('id').eq('legacy_slug', slug).maybeSingle();
+  if (!site) return null;
+  const v = await listVersions(site.id).catch(() => []);
+  return v[0]?.kind || null;
+}
