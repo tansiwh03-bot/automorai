@@ -17,6 +17,7 @@ export function Header({ s }: { s: Section }) {
 
   const go = (e: React.MouseEvent, link: string) => {
     if (/^https?:/.test(link)) { e.preventDefault(); r.onPreviewAction('external_link'); return; }
+    if (/^\/[a-z0-9-]*$/.test(link)) { e.preventDefault(); r.onPreviewAction('page:' + link); return; }   // another page of the site
     if (link.startsWith('#') && link.length > 1) {
       e.preventDefault();
       document.getElementById(link.slice(1))?.scrollIntoView({ behavior: 'smooth' });

@@ -39,7 +39,8 @@ export interface Section<P = Record<string, unknown>> {
 
 export type SectionType =
   | 'notice_bar' | 'header' | 'hero_slider' | 'categories' | 'product_grid'
-  | 'why_us' | 'testimonials' | 'about' | 'footer' | 'chat_bubble';
+  | 'why_us' | 'testimonials' | 'about' | 'footer' | 'chat_bubble'
+  | 'page_title' | 'rich_text' | 'contact_info' | 'faq';
 
 export interface NavItem { label: Txt; link: string; children?: { label: Txt; link: string }[] }
 
@@ -57,6 +58,11 @@ export interface SiteTheme {
   schema: number;
   accent: string;                    // shop accent color (#rrggbb)
   font: FontKey;
+  /** Template look (optional; missing = the original look, so imported shops stay identical). */
+  radius?: 'default' | 'sharp' | 'round';
+  tone?: 'default' | 'cool' | 'neutral' | 'warm';
+  template?: string;
+  baseAccent?: string;             // the shop's own accent before any template
   globals: {                          // shown on every page, in this order: before[], page sections, after[]
     before: Section[];               // notice bar, header
     after: Section[];                // footer, chat bubble
@@ -67,7 +73,13 @@ export interface SiteTheme {
 export interface PageDoc {
   schema: number;
   sections: Section[];
+  /** Removed pages are kept (archived) so they can be brought back; they are never published. */
+  archived?: boolean;
 }
+
+/** Page address part: 'home' is the main page "/", others are "/<slug>". */
+export const PAGE_SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
+export const RESERVED_SLUGS = ['api', 'admin', 'assets', 'static', 'cart', 'checkout', 'webhook', 'p'];
 
 /** Data the renderer needs that does not live in the design (it changes without editing the design). */
 export interface RenderData {
@@ -93,7 +105,7 @@ export const newId = (prefix = 's'): string =>
   `${prefix}_${Date.now().toString(36)}${(++_n).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 const SECTION_TYPES: SectionType[] = ['notice_bar', 'header', 'hero_slider', 'categories', 'product_grid',
-  'why_us', 'testimonials', 'about', 'footer', 'chat_bubble'];
+  'why_us', 'testimonials', 'about', 'footer', 'chat_bubble', 'page_title', 'rich_text', 'contact_info', 'faq'];
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
@@ -112,6 +124,8 @@ export function validateTheme(t: unknown): string[] {
   const errs: string[] = [];
   if (typeof t.accent !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(t.accent)) errs.push('accent must be #rrggbb');
   if (t.font !== undefined && !(String(t.font) in FONTS)) errs.push(`unknown font ${String(t.font)}`);
+  if (t.radius !== undefined && !['default', 'sharp', 'round'].includes(String(t.radius))) errs.push('bad radius');
+  if (t.tone !== undefined && !['default', 'cool', 'neutral', 'warm'].includes(String(t.tone))) errs.push('bad tone');
   if (!isObj(t.globals) || !Array.isArray(t.globals.before) || !Array.isArray(t.globals.after)) errs.push('globals missing');
   else {
     (t.globals.before as unknown[]).forEach((s, i) => errs.push(...validateSection(s, `globals.before[${i}]`)));

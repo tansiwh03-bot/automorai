@@ -10,11 +10,16 @@ import { Categories } from './sections/Categories';
 import { ProductGrid } from './sections/ProductGrid';
 import { WhyUs, Testimonials, About } from './sections/Content';
 import { Footer, ChatBubble } from './sections/Footer';
+import { PageTitle, RichText, ContactInfo, Faq, builderCss } from './sections/Pages';
 
 const REGISTRY: Record<string, ComponentType<{ s: Section }>> = {
   notice_bar: NoticeBar, header: Header, hero_slider: HeroSlider, categories: Categories, product_grid: ProductGrid,
   why_us: WhyUs, testimonials: Testimonials, about: About, footer: Footer, chat_bubble: ChatBubble,
+  page_title: PageTitle, rich_text: RichText, contact_info: ContactInfo, faq: Faq,
 };
+
+/** Layout variants a section may have (templates); anything else is ignored. */
+const VARIANTS: Record<string, string[]> = { hero_slider: ['split', 'compact'], categories: ['circles'], product_grid: ['grid3'] };
 
 // Device breakpoints used by the editor preview (mobile matches the legacy CSS 768px rule)
 const BP = { tablet: 1024, mobile: 768 };
@@ -49,7 +54,9 @@ export function sectionCss(sections: Section[]): string {
 function SectionView({ s }: { s: Section }) {
   const C = REGISTRY[s.type];
   if (!C) return null;                                  // unknown types are skipped, never crash the page
-  return <div data-sid={safeSid(s.id)} style={{ display: 'contents' }}><C s={s} /></div>;
+  const v = String((s.props as { variant?: string }).variant || '');
+  const variant = VARIANTS[s.type]?.includes(v) ? v : undefined;
+  return <div data-sid={safeSid(s.id)} data-variant={variant} style={{ display: 'contents' }}><C s={s} /></div>;
 }
 
 export interface RendererProps {
@@ -88,7 +95,7 @@ export default function Renderer({ theme, page, data, initialLang = 'en', onPrev
     onPreviewAction: onPreviewAction || (() => {}), focusBlock,
   };
   // @import must come first in a stylesheet (own <style> before the rest); the font variables come after the shop CSS so they win
-  const css = useMemo(() => storefrontCss(theme.accent) + '\n' + sectionCss(all), [theme.accent, all]);
+  const css = useMemo(() => storefrontCss(theme.accent) + '\n' + builderCss(theme) + '\n' + sectionCss(all), [theme, all]);
   const fcss = useMemo(() => fontCss(theme.font), [theme.font]);
   const sel = selectedId ? safeSid(selectedId) : '';
 

@@ -5,15 +5,18 @@ import { newId, type Block, type Section, type SectionType, type Txt } from '../
 
 export type FieldKind =
   | 'txt'        // bilingual text (EN + বাংলা), follows the shop's language switch
+  | 'txtarea'    // bilingual, several lines
   | 'text'       // one text, shown as written in both languages
   | 'textarea'
   | 'image'      // upload or paste an https link
   | 'link'       // #products, #about, https://…
   | 'toggle'
   | 'number'
-  | 'tags';      // comma separated list
+  | 'tags'       // comma separated list
+  | 'select';
 
-export interface Field { key: string; label: string; kind: FieldKind; help?: string; min?: number; max?: number; scale?: number }
+export interface Field { key: string; label: string; kind: FieldKind; help?: string; min?: number; max?: number; scale?: number;
+  options?: { v: string; l: string }[] }
 
 export interface BlockSpec {
   label: string;            // "Slide", "Category"…
@@ -50,7 +53,8 @@ export const SPECS: Record<SectionType, SectionSpec> = {
   ] },
   hero_slider: {
     label: 'Banner slider', icon: '🖼️',
-    fields: [{ key: 'intervalMs', label: 'Seconds per slide', kind: 'number', min: 2, max: 15, scale: 1000, help: 'How long each slide stays.' }],
+    fields: [{ key: 'variant', label: 'Layout', kind: 'select', options: [{ v: '', l: 'Full-width photo (original)' }, { v: 'split', l: 'Text left, photo right' }, { v: 'compact', l: 'Short banner' }] },
+      { key: 'intervalMs', label: 'Seconds per slide', kind: 'number', min: 2, max: 15, scale: 1000, help: 'How long each slide stays.' }],
     blocks: {
       label: 'Slide', min: 1, max: 6, title: b => plain(b.props.title) || 'Slide',
       fields: [
@@ -69,7 +73,8 @@ export const SPECS: Record<SectionType, SectionSpec> = {
   },
   categories: {
     label: 'Categories', icon: '🗂️',
-    fields: [{ key: 'title', label: 'Heading', kind: 'txt' }],
+    fields: [{ key: 'title', label: 'Heading', kind: 'txt' },
+      { key: 'variant', label: 'Layout', kind: 'select', options: [{ v: '', l: 'Square tiles (original)' }, { v: 'circles', l: 'Round pictures' }] }],
     blocks: {
       label: 'Category', min: 1, max: 12, title: b => plain(b.props.label) || 'Category',
       fields: [
@@ -89,6 +94,7 @@ export const SPECS: Record<SectionType, SectionSpec> = {
       { key: 'eyebrow', label: 'Small label', kind: 'txt' },
       { key: 'heading', label: 'Heading', kind: 'txt' },
       { key: 'sub', label: 'Sub-heading', kind: 'txt' },
+      { key: 'variant', label: 'Layout', kind: 'select', options: [{ v: '', l: 'Auto columns (original)' }, { v: 'grid3', l: '3 big columns' }] },
     ],
     addable: { max: 1, make: () => ({ id: newId('products'), type: 'product_grid', props: { anchor: 'products', eyebrow: L('prodEyebrow'), heading: L('prodHeading'), sub: L('prodSub'), source: 'all' } }) },
   },
@@ -128,6 +134,37 @@ export const SPECS: Record<SectionType, SectionSpec> = {
     { key: 'whatsapp', label: 'WhatsApp number', kind: 'text', help: 'With country code, e.g. 8801XXXXXXXXX' },
     { key: 'showTrackOrder', label: 'Show "Track order" link', kind: 'toggle' },
   ] },
+  page_title: {
+    label: 'Page title', icon: '🏷️',
+    fields: [{ key: 'title', label: 'Title', kind: 'txt' }, { key: 'sub', label: 'Short line under the title', kind: 'txt' },
+      { key: 'img', label: 'Background image (optional)', kind: 'image' }],
+    addable: { max: 1, make: () => ({ id: newId('ptitle'), type: 'page_title', props: { title: { en: 'Page title', bn: 'পাতার শিরোনাম' }, sub: '', img: '' } }) },
+  },
+  rich_text: {
+    label: 'Text', icon: '📝',
+    fields: [{ key: 'eyebrow', label: 'Small label', kind: 'txt' }, { key: 'heading', label: 'Heading', kind: 'txt' },
+      { key: 'body', label: 'Text', kind: 'txtarea', help: 'Leave an empty line between paragraphs.' }],
+    addable: { max: 6, make: () => ({ id: newId('text'), type: 'rich_text', props: { eyebrow: '', heading: { en: 'Heading', bn: 'শিরোনাম' }, body: { en: 'Write your text here.', bn: 'এখানে আপনার লেখা লিখুন।' } } }) },
+  },
+  contact_info: {
+    label: 'Contact details', icon: '📇',
+    fields: [{ key: 'heading', label: 'Heading', kind: 'txt' }, { key: 'intro', label: 'Short text', kind: 'txt' },
+      { key: 'phone', label: 'Phone', kind: 'text' }, { key: 'whatsapp', label: 'WhatsApp number', kind: 'text', help: 'With country code, e.g. 8801XXXXXXXXX' },
+      { key: 'email', label: 'Email', kind: 'text' }, { key: 'address', label: 'Address', kind: 'txtarea' }, { key: 'hours', label: 'Opening hours', kind: 'txt' },
+      { key: 'mapLink', label: 'Google Maps link (optional)', kind: 'text' }],
+    addable: { max: 2, make: () => ({ id: newId('contact'), type: 'contact_info', props: { heading: { en: 'Get in touch', bn: 'যোগাযোগ করুন' }, intro: '', phone: '', whatsapp: '', email: '', address: '', hours: '', mapLink: '' } }) },
+  },
+  faq: {
+    label: 'Questions & answers', icon: '❓',
+    fields: [{ key: 'heading', label: 'Heading', kind: 'txt' }],
+    blocks: {
+      label: 'Question', min: 1, max: 20, title: b => plain(b.props.q) || 'Question',
+      fields: [{ key: 'q', label: 'Question', kind: 'txt' }, { key: 'a', label: 'Answer', kind: 'txtarea' }],
+      make: () => ({ id: newId('q'), type: 'faq_item', props: { q: { en: 'New question?', bn: 'নতুন প্রশ্ন?' }, a: '' } }),
+    },
+    addable: { max: 2, make: () => ({ id: newId('faq'), type: 'faq', props: { heading: { en: 'Frequently asked questions', bn: 'সাধারণ প্রশ্ন' } },
+      blocks: [{ id: newId('q'), type: 'faq_item', props: { q: { en: 'How long does delivery take?', bn: 'ডেলিভারি পেতে কত দিন লাগে?' }, a: { en: 'Inside Dhaka 1–2 days, outside Dhaka 2–4 days.', bn: 'ঢাকার ভিতরে ১–২ দিন, ঢাকার বাইরে ২–৪ দিন।' } } }] }) },
+  },
   chat_bubble: { label: 'Chat & WhatsApp buttons', icon: '💭', global: true, fields: [
     { key: 'enabled', label: 'Show shop chat button', kind: 'toggle' },
     { key: 'whatsappFloat', label: 'Floating WhatsApp number', kind: 'text', help: 'Empty = no WhatsApp button.' },

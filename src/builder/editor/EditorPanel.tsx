@@ -1,6 +1,6 @@
 // Simple editor: left panel of the Website Builder. Edits the same theme + page JSON the renderer draws.
 // Every change goes through `change(next, key)` so undo/redo and autosave see it.
-import { useRef, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { FONTS, safeUrl, type Block, type BoxStyle, type Device, type FontKey, type NavItem, type PageDoc, type Section, type SiteTheme, type Txt } from '../schema';
 import { SPECS, type Field } from './fields';
 import { uploadImage } from '../api';
@@ -12,6 +12,8 @@ const DEFAULT_TRUE = new Set(['showSearch', 'showLangSwitch', 'showCart', 'showT
 const LINKS = [
   { v: '#products', l: 'Products section' }, { v: '#about', l: 'About section' }, { v: '#', l: 'Top of page' },
 ];
+/** The site's pages, offered as link targets ("/" home, "/about-us" …). Set by the Builder tab. */
+export const PageLinksCtx = createContext<{ v: string; l: string }[]>([]);
 
 // ── small inputs ──────────────────────────────────────────────────────────────
 const asTxt = (t: unknown): { en: string; bn: string } =>
@@ -60,11 +62,14 @@ function ImageInput({ value, onChange, siteId }: { value: unknown; onChange: (v:
 
 function LinkInput({ value, onChange }: { value: unknown; onChange: (v: string) => void }) {
   const v = String(value ?? '');
-  const preset = LINKS.some(x => x.v === v) ? v : 'custom';
+  const pageLinks = useContext(PageLinksCtx);
+  const all = [...pageLinks, ...LINKS];
+  const preset = all.some(x => x.v === v) ? v : 'custom';
   return (
     <div style={{ display: 'grid', gap: 6 }}>
       <select className="amr-ed-in" value={preset} onChange={e => onChange(e.target.value === 'custom' ? 'https://' : e.target.value)}>
-        {LINKS.map(x => <option key={x.v} value={x.v}>{x.l}</option>)}
+        {pageLinks.length > 0 && <optgroup label="Pages">{pageLinks.map(x => <option key={x.v} value={x.v}>{x.l}</option>)}</optgroup>}
+        <optgroup label="On this page">{LINKS.map(x => <option key={x.v} value={x.v}>{x.l}</option>)}</optgroup>
         <option value="custom">Other link…</option>
       </select>
       {preset === 'custom' && <input className="amr-ed-in" value={v} onChange={e => onChange(e.target.value)} placeholder="https://…" />}
@@ -76,6 +81,7 @@ function LinkInput({ value, onChange }: { value: unknown; onChange: (v: string) 
 function FieldInput({ f, value, onChange, siteId }: { f: Field; value: unknown; onChange: (v: unknown) => void; siteId: string }) {
   switch (f.kind) {
     case 'txt': return <TxtInput value={value} onChange={onChange} />;
+    case 'txtarea': return <TxtInput value={value} onChange={onChange} area />;
     case 'text': return <input className="amr-ed-in" value={String(value ?? '')} onChange={e => onChange(e.target.value)} />;
     case 'textarea': return <textarea className="amr-ed-in" rows={3} value={String(value ?? '')} onChange={e => onChange(e.target.value)} />;
     case 'image': return <ImageInput value={value} onChange={onChange} siteId={siteId} />;
@@ -94,6 +100,10 @@ function FieldInput({ f, value, onChange, siteId }: { f: Field; value: unknown; 
           onChange(x * sc);
         }} />;
     }
+    case 'select':
+      return <select className="amr-ed-in" value={String(value ?? '')} onChange={e => onChange(e.target.value || undefined)}>
+        {(f.options || []).map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+      </select>;
     case 'tags': {
       const list = Array.isArray(value) ? value.map(String) : [];
       return <input className="amr-ed-in" defaultValue={list.join(', ')} key={list.join('|')}

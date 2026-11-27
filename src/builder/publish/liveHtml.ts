@@ -10,6 +10,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Renderer, { sectionCss, fontCss } from '../Renderer';
+import { builderCss } from '../sections/Pages';
 import { storefrontCss } from '../storefrontCss';
 import { txt, type PageDoc, type SiteTheme } from '../schema';
 
@@ -65,14 +66,24 @@ const ONCLICK = 'data-amr-onclick';
 const setClick = (el: Element | null, js: string) => { el?.setAttribute(ONCLICK, js); };
 
 /** Give the static markup the ids and hooks the shop's own script looks for. */
-function addLegacyHooks(doc: Document) {
+function addLegacyHooks(doc: Document, isHome: boolean) {
   const $ = (s: string) => doc.querySelector(s);
   const $$ = (s: string) => Array.from(doc.querySelectorAll(s));
-  setClick($('.header .logo'), 'showStorefront()');
-  $$('.header-nav .nav-link, .footer .footer-link').forEach(a => {
-    const href = a.getAttribute('href') || '';
-    if (href === '#' || href === '#products' || href === '#about') setClick(a, 'showStorefront()');
-  });
+  if (isHome) {
+    setClick($('.header .logo'), 'showStorefront()');
+    $$('.header-nav .nav-link, .footer .footer-link').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (href === '#' || href === '#products' || href === '#about') setClick(a, 'showStorefront()');
+    });
+  } else {
+    // inner page: the logo goes home; "#section" links that are not on this page go to that section of the home page
+    setClick($('.header .logo'), "location.href='/'");
+    $$('a[href^="#"]').forEach(a => {
+      const href = a.getAttribute('href') || '#';
+      const id = href.slice(1);
+      if (!id || !doc.getElementById(id)) a.setAttribute('href', '/' + (id ? href : ''));
+    });
+  }
   const productsLink = $$('.header-nav .nav-item > .nav-link').find(a => a.getAttribute('href') === '#products');
   if (productsLink) {
     productsLink.parentElement!.id = 'navProductsItem';
@@ -91,6 +102,11 @@ function addLegacyHooks(doc: Document) {
     const img = t.querySelector('.cat-tile-img'); if (img) img.id = `catImg${i}`;
   });
   const grid = $('.product-grid'); if (grid) grid.id = 'productGrid';
+  else {
+    // the shop's script expects a product grid; on pages without one it fills this hidden box instead
+    const hidden = doc.createElement('div'); hidden.id = 'productGrid'; hidden.setAttribute('style', 'display:none');
+    doc.getElementById('storefrontView')?.appendChild(hidden);
+  }
   $$('.footer-link').forEach(a => {
     if (/track/i.test(a.textContent || '') && a.getAttribute('href') === '#') setClick(a, 'if(window.openTrackOrder)openTrackOrder();return false');
   });
@@ -103,14 +119,14 @@ function addLegacyHooks(doc: Document) {
 /** data-amr-onclick="x" → onclick="x" (React cannot write string handlers; the values above are fixed, never user text). */
 const finalize = (html: string) => html.replace(/ data-amr-(onclick|oninput|onsubmit)="/g, ' $1="');
 
-export function buildLiveParts(theme: SiteTheme, page: PageDoc): LiveParts {
+export function buildLiveParts(theme: SiteTheme, page: PageDoc, opts: { isHome: boolean } = { isHome: true }): LiveParts {
   const warnings: string[] = [];
   const en = parse(render(theme, page, 'en'));
   const bn = parse(render(theme, page, 'bn'));
   // our CSS goes into <head> separately; React may also emit <link rel="preload"> for images — not wanted in the body
   for (const d of [en, bn]) d.querySelectorAll('style, link').forEach(s => s.remove());
   bilingual(en.body, bn.body, m => warnings.push(m));
-  addLegacyHooks(en);
+  addLegacyHooks(en, opts.isHome);
 
   // split: everything up to the storefront <main> = top; the rest = footer + floating buttons
   const main = en.getElementById('storefrontView');
@@ -133,7 +149,7 @@ export function buildLiveParts(theme: SiteTheme, page: PageDoc): LiveParts {
   };
   return {
     top: finalize(top), rest: finalize(rest),
-    css: storefrontCss(theme.accent) + '\n' + sectionCss(all) + '\n' + f.vars,
+    css: storefrontCss(theme.accent) + '\n' + builderCss(theme) + '\n' + sectionCss(all) + '\n' + f.vars,
     fontImport: f.imp, config, warnings,
   };
 }

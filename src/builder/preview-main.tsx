@@ -62,6 +62,7 @@ function PreviewApp() {
     external_link: 'Preview mode — links are disabled here.',
   };
   const onPreviewAction = (what: string) => {
+    if (what.startsWith('page:')) { post({ type: 'amr-builder-goto', path: what.slice(5) }); return; }   // editor opens that page
     setNote(notes[what] || 'Preview mode');
     window.clearTimeout((window as unknown as { __n?: number }).__n);
     (window as unknown as { __n?: number }).__n = window.setTimeout(() => setNote(''), 2600);

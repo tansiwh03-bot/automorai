@@ -8,7 +8,7 @@ const PRODUCTS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-pr
 const SETTINGS_API = 'https://n8n2.kingpurefood.com/webhook/automorai/website-settings';
 
 export interface BuilderSite { id: string; name: string; theme: SiteTheme; legacy_slug: string | null; updated_at: string }
-export interface BuilderPage { id: string; slug: string; title: string; draft_json: PageDoc; updated_at: string }
+export interface BuilderPage { id: string; slug: string; title: string; position: number; draft_json: PageDoc; updated_at: string }
 
 const authHeader = async (): Promise<Record<string, string>> => {
   const { data } = await supabase.auth.getSession();
@@ -18,15 +18,34 @@ const authHeader = async (): Promise<Record<string, string>> => {
 };
 
 /** The builder site made from this shop, with its home page (null if not imported yet). */
-export async function loadSite(slug: string): Promise<{ site: BuilderSite; home: BuilderPage | null } | null> {
+export async function loadSite(slug: string): Promise<{ site: BuilderSite; home: BuilderPage | null; pages: BuilderPage[] } | null> {
   const { data: site, error } = await supabase.from('sites')
     .select('id,name,theme,legacy_slug,updated_at').eq('legacy_slug', slug).maybeSingle();
   if (error) throw new Error(error.message);
   if (!site) return null;
-  const { data: home, error: e2 } = await supabase.from('site_pages')
-    .select('id,slug,title,draft_json,updated_at').eq('site_id', site.id).eq('slug', 'home').maybeSingle();
+  const { data: pages, error: e2 } = await supabase.from('site_pages')
+    .select('id,slug,title,position,draft_json,updated_at').eq('site_id', site.id).order('position').order('created_at');
   if (e2) throw new Error(e2.message);
-  return { site: site as BuilderSite, home: (home as BuilderPage) || null };
+  const list = (pages || []) as BuilderPage[];
+  return { site: site as BuilderSite, home: list.find(p => p.slug === 'home') || null, pages: list };
+}
+
+/** Add a page to the site (draft only). */
+export async function createPage(siteId: string, slug: string, title: string, position: number, doc: PageDoc): Promise<BuilderPage> {
+  const problems = validatePage(doc);
+  if (problems.length) throw new Error('This page has a problem: ' + problems.slice(0, 2).join('; '));
+  const { data, error } = await supabase.from('site_pages')
+    .insert({ site_id: siteId, slug, title: title.slice(0, 120), position, draft_json: doc })
+    .select('id,slug,title,position,draft_json,updated_at').single();
+  if (error) throw new Error(/duplicate|unique/i.test(error.message) ? 'A page with this address already exists.' : error.message);
+  return data as BuilderPage;
+}
+
+/** Change a page's name / address / order. Returns the new updated_at. */
+export async function updatePageMeta(pageId: string, meta: { title?: string; slug?: string; position?: number }): Promise<string> {
+  const { data, error } = await supabase.from('site_pages').update(meta).eq('id', pageId).select('updated_at').single();
+  if (error) throw new Error(/duplicate|unique/i.test(error.message) ? 'A page with this address already exists.' : error.message);
+  return (data as { updated_at: string }).updated_at;
 }
 
 /** Step 1 (server): check you own the shop, create/refresh the builder site row, return the current shop HTML. */
@@ -121,7 +140,7 @@ const callServer = async (url: string, body: unknown): Promise<Record<string, un
 };
 
 /** Publish the saved draft to the live shop. `parts` comes from buildLiveParts(). */
-export const publishSite = (slug: string, parts: unknown) => callServer(PUBLISH_API, { business_slug: slug, parts });
+export const publishSite = (slug: string, pages: { slug: string; parts: unknown }[]) => callServer(PUBLISH_API, { business_slug: slug, pages });
 /** Put an older version back on the live shop (one click). */
 export const restoreVersion = (slug: string, version: number) => callServer(RESTORE_API, { business_slug: slug, version });
 
@@ -139,4 +158,15 @@ export async function liveDesignKind(slug: string): Promise<'builder' | 'legacy'
   if (!site) return null;
   const v = await listVersions(site.id).catch(() => []);
   return v[0]?.kind || null;
+}
+
+/** Save one page's draft only (no theme), with the same "nobody changed it meanwhile" check. Returns new updated_at. */
+export async function savePageOnly(pageId: string, page: PageDoc, knownUpdatedAt: string): Promise<string> {
+  const problems = validatePage(page);
+  if (problems.length) throw new Error('This page has a problem and was not saved: ' + problems.slice(0, 3).join('; '));
+  const { data, error } = await supabase.from('site_pages').update({ draft_json: page })
+    .eq('id', pageId).eq('updated_at', knownUpdatedAt).select('updated_at');
+  if (error) throw new Error(error.message);
+  if (!data?.length) throw new ConflictError('changed elsewhere');
+  return data[0].updated_at;
 }
