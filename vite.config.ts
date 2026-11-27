@@ -9,6 +9,15 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [dyadComponentTagger(), react()],
+  build: {
+    rollupOptions: {
+      // second page: the isolated Website Builder preview (loaded in an iframe by the Dashboard)
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        "builder-preview": path.resolve(__dirname, "builder-preview.html"),
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

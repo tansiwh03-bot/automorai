@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SalesReport from '../components/SalesReport';
-import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug, Truck, Megaphone, Workflow, Settings as SettingsIcon } from 'lucide-react';
+import BuilderBeta from '../builder/BuilderBeta';
+import { LayoutDashboard, Inbox as InboxIcon, Globe, Package, Boxes, ShoppingBag, BarChart3, Bell, ChevronDown, Users, CreditCard, Sparkles, Plug, Truck, Megaphone, Workflow, Settings as SettingsIcon, LayoutTemplate } from 'lucide-react';
 
 // Attaches the logged-in user's Supabase session token so backend endpoints can verify
 // the caller actually owns the business_slug being requested (see n8n "Verify Website Owner").
@@ -293,7 +294,7 @@ function InstallAppButton() {
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'products' | 'stock' | 'orders' | 'courier' | 'customers' | 'assistant' | 'marketing' | 'automations' | 'integrations' | 'settings' | 'billing' | 'reports'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'website' | 'builder' | 'products' | 'stock' | 'orders' | 'courier' | 'customers' | 'assistant' | 'marketing' | 'automations' | 'integrations' | 'settings' | 'billing' | 'reports'>('home');
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1286,6 +1287,7 @@ const Dashboard = () => {
     { key: 'home' as const, label: 'Overview', Icon: LayoutDashboard, group: 'Main menu' },
     { key: 'inbox' as const, label: 'Unified Inbox', Icon: InboxIcon, group: 'Main menu' },
     { key: 'website' as const, label: 'Website & Store', Icon: Globe, group: 'Main menu' },
+    { key: 'builder' as const, label: 'Website Builder (beta)', Icon: LayoutTemplate, group: 'Main menu' },
     { key: 'products' as const, label: 'Products', Icon: Package, group: 'Main menu' },
     { key: 'stock' as const, label: 'Inventory', Icon: Boxes, group: 'Main menu' },
     { key: 'orders' as const, label: 'Orders', Icon: ShoppingBag, group: 'Main menu' },
@@ -2374,6 +2376,10 @@ const Dashboard = () => {
       )}
 
       {/* ════════ PRODUCTS TAB ════════ */}
+      {activeTab === 'builder' && (
+        <BuilderBeta slug={currentSiteId} siteName={wsName} isDraft={isDraftSite} liveUrl={websiteResult?.url || ''} />
+      )}
+
       {activeTab === 'products' && (
         <div style={{ padding: '32px 24px', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
