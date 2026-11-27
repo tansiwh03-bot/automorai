@@ -46,9 +46,14 @@ export async function saveImported(siteId: string, name: string, theme: SiteThem
   if (problems.length) throw new Error('Converted design is invalid: ' + problems.slice(0, 3).join('; '));
   const { error: e1 } = await supabase.from('sites').update({ name: name.slice(0, 120), theme }).eq('id', siteId);
   if (e1) throw new Error(e1.message);
-  const { error: e2 } = await supabase.from('site_pages')
-    .upsert({ site_id: siteId, slug: 'home', title: 'Home', position: 0, draft_json: page }, { onConflict: 'site_id,slug' });
+  // No upsert: ON CONFLICT DO UPDATE would also set site_id, which users may not update (column grant, on purpose).
+  const fields = { title: 'Home', position: 0, draft_json: page };
+  const { data: existing, error: e2 } = await supabase.from('site_pages').select('id').eq('site_id', siteId).eq('slug', 'home').maybeSingle();
   if (e2) throw new Error(e2.message);
+  const { error: e3 } = existing
+    ? await supabase.from('site_pages').update(fields).eq('id', existing.id)
+    : await supabase.from('site_pages').insert({ site_id: siteId, slug: 'home', ...fields });
+  if (e3) throw new Error(e3.message);
 }
 
 export async function fetchSettings(slug: string): Promise<Record<string, unknown> | null> {
