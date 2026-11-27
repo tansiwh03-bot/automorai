@@ -41,7 +41,7 @@ const plain = (t: unknown): string => (t == null ? '' : typeof t === 'string' ? 
 
 export const SPECS: Record<SectionType, SectionSpec> = {
   notice_bar: { label: 'Notice bar', icon: '📢', global: true, fields: [
-    { key: 'text', label: 'Notice text', kind: 'text', help: 'The thin line at the very top. Leave empty to show nothing.' },
+    { key: 'text', label: 'Notice text', kind: 'txt', help: 'The thin line at the very top. Leave empty to show nothing.' },
   ] },
   header: { label: 'Header & menu', icon: '🧭', global: true, fields: [
     { key: 'businessName', label: 'Shop name', kind: 'text' },
@@ -59,9 +59,9 @@ export const SPECS: Record<SectionType, SectionSpec> = {
       label: 'Slide', min: 1, max: 6, title: b => plain(b.props.title) || 'Slide',
       fields: [
         { key: 'img', label: 'Banner image', kind: 'image', help: 'Wide photo, at least 1600 × 700.' },
-        { key: 'tag', label: 'Small label', kind: 'text' },
-        { key: 'title', label: 'Title', kind: 'text' },
-        { key: 'desc', label: 'Description', kind: 'textarea' },
+        { key: 'tag', label: 'Small label', kind: 'txt' },
+        { key: 'title', label: 'Title', kind: 'txt' },
+        { key: 'desc', label: 'Description', kind: 'txtarea' },
         { key: 'cta', label: 'Button text', kind: 'txt' },
         { key: 'ctaLink', label: 'Button link', kind: 'link' },
         { key: 'trustLine', label: 'Small line under the button', kind: 'txt' },
@@ -123,14 +123,14 @@ export const SPECS: Record<SectionType, SectionSpec> = {
   },
   about: {
     label: 'About us', icon: 'ℹ️',
-    fields: [{ key: 'eyebrow', label: 'Small label', kind: 'txt' }, { key: 'title', label: 'Title', kind: 'text' },
-      { key: 'body', label: 'Text', kind: 'textarea' }, { key: 'img', label: 'Image', kind: 'image' }],
+    fields: [{ key: 'eyebrow', label: 'Small label', kind: 'txt' }, { key: 'title', label: 'Title', kind: 'txt' },
+      { key: 'body', label: 'Text', kind: 'txtarea' }, { key: 'img', label: 'Image', kind: 'image' }],
     addable: { max: 3, make: () => ({ id: newId('about'), type: 'about', props: { eyebrow: L('aboutEyebrow'), title: 'About us', body: 'Tell your customers about your shop.', img: '' } }) },
   },
   footer: { label: 'Footer', icon: '🔻', global: true, fields: [
     { key: 'businessName', label: 'Shop name', kind: 'text' },
     { key: 'logoImg', label: 'Logo image', kind: 'image' },
-    { key: 'desc', label: 'About text', kind: 'textarea' },
+    { key: 'desc', label: 'About text', kind: 'txtarea' },
     { key: 'whatsapp', label: 'WhatsApp number', kind: 'text', help: 'With country code, e.g. 8801XXXXXXXXX' },
     { key: 'showTrackOrder', label: 'Show "Track order" link', kind: 'toggle' },
   ] },

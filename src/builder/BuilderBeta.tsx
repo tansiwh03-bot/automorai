@@ -5,8 +5,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { supabase } from '@/lib/supabaseClient';
 import { convertLegacy } from './convertLegacy';
 import { loadSite, startImport, saveImported, saveDraft, savePageOnly, ConflictError, fetchSettings, fetchProducts, publishSite, restoreVersion, listVersions,
-  createPage, updatePageMeta, type BuilderSite, type BuilderPage, type SiteVersion } from './api';
+  createPage, updatePageMeta, aiGenerate, type BuilderSite, type BuilderPage, type SiteVersion } from './api';
 import { PAGE_KINDS, TEMPLATES, applyTemplate, type PageKind, type Template } from './editor/pageTemplates';
+import { applyPlanToHome, aiPageDoc, type AiPlan } from './editor/aiApply';
 import { PAGE_SLUG_RE, RESERVED_SLUGS, type NavItem, type PageDoc, type SiteTheme } from './schema';
 import { buildLiveParts } from './publish/liveHtml';
 import type { Device, Product } from './schema';
@@ -68,7 +69,11 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
   const curPageRef = useRef('');
   const docsRef = useRef<Record<string, PageDoc>>({});
   const pageKnown = useRef<Record<string, string>>({});
-  const [pagePanel, setPagePanel] = useState<'' | 'add' | 'settings' | 'templates'>('');
+  const [pagePanel, setPagePanel] = useState<'' | 'add' | 'settings' | 'templates' | 'ai'>('');
+  const [aiText, setAiText] = useState('');
+  const [aiBusy, setAiBusy] = useState('');
+  const [aiMsg, setAiMsg] = useState('');
+  const [aiOpts, setAiOpts] = useState({ look: true, pages: true, cats: false });
   const [pageErr, setPageErr] = useState('');
 
   const refresh = useCallback(async () => {
@@ -285,7 +290,7 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
     setSelected(''); setOpenBlock(''); setSaveState('saved'); setPagePanel('');
   };
 
-  const addPage = async (kind: PageKind) => {
+  const addPage = async (kind: PageKind, ready?: PageDoc) => {
     if (!site || !designRef.current) return;
     setPageErr('');
     const taken = new Set(pages.map(pg => pg.slug));
@@ -294,7 +299,7 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
     try {
       if (!(await flushSave())) throw new Error('Your changes are not saved yet — try again in a moment.');
       const homeDoc = pages.find(pg => pg.slug === 'home') ? docsRef.current[pages.find(pg => pg.slug === 'home')!.id] : null;
-      const doc = kind.make(designRef.current.theme, homeDoc);
+      const doc = ready || kind.make(designRef.current.theme, homeDoc);
       const pg = await createPage(site.id, sl, kind.title, Math.max(0, ...pages.map(x => x.position)) + 1, doc);
       docsRef.current[pg.id] = pg.draft_json; pageKnown.current[pg.id] = pg.updated_at;
       setPages(list => [...list, pg]);
@@ -372,6 +377,42 @@ export default function BuilderBeta({ slug, siteName, isDraft, liveUrl }: Props)
     }
     change({ theme: out.theme, page: out.pages[ids.indexOf(curPageRef.current)] }, 'template');
     setPagePanel('');
+  };
+
+  // ── AI Website Generator ──
+  const runAi = async () => {
+    if (!designRef.current || !site) return;
+    const text = aiText.trim();
+    if (text.length < 20) { setAiMsg('Please write at least one or two sentences about your business.'); return; }
+    setAiMsg('');
+    let plan: AiPlan;
+    try {
+      setAiBusy('Writing your website… (about 20–40 seconds)');
+      const r = await aiGenerate(slug, text);
+      plan = r.plan;
+      setAiMsg(`Done. You can make ${r.left_today} more AI designs today.`);
+    } catch (e) { setAiBusy(''); setAiMsg((e as Error).message); return; }
+    setAiBusy('');
+    const homePg = pages.find(pg => pg.slug === 'home');
+    if (!homePg) return;
+    const extra = aiOpts.pages ? ['about', 'contact', 'faq'].filter(k => !pages.some(pg => pg.slug === PAGE_KINDS.find(x => x.key === k)!.slug)) : [];
+    if (!window.confirm('Apply the AI design?\n\nIt rewrites the texts on your Home page' + (aiOpts.look ? ', changes the look' : '') +
+      (extra.length ? ` and adds these pages: ${extra.join(', ')}` : '') + '. Your products, logo and menu stay. You can undo the Home page change.')) return;
+    try {
+      // 1) new pages first (each opens itself), 2) then Home last, so "Undo" right after still reverts the Home change
+      const wa = String((designRef.current.theme.globals.after.find(x => x.type === 'footer')?.props.whatsapp) || '');
+      for (const k of extra) {
+        const kind = PAGE_KINDS.find(x => x.key === k)!;
+        await addPage(kind, aiPageDoc(k, plan, wa) || undefined);
+        if (!(await flushSave())) throw new Error('A new page could not be saved. Please try again.');
+      }
+      if (curPageRef.current !== homePg.id) await switchPage(homePg.id);
+      if (curPageRef.current !== homePg.id || !designRef.current) throw new Error('Could not open the Home page. Try again.');
+      const hasCats = (designRef.current.page.sections.find(x => x.type === 'categories')?.blocks || []).length > 1;
+      const out = applyPlanToHome(plan, designRef.current.theme, designRef.current.page, { look: aiOpts.look, keepCategories: hasCats && !aiOpts.cats });
+      change(out, 'ai');
+      setPagePanel('');
+    } catch (e) { setAiMsg((e as Error).message); }
   };
 
   const doPublish = async () => {
@@ -519,6 +560,7 @@ ${EDITOR_CSS}`}</style>
                 <button className="amr-ed-btn" onClick={() => setPagePanel(pagePanel === 'add' ? '' : 'add')}>+ Add page</button>
                 <button className="amr-ed-btn" onClick={() => setPagePanel(pagePanel === 'settings' ? '' : 'settings')}>⚙ Page settings</button>
                 <button className="amr-ed-btn" onClick={() => setPagePanel(pagePanel === 'templates' ? '' : 'templates')}>🎨 Templates</button>
+                <button className="amr-ed-btn amr-ed-btn-blue" onClick={() => setPagePanel(pagePanel === 'ai' ? '' : 'ai')}>✨ AI design</button>
               </div>
               {pageErr && <div className="amr-ed-warn">{pageErr}</div>}
               {design.page.archived && (
@@ -554,6 +596,18 @@ ${EDITOR_CSS}`}</style>
                   </div>
                 );
               })()}
+              {pagePanel === 'ai' && (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <div className="amr-ed-help" style={{ marginTop: 0 }}>Describe your business in Bangla or English. AI writes the texts (both languages), picks a look and photos. Nothing goes live until you publish.</div>
+                  <textarea className="amr-ed-in" rows={5} maxLength={1500} value={aiText} onChange={e => setAiText(e.target.value)}
+                    placeholder="e.g. We sell handmade cotton kurtis and three-pieces for women in Dhaka. Prices 800–2500 taka. Cash on delivery all over Bangladesh." />
+                  <label className="amr-ed-toggle"><input type="checkbox" checked={aiOpts.look} onChange={e => setAiOpts({ ...aiOpts, look: e.target.checked })} /> Also choose colors & layout</label>
+                  <label className="amr-ed-toggle"><input type="checkbox" checked={aiOpts.pages} onChange={e => setAiOpts({ ...aiOpts, pages: e.target.checked })} /> Add About, Contact and FAQ pages (if missing)</label>
+                  <label className="amr-ed-toggle"><input type="checkbox" checked={aiOpts.cats} onChange={e => setAiOpts({ ...aiOpts, cats: e.target.checked })} /> Replace my categories (only if you have no products yet)</label>
+                  <button className="amr-ed-btn amr-ed-btn-blue" disabled={!!aiBusy} onClick={runAi}>{aiBusy || '✨ Write my website'}</button>
+                  {aiMsg && <div className="amr-ed-help" style={{ color: /Done/.test(aiMsg) ? '#15803d' : '#b42318' }}>{aiMsg}</div>}
+                </div>
+              )}
               {pagePanel === 'templates' && (
                 <div style={{ display: 'grid', gap: 8 }}>
                   <div className="amr-ed-help" style={{ marginTop: 0 }}>A template changes the look of all pages (colors, font, layouts). Your photos, texts and products stay. You can undo.</div>

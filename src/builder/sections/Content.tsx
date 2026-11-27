@@ -46,15 +46,15 @@ export function Testimonials({ s }: { s: Section }) {
 
 export function About({ s }: { s: Section }) {
   const r = useRender();
-  const p = s.props as { eyebrow?: Txt; title?: string; body?: string; img?: string };
+  const p = s.props as { eyebrow?: Txt; title?: Txt; body?: Txt; img?: string };
   if (!p.title && !p.body) return null;
   return (
     <section className="about-section" style={{ display: 'block' }}><div className="container"><div className="about-grid">
       <img className="about-img" src={safeUrl(p.img)} alt="" />
       <div>
         <div className="section-eyebrow">{txt(p.eyebrow, r.lang)}</div>
-        <div className="about-title">{p.title}</div>
-        <div className="about-body">{p.body}</div>
+        <div className="about-title">{txt(p.title, r.lang)}</div>
+        <div className="about-body">{txt(p.body, r.lang)}</div>
       </div>
     </div></div></section>
   );

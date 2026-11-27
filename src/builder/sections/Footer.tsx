@@ -3,7 +3,7 @@ import { useRender, label as lbl } from '../context';
 
 export function Footer({ s }: { s: Section }) {
   const r = useRender();
-  const p = s.props as { businessName: string; logoIcon?: string; logoImg?: string; desc?: string; whatsapp?: string; year?: string;
+  const p = s.props as { businessName: string; logoIcon?: string; logoImg?: string; desc?: Txt; whatsapp?: string; year?: string;
     newsletter?: { label: Txt; title: Txt; placeholder: Txt; button: Txt }; labels?: Record<string, Txt>; showTrackOrder?: boolean };
   const t = (k: string) => lbl(p.labels, k, r.lang);
   const logo = safeUrl(p.logoImg);
@@ -29,7 +29,7 @@ export function Footer({ s }: { s: Section }) {
             {logo && <img className="footer-logo-img" src={logo} alt="" style={{ display: 'block' }} />}
             <div className="footer-logo-name">{p.businessName}</div>
           </div>
-          <div className="footer-desc">{p.desc}</div>
+          <div className="footer-desc">{txt(p.desc, r.lang)}</div>
         </div>
         <div><div className="footer-col-title">{t('quickLinksTitle')}</div><div className="footer-links">
           <a className="footer-link" href="#products" onClick={e => jump(e, 'products')}>{t('allProductsLink')}</a>

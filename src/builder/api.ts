@@ -170,3 +170,9 @@ export async function savePageOnly(pageId: string, page: PageDoc, knownUpdatedAt
   if (!data?.length) throw new ConflictError('changed elsewhere');
   return data[0].updated_at;
 }
+
+// ── AI Website Generator (Phase 5) ───────────────────────────────────────────
+const AI_API = 'https://n8n2.kingpurefood.com/webhook/automorai/site-builder/ai-generate';
+/** Ask the server to write a content plan for this shop (server checks ownership, daily limit and the AI output). */
+export const aiGenerate = (slug: string, description: string) =>
+  callServer(AI_API, { business_slug: slug, description }) as Promise<{ success: boolean; plan: import('./editor/aiApply').AiPlan; left_today: number }>;

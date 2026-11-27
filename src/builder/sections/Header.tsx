@@ -3,9 +3,10 @@ import { txt, safeUrl, type NavItem, type Section, type Txt } from '../schema';
 import { useRender, productInCat, label as lbl } from '../context';
 
 export function NoticeBar({ s }: { s: Section }) {
-  const p = s.props as { text?: string };
+  const p = s.props as { text?: Txt };
+  const r = useRender();
   if (!p.text) return null;
-  return <div className="notice-bar">{p.text}</div>;
+  return <div className="notice-bar">{txt(p.text, r.lang)}</div>;
 }
 
 export function Header({ s }: { s: Section }) {
