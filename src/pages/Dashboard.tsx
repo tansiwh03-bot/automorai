@@ -429,7 +429,8 @@ const Dashboard = () => {
   const [createError, setCreateError] = useState('');
   const [createForm, setCreateForm] = useState({ product_title: '', product_price: 0, quantity: 1, customer_name: '', customer_phone: '', customer_address: '', payment_method: 'cod', delivery_location: 'inside' });
   // Courier delivery-history check per phone (fraud/return risk), keyed by phone
-  const [phoneRisk, setPhoneRisk] = useState<Record<string, { found: boolean; delivered: number; returned: number; total: number; return_rate: number; risk: string }>>({});
+  const [phoneRisk, setPhoneRisk] = useState<Record<string, { found: boolean; delivered: number; returned: number; total: number; return_rate: number; risk: string;
+    courier?: { pathao?: { status: string; rating?: string; note?: string }; steadfast?: { status: string; numbers?: Record<string, number>; note?: string } } }>>({});
 
   // ── Facebook OAuth ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -2121,7 +2122,7 @@ const Dashboard = () => {
 
                         {/* ── Payment Methods ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Payment Methods</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Payment Methods</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Customers can pay by Cash on Delivery, bKash, Nagad, or Bank Transfer. Fill in the numbers/details below for the ones you accept — leave blank to hide that option's details (customers can still select it, but will not see where to send money).
                           </p>
@@ -2142,7 +2143,7 @@ const Dashboard = () => {
 
                         {/* ── Delivery Charge ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Delivery Charge</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Delivery Charge</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Customers pick Dhaka or Outside Dhaka at checkout and this charge is added to their total automatically. Defaults to ৳60 / ৳120 if left blank.
                           </p>
@@ -2160,9 +2161,9 @@ const Dashboard = () => {
 
                         {/* ── Courier Integration ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Courier Integration</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Courier Integration</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
-                            Connect your own Steadfast or Pathao courier account. Each business needs its own courier account (parcels are picked up from your own shop) — this just saves your credentials securely for now; automatic booking is coming soon.
+                            Connect your own Steadfast or Pathao courier account. Each business needs its own courier account (parcels are picked up from your own shop) — your keys are stored encrypted. Used to book parcels from Orders and to check a customer's delivery record next to each order.
                           </p>
                           <FormField label="Courier Provider">
                             <select value={courierProvider} onChange={e => setCourierProvider(e.target.value as 'none' | 'steadfast' | 'pathao')} style={inputStyle}>
@@ -2217,7 +2218,7 @@ const Dashboard = () => {
 
                         {/* ── Marketing tracking (Meta Pixel / GA4 / GTM) ── */}
                         <div id="amr-tracking" style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Pixel &amp; Analytics</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Pixel &amp; Analytics</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Paste only the ID. Your website then sends page views, product views, add-to-cart, checkout and purchases automatically. Works right after you save — no rebuild needed. Leave blank if you don't use it.
                           </p>
@@ -2245,7 +2246,7 @@ const Dashboard = () => {
 
                         {/* ── Shop Info (used by the chat assistant) ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Shop Info</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Shop Info</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>
                             Your chat assistant uses this to answer customer questions about your shop. Leave any field blank if it doesn't apply — the assistant will then honestly say it doesn't have that info instead of guessing.
                           </p>
@@ -2266,7 +2267,7 @@ const Dashboard = () => {
 
                         {/* ── Navigation Menu ── */}
                         <div style={{ marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px solid #eef2f8' }}>
-                          <p style={{ color: '#12284c', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
+                          <p style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', margin: '0 0 6px' }}>Navigation Menu</p>
                           <p style={{ color: '#718096', fontSize: '0.78rem', margin: '0 0 12px' }}>Top menu items — you can also add sub-items (e.g. Men → Shirt, Pant).</p>
                           {websiteSettings.nav_menu.map((item, idx) => (
                             <div key={idx} style={{ background: '#f0f4fb', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
@@ -3062,15 +3063,32 @@ const Dashboard = () => {
                           {o.customer_phone}
                           {(() => {
                             const r = phoneRisk[(o.customer_phone || '').trim()];
-                            if (!r || !r.found) return null;
+                            if (!r) return null;
+                            // live answers from the merchant's own courier accounts (Pathao rating, Steadfast numbers)
+                            const chip = (bg: string, fg: string, t: string, title: string, k: string) => (
+                              <span key={k} title={title} style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '999px', background: bg, color: fg, fontSize: '0.68rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-block', marginTop: '3px' }}>{t}</span>);
+                            const live: React.ReactElement[] = [];
+                            const pa = r.courier?.pathao;
+                            if (pa?.status === 'ok' && pa.rating) {
+                              const g = pa.rating.toLowerCase();
+                              const tone = /excellent|good/.test(g) ? ['#16301c', '#8fe388'] : /moderate|average|medium/.test(g) ? ['#3a2e14', '#ffcf5c'] : /risk|bad|fraud|poor|fake/.test(g) ? ['#3a1416', '#c44d4d'] : ['#eef2f8', '#718096'];
+                              live.push(chip(tone[0], tone[1], 'Pathao: ' + pa.rating.replace(/_/g, ' '), 'Customer rating from Pathao (all Pathao merchants), checked with your Pathao account', 'pa'));
+                            } else if (pa?.status === 'unavailable') live.push(chip('#eef2f8', '#718096', 'Pathao: n/a', pa.note || 'Pathao did not answer', 'pa'));
+                            const sfc = r.courier?.steadfast;
+                            if (sfc?.status === 'ok' && sfc.numbers) {
+                              const n = sfc.numbers; const find = (re: RegExp) => { const k = Object.keys(n).find(x => re.test(x)); return k ? n[k] : undefined; };
+                              const del = find(/deliver/i), can = find(/cancel|return/i), tot = find(/total/i);
+                              live.push(chip('#e8f1fb', '#1d4ed8', `Steadfast: ${del ?? '?'}✓ ${can ?? '?'}✗${tot !== undefined ? ' / ' + tot : ''}`,
+                                'Delivered / cancelled from Steadfast (all Steadfast merchants): ' + Object.entries(n).map(([k, v]) => `${k} ${v}`).join(', '), 'sf'));
+                            } else if (sfc?.status === 'unavailable') live.push(chip('#eef2f8', '#718096', 'Steadfast: n/a', sfc.note || 'Steadfast did not answer', 'sf'));
+                            if (!r.found) return live.length ? <>{live}</> : null;
                             const m = {
                               high:   { bg: '#3a1416', fg: '#c44d4d', t: `⚠️ ${r.returned}/${r.total} returned` },
                               medium: { bg: '#3a2e14', fg: '#ffcf5c', t: `${r.returned}/${r.total} returned` },
                               good:   { bg: '#16301c', fg: '#8fe388', t: `✓ ${r.delivered}/${r.total} delivered` },
                               low_data: { bg: '#eef2f8', fg: '#718096', t: `${r.delivered}✓ ${r.returned}✗ (new)` },
                             }[r.risk] || { bg: '#eef2f8', fg: '#718096', t: `${r.delivered}✓ ${r.returned}✗` };
-                            return <span title={`Courier history: ${r.delivered} delivered, ${r.returned} returned (${r.return_rate}% return rate)`}
-                              style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '999px', background: m.bg, color: m.fg, fontSize: '0.68rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{m.t}</span>;
+                            return <>{chip(m.bg, m.fg, m.t, `Automorai history: ${r.delivered} delivered, ${r.returned} returned (${r.return_rate}% return rate)`, 'own')}{live}</>;
                           })()}
                         </div>
                         {o.customer_email && <div style={{ fontSize: '0.72rem', color: '#718096' }}>{o.customer_email}</div>}
