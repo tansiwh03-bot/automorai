@@ -5,7 +5,8 @@ import { createRoot } from 'react-dom/client';
 import Renderer from './Renderer';
 import { validatePage, validateTheme, type PageDoc, type RenderData, type SiteTheme } from './schema';
 
-interface Payload { theme: SiteTheme; page: PageDoc; data: RenderData & { productsLoaded?: boolean }; lang?: 'en' | 'bn'; rev: number }
+interface Payload { theme: SiteTheme; page: PageDoc; data: RenderData & { productsLoaded?: boolean }; lang?: 'en' | 'bn'; rev: number;
+  selectedId?: string; editing?: boolean; focusBlock?: string }
 
 const post = (msg: Record<string, unknown>) => {
   if (window.parent !== window) window.parent.postMessage(msg, window.location.origin);
@@ -20,11 +21,18 @@ function PreviewApp() {
     const onMsg = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== window.parent) return;
       const m = e.data;
+      if (m?.type === 'amr-builder-scroll') {            // editor picked a section in its list → show it
+        const el = document.querySelector(`[data-sid="${String(m.sid).replace(/[^a-zA-Z0-9_-]/g, '')}"] > *`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
       if (!m || m.type !== 'amr-builder-render') return;
       const problems = [...validateTheme(m.theme), ...validatePage(m.page)];
       if (problems.length) { setErr(problems.slice(0, 5).join('\n')); post({ type: 'amr-builder-error', problems }); return; }
       setErr('');
-      setP({ theme: m.theme, page: m.page, data: m.data || { products: [], businessSlug: '' }, lang: m.lang, rev: Number(m.rev) || 0 });
+      setP({ theme: m.theme, page: m.page, data: m.data || { products: [], businessSlug: '' }, lang: m.lang, rev: Number(m.rev) || 0,
+        selectedId: typeof m.selectedId === 'string' ? m.selectedId : '', editing: !!m.editing,
+        focusBlock: typeof m.focusBlock === 'string' ? m.focusBlock : '' });
     };
     window.addEventListener('message', onMsg);
     post({ type: 'amr-builder-ready' });
@@ -32,6 +40,18 @@ function PreviewApp() {
   }, []);
 
   useEffect(() => { if (p) post({ type: 'amr-builder-rendered', rev: p.rev }); }, [p]);
+
+  // editing: a click on a section tells the editor which one (capture phase, before the section's own handlers)
+  const editing = !!p?.editing;
+  useEffect(() => {
+    if (!editing) return;
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as Element | null)?.closest?.('[data-sid]');
+      if (el) post({ type: 'amr-builder-pick', sid: el.getAttribute('data-sid') });
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [editing]);
 
   const notes: Record<string, string> = {
     cart: 'Preview mode — the cart works on your live shop.',
@@ -52,7 +72,7 @@ function PreviewApp() {
   return (
     <>
       {/* key: a new import/remount resets slider, language and filters */}
-      <Renderer key={`${p.rev}-${p.lang}`} theme={p.theme} page={p.page} data={p.data} initialLang={p.lang} onPreviewAction={onPreviewAction} />
+      <Renderer key={`${p.rev}-${p.lang}`} theme={p.theme} page={p.page} data={p.data} initialLang={p.lang} onPreviewAction={onPreviewAction} selectedId={p.selectedId} focusBlock={p.focusBlock} />
       {note && (
         <div style={{ position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', zIndex: 9999, background: '#0a1f5c',
           color: '#fff', padding: '10px 16px', borderRadius: 10, fontSize: 13, fontFamily: 'Poppins, sans-serif', boxShadow: '0 8px 24px rgba(0,0,0,.25)' }}>{note}</div>

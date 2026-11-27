@@ -43,10 +43,20 @@ export type SectionType =
 
 export interface NavItem { label: Txt; link: string; children?: { label: Txt; link: string }[] }
 
+/** Font pairs (Latin + Bangla). 'poppins-hind' is the legacy look; the others swap both CSS font variables. */
+export const FONTS = {
+  'poppins-hind': { label: 'Poppins + Hind Siliguri (original)', main: "'Poppins','Hind Siliguri',sans-serif", bn: "'Hind Siliguri',sans-serif", google: '' },
+  'inter-hind': { label: 'Inter + Hind Siliguri', main: "'Inter','Hind Siliguri',sans-serif", bn: "'Inter','Hind Siliguri',sans-serif", google: 'Inter:wght@400;500;600;700;800' },
+  'montserrat-hind': { label: 'Montserrat + Hind Siliguri', main: "'Montserrat','Hind Siliguri',sans-serif", bn: "'Montserrat','Hind Siliguri',sans-serif", google: 'Montserrat:wght@400;500;600;700;800' },
+  'playfair-hind': { label: 'Playfair Display (elegant) + Hind Siliguri', main: "'Playfair Display','Hind Siliguri',serif", bn: "'Hind Siliguri',sans-serif", google: 'Playfair+Display:wght@500;600;700;800' },
+  'poppins-noto': { label: 'Poppins + Noto Sans Bengali', main: "'Poppins','Noto Sans Bengali',sans-serif", bn: "'Poppins','Noto Sans Bengali',sans-serif", google: 'Noto+Sans+Bengali:wght@400;500;600;700' },
+} as const;
+export type FontKey = keyof typeof FONTS;
+
 export interface SiteTheme {
   schema: number;
   accent: string;                    // shop accent color (#rrggbb)
-  font: 'poppins-hind';              // only the legacy font pair exists in v1
+  font: FontKey;
   globals: {                          // shown on every page, in this order: before[], page sections, after[]
     before: Section[];               // notice bar, header
     after: Section[];                // footer, chat bubble
@@ -101,6 +111,7 @@ export function validateTheme(t: unknown): string[] {
   if (!isObj(t)) return ['theme is not an object'];
   const errs: string[] = [];
   if (typeof t.accent !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(t.accent)) errs.push('accent must be #rrggbb');
+  if (t.font !== undefined && !(String(t.font) in FONTS)) errs.push(`unknown font ${String(t.font)}`);
   if (!isObj(t.globals) || !Array.isArray(t.globals.before) || !Array.isArray(t.globals.after)) errs.push('globals missing');
   else {
     (t.globals.before as unknown[]).forEach((s, i) => errs.push(...validateSection(s, `globals.before[${i}]`)));

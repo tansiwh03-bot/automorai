@@ -1,7 +1,7 @@
 // Shared renderer: draws a site from the builder format. The same component is used by the Dashboard preview,
 // and (next phases) by the editor canvas and the live shop. It only reads the design + live data; it never fetches.
 import { useMemo, useState, type ComponentType } from 'react';
-import { type PageDoc, type Section, type SiteTheme, type RenderData, type BoxStyle } from './schema';
+import { FONTS, type FontKey, type PageDoc, type Section, type SiteTheme, type RenderData, type BoxStyle } from './schema';
 import { Ctx, type RenderCtx } from './context';
 import { storefrontCss } from './storefrontCss';
 import { NoticeBar, Header } from './sections/Header';
@@ -58,9 +58,20 @@ export interface RendererProps {
   data: RenderData & { productsLoaded?: boolean };
   initialLang?: 'en' | 'bn';
   onPreviewAction?: (what: string) => void;
+  /** Editor only: outline this section. */
+  selectedId?: string;
+  /** Editor only: block being edited (sliders show it). */
+  focusBlock?: string;
 }
 
-export default function Renderer({ theme, page, data, initialLang = 'en', onPreviewAction }: RendererProps) {
+/** Font pair override; the original pair adds nothing, so imported shops stay pixel-identical. */
+function fontCss(font: string | undefined): { imp: string; vars: string } {
+  const f = FONTS[font as FontKey];
+  if (!f || !f.google) return { imp: '', vars: '' };
+  return { imp: `@import url('https://fonts.googleapis.com/css2?family=${f.google}&display=swap');`, vars: `:root{--font-main:${f.main};--font-bn:${f.bn}}` };
+}
+
+export default function Renderer({ theme, page, data, initialLang = 'en', onPreviewAction, selectedId, focusBlock }: RendererProps) {
   const [lang, setLang] = useState<'en' | 'bn'>(initialLang);
   const [activeCat, setActiveCat] = useState(0);
   const [search, setSearch] = useState('');
@@ -74,13 +85,19 @@ export default function Renderer({ theme, page, data, initialLang = 'en', onPrev
   const ctx: RenderCtx = {
     lang, setLang, products: data.products || [], productsLoaded: data.productsLoaded !== false,
     activeCat, setActiveCat, catMatchers, search, setSearch,
-    onPreviewAction: onPreviewAction || (() => {}),
+    onPreviewAction: onPreviewAction || (() => {}), focusBlock,
   };
+  // @import must come first in a stylesheet (own <style> before the rest); the font variables come after the shop CSS so they win
   const css = useMemo(() => storefrontCss(theme.accent) + '\n' + sectionCss(all), [theme.accent, all]);
+  const fcss = useMemo(() => fontCss(theme.font), [theme.font]);
+  const sel = selectedId ? safeSid(selectedId) : '';
 
   return (
     <Ctx.Provider value={ctx}>
+      {fcss.imp && <style>{fcss.imp}</style>}
       <style>{css}</style>
+      {fcss.vars && <style>{fcss.vars}</style>}
+      {sel && <style>{`[data-sid="${sel}"]>*{outline:3px solid #2563eb!important;outline-offset:-3px}`}</style>}
       {theme.globals.before.map(s => <SectionView key={s.id} s={s} />)}
       <main id="storefrontView">{page.sections.map(s => <SectionView key={s.id} s={s} />)}</main>
       {theme.globals.after.map(s => <SectionView key={s.id} s={s} />)}

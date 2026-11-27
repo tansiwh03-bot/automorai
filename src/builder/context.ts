@@ -14,6 +14,8 @@ export interface RenderCtx {
   setSearch: (q: string) => void;
   /** Things a preview cannot do (open cart, place order, chat…) — the host decides what to show. */
   onPreviewAction: (what: string) => void;
+  /** Editor only: the block being edited (e.g. a slide) — sliders stop on it. */
+  focusBlock?: string;
 }
 
 export const Ctx = createContext<RenderCtx | null>(null);

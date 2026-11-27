@@ -67,3 +67,42 @@ export async function fetchProducts(slug: string) {
   const j = await r.json().catch(() => ({}));
   return Array.isArray(j.products) ? j.products : [];
 }
+
+export class ConflictError extends Error {}
+
+/**
+ * Save the editor's draft (theme + home page). Each row is only written if nobody else changed it since we loaded it
+ * (updated_at must still match) — otherwise ConflictError, so a second tab/device never silently overwrites work.
+ * Returns the new updated_at values.
+ */
+export async function saveDraft(siteId: string, pageId: string, theme: SiteTheme, page: PageDoc,
+  known: { site: string; page: string }): Promise<{ site: string; page: string }> {
+  const problems = [...validateTheme(theme), ...validatePage(page)];
+  if (problems.length) throw new Error('This design has a problem and was not saved: ' + problems.slice(0, 3).join('; '));
+  if (JSON.stringify(page).length > 900_000 || JSON.stringify(theme).length > 60_000) throw new Error('This design is too large to save.');
+  const out = { ...known };
+  const { data: s, error: e1 } = await supabase.from('sites').update({ theme })
+    .eq('id', siteId).eq('updated_at', known.site).select('updated_at');
+  if (e1) throw new Error(e1.message);
+  if (!s?.length) throw new ConflictError('changed elsewhere');
+  out.site = s[0].updated_at;
+  const { data: p, error: e2 } = await supabase.from('site_pages').update({ draft_json: page })
+    .eq('id', pageId).eq('updated_at', known.page).select('updated_at');
+  if (e2) throw new Error(e2.message);
+  if (!p?.length) throw new ConflictError('changed elsewhere');
+  out.page = p[0].updated_at;
+  return out;
+}
+
+const IMG_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+
+/** Upload an image for this site (owner-only by storage policy). Returns its public URL. */
+export async function uploadImage(siteId: string, file: File): Promise<string> {
+  const ext = IMG_TYPES[file.type];
+  if (!ext) throw new Error('Please choose a JPG, PNG, WEBP or GIF image.');
+  if (file.size > 5 * 1024 * 1024) throw new Error('Image is larger than 5 MB.');
+  const path = `${siteId}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from('site-assets').upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw new Error('Upload failed: ' + error.message);
+  return supabase.storage.from('site-assets').getPublicUrl(path).data.publicUrl;
+}

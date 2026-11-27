@@ -11,11 +11,15 @@ export function HeroSlider({ s }: { s: Section }) {
   const [cur, setCur] = useState(0);
   const n = slides.length;
 
+  // in the editor, show the slide being edited and stop rotating
+  const focusIdx = r.focusBlock ? (s.blocks || []).findIndex(b => b.id === r.focusBlock) : -1;
+  useEffect(() => { if (focusIdx >= 0) setCur(focusIdx); }, [focusIdx]);
   useEffect(() => {
-    if (n < 2) return;
+    if (n < 2 || focusIdx >= 0) return;
     const t = setInterval(() => setCur(c => (c + 1) % n), interval);
     return () => clearInterval(t);
-  }, [n, interval]);
+  }, [n, interval, focusIdx]);
+  useEffect(() => { if (cur >= n && n) setCur(0); }, [cur, n]);
 
   if (!n) return null;
   return (
