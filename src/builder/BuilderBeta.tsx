@@ -298,7 +298,7 @@ ${EDITOR_CSS}`}</style>
       <div className="amr-pagehead">
         <div className="amr-eyebrow">Website Builder</div>
         <h1>Website Builder <span style={{ fontSize: '.7rem', verticalAlign: 'middle', background: '#e8f7fd', color: '#0b84ad', padding: '3px 8px', borderRadius: '20px', fontWeight: 800 }}>BETA</span></h1>
-        <div className="amr-sub">Edit your design here. Changes are saved as a draft — your live shop does not change until publishing is added in the next phase.</div>
+        <div className="amr-sub">Edit your design here. Changes are saved as a draft — your live shop changes only when you press Publish.</div>
       </div>
 
       {!slug ? (
