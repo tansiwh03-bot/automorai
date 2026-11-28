@@ -607,8 +607,9 @@ const Dashboard = () => {
     setCreateSaving(true);
     try {
       const qty = Number(f.quantity) || 1;
+      // owner token: lets the server accept the owner's own price (without it the order is checked like a storefront order)
       const res = await fetch(NEW_ORDER_API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           business_slug: currentSiteId, product_title: f.product_title.trim(), product_price: Number(f.product_price), quantity: qty,
           selected_size: '', selected_color: '', customer_name: f.customer_name.trim(), customer_phone: f.customer_phone.trim(), customer_email: '',
@@ -621,6 +622,7 @@ const Dashboard = () => {
         setCreateOrderOpen(false);
         setCreateForm({ product_title: '', product_price: 0, quantity: 1, customer_name: '', customer_phone: '', customer_address: '', payment_method: 'cod', delivery_location: 'inside' });
         loadOrders();
+        loadProducts();   // stock may have changed
       } else {
         setCreateError(data.error || 'Could not create the order. Make sure your website is live.');
       }
@@ -985,6 +987,7 @@ const Dashboard = () => {
         body: JSON.stringify({ order_id: orderId, status }),
       });
       loadOrders();
+      if (status === 'cancelled' || status === 'pending') loadProducts();   // cancel gives stock back
     } catch {}
   };
 
